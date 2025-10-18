@@ -1,16 +1,17 @@
 ﻿using dotGeoMigrata.Core.Domain.Values;
+using dotGeoMigrata.Interfaces;
 
 namespace dotGeoMigrata.Core.Domain.Entities;
 
-internal sealed record PopulationGroup
+internal sealed record PopulationGroup : IIdentifiable
 {
-    public required string Id { get; init; }
-    public required int Count { get; init; }
-    public required string? DisplayName { get; init; }
-    public required double MovingWillingness { get; init; }
-    public required double MaxMigrationThreshold { get; init; }
-    public required double MinMigrationThreshold { get; init; }
-    public required List<FactorSensitivity> Sensitivities { get; init; }
+    public string Id { get; init; }
+    public int Count { get; init; }
+    public string? DisplayName { get; init; }
+    public double MovingWillingness { get; init; }
+    public double MaxMigrationThreshold { get; init; }
+    public double MinMigrationThreshold { get; init; }
+    public List<FactorSensitivity> Sensitivities { get; init; }
 
     public PopulationGroup(
         string id,

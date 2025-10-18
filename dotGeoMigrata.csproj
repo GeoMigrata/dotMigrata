@@ -8,7 +8,6 @@
 
     <ItemGroup>
       <Folder Include="src\Simulation\Config\" />
-      <Folder Include="src\Simulation\Stages\" />
     </ItemGroup>
 
 </Project>

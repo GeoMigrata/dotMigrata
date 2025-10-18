@@ -1,15 +1,16 @@
 ﻿using dotGeoMigrata.Core.Domain.Values;
+using dotGeoMigrata.Interfaces;
 
 namespace dotGeoMigrata.Core.Domain.Entities;
 
-internal class City
+internal class City : IIdentifiable
 {
-    public required string Id { get; init; }
-    public required string DisplayName { get; init; }
-    public required double Area { get; set; }
-    public required (double, double) Position { get; init; }
-    public required List<FactorValue> FactorValues { get; init; }
-    public required List<PopulationGroup> PopulationGroups { get; init; }
+    public string Id { get; init; }
+    public string? DisplayName { get; init; }
+    public double Area { get; set; }
+    public (double, double) Position { get; init; }
+    public List<FactorValue> FactorValues { get; init; }
+    public List<PopulationGroup> PopulationGroups { get; init; }
 
     public City(string id,
         double area,
@@ -17,12 +18,13 @@ internal class City
         string? displayName = null,
         List<FactorValue>? factorValues = null,
         List<PopulationGroup>? populationGroups = null) =>
-        (Id, Area, Position, FactorValues, PopulationGroups) = (
+        (Id, Area, Position, DisplayName, FactorValues, PopulationGroups) = (
             !string.IsNullOrWhiteSpace(id)
                 ? id
                 : throw new ArgumentException("Id of City must be non-empty", nameof(id)),
             area > 0 ? area : throw new ArgumentException("Area must be greater than 0", nameof(area)),
             position,
+            displayName,
             factorValues ?? [],
             populationGroups ?? []
         );

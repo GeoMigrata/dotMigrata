@@ -1,4 +1,5 @@
 ﻿using dotGeoMigrata.Core.Domain.Enums;
+using dotGeoMigrata.Interfaces;
 
 namespace dotGeoMigrata.Core.Domain.Values;
 
@@ -12,7 +13,7 @@ internal readonly record struct FactorDefinition(
     double MaxValue = 1,
     string? DisplayName = null,
     string? Description = null,
-    TransformType? Transform = null)
+    TransformType? Transform = null) : IIdentifiable
 {
     public string Id { get; init; } = !string.IsNullOrWhiteSpace(Id)
         ? Id

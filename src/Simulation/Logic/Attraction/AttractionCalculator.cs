@@ -1,17 +1,18 @@
 ﻿using dotGeoMigrata.Core.Domain.Entities;
 using dotGeoMigrata.Core.Domain.Enums;
+using dotGeoMigrata.Interfaces;
 
 namespace dotGeoMigrata.Simulation.Logic.Attraction;
 
 /// <summary>
 /// Calculates the attraction score of a city for a specific population group.
 /// </summary>
-internal static class AttractionCalculator
+internal class AttractionCalculator : IAttractionCalculator
 {
     /// <summary>
     /// Compute the attraction score for a given (City, PopulationGroup)
     /// </summary>
-    public static double ComputeAttraction(World w, City c, PopulationGroup g)
+    public double CalculateAttraction(World w, City c, PopulationGroup g)
     {
         var factorValues = c.FactorValues;
 
