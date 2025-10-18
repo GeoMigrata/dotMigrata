@@ -2,15 +2,15 @@
 
 namespace dotGeoMigrata.Core.Domain.Entities;
 
-internal static class World
+internal class World
 {
-    public static HashSet<City> Cities { get; } = [];
-    public static int TotalPopulation => Cities.Sum(c => c.Population);
-    public static HashSet<FactorDefinition> Factors { get; } = [];
+    public IReadOnlyList<City> Cities { get; }
+    public IReadOnlyList<FactorDefinition> Factors { get; }
+    public int Population => Cities.Sum(c => c.Population);
 
-    public static void AddCity(City city) => Cities.Add(city);
-    public static void RemoveCity(City city) => Cities.Remove(city);
-
-    public static void AddFactor(FactorDefinition factor) => Factors.Add(factor);
-    public static void RemoveFactor(FactorDefinition factor) => Factors.Remove(factor);
+    public World(IEnumerable<City> cities, IEnumerable<FactorDefinition> factorDefinitions)
+    {
+        Cities = cities is List<City> cList ? cList : cities.ToList();
+        Factors = factorDefinitions is List<FactorDefinition> fList ? fList : factorDefinitions.ToList();
+    }
 }

@@ -2,5 +2,5 @@
 
 internal enum FactorType
 {
-    Negative, Positive, Neutral
+    Negative, Positive
 }
