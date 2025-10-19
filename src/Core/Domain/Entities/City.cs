@@ -7,7 +7,7 @@ internal class City : IIdentifiable
 {
     public string DisplayName { get; init; }
     public double Area { get; set; }
-    public (double, double) Position { get; init; }
+    public Coordinate Position { get; init; }
 
     private readonly List<FactorValue> _factorValues;
     public IReadOnlyList<FactorValue> FactorValues => _factorValues;
@@ -18,7 +18,7 @@ internal class City : IIdentifiable
     public City(
         string displayName,
         double area,
-        (double, double) position,
+        Coordinate position,
         IEnumerable<FactorValue>? factorValues = null,
         IEnumerable<PopulationGroup>? populationGroups = null) =>
         (Area, Position, DisplayName, _factorValues, _populationGroups) = (

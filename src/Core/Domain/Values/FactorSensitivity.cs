@@ -10,7 +10,7 @@ internal readonly record struct FactorSensitivity
     public int Sensitivity { get; init; }
     public FactorType? OverriddenFactorType { get; init; }
 
-    public FactorSensitivity(World world, FactorDefinition factor, int sensitivity,
+    public FactorSensitivity(FactorDefinition factor, int sensitivity,
         FactorType? overriddenFactorType = null)
     {
         Factor = factor;
