@@ -40,8 +40,8 @@ internal static class DomainToDtoMapper
         {
             DisplayName = populationGroup.DisplayName,
             Count = populationGroup.Count,
-            MinAcceptanceThreshold = populationGroup.MinAcceptanceThreshold,
-            MaxMigrationThreshold = populationGroup.MaxMigrationThreshold,
+            AcceptanceThreshold = populationGroup.AcceptanceThreshold,
+            MigrationThreshold = populationGroup.MigrationThreshold,
             MovingWillingness = populationGroup.MovingWillingness,
             FactorSensitivities = factorSensitivities
         };
