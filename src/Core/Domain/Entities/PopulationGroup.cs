@@ -9,7 +9,7 @@ internal sealed record PopulationGroup : IIdentifiable
     public string DisplayName { get; init; }
     public double MovingWillingness { get; init; }
     public double MaxMigrationThreshold { get; init; }
-    public double MinMigrationThreshold { get; init; }
+    public double MinAcceptanceThreshold { get; init; }
     
     private readonly List<FactorSensitivity> _sensitivities;
     public IReadOnlyList<FactorSensitivity> Sensitivities => _sensitivities;
@@ -22,7 +22,7 @@ internal sealed record PopulationGroup : IIdentifiable
         double minMigrationThreshold,
         IEnumerable<FactorSensitivity>? sensitivities = null)
     {
-        (DisplayName, Count, MovingWillingness, MaxMigrationThreshold, MinMigrationThreshold, _sensitivities) = (
+        (DisplayName, Count, MovingWillingness, MaxMigrationThreshold, MinAcceptanceThreshold, _sensitivities) = (
             displayName,
             count > 0 ? count : throw new ArgumentException("Count must be larger than zero", nameof(count)),
             movingWillingness,

@@ -69,7 +69,7 @@ internal static class DtoToDomainMapper
             count: dto.Count,
             movingWillingness: dto.MovingWillingness,
             maxMigrationThreshold: dto.MaxMigrationThreshold,
-            minMigrationThreshold: dto.MinMigrationThreshold,
+            minMigrationThreshold: dto.MinAcceptanceThreshold,
             sensitivities: sensitivities
         );
     }
