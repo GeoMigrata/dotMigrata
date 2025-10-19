@@ -7,20 +7,13 @@ namespace dotGeoMigrata.Core.Domain.Values;
 /// Defines a factor including its transformation type, direction, and normalization rule.
 /// </summary>
 internal readonly record struct FactorDefinition(
-    string Id,
+    string DisplayName,
     FactorType Type,
     double MinValue = 0,
     double MaxValue = 1,
-    string? DisplayName = null,
-    string? Description = null,
     TransformType? Transform = null) : IIdentifiable
 {
-    public string Id { get; init; } = !string.IsNullOrWhiteSpace(Id)
-        ? Id
-        : throw new ArgumentException("Id of Factor must be non-empty", nameof(Id));
-
-    public string? DisplayName { get; init; } = DisplayName;
-    public string? Description { get; init; } = Description;
+    public string DisplayName { get; init; } = DisplayName;
     public FactorType Type { get; init; } = Type;
     public TransformType? Transform { get; init; } = Transform;
 

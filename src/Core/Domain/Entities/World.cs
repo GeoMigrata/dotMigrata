@@ -5,20 +5,19 @@ namespace dotGeoMigrata.Core.Domain.Entities;
 
 internal class World : IIdentifiable
 {
-    public string Id { get; init; }
-    public string? DisplayName { get; init; }
-    public IReadOnlyList<City> Cities { get; }
-    public IReadOnlyList<FactorDefinition> Factors { get; }
-    public int Population => Cities.Sum(c => c.Population);
+    public string DisplayName { get; init; }
 
-    public World(string id, IEnumerable<City> cities, IEnumerable<FactorDefinition> factorDefinitions,
-        string? displayName = null)
+    private readonly List<City> _cities;
+    public IReadOnlyList<City> Cities => _cities;
+    private readonly List<FactorDefinition> _factorDefinitions;
+    public IReadOnlyList<FactorDefinition> FactorDefinitions => _factorDefinitions;
+
+    public int Population => _cities.Sum(c => c.Population);
+
+    public World(string displayName, IEnumerable<City> cities, IEnumerable<FactorDefinition> factorDefinitions)
     {
-        if (string.IsNullOrWhiteSpace(id))
-            throw new ArgumentException("Id of World must be non-empty", nameof(id));
-        Id = id;
         DisplayName = displayName;
-        Cities = cities is List<City> cList ? cList : cities.ToList();
-        Factors = factorDefinitions is List<FactorDefinition> fList ? fList : factorDefinitions.ToList();
+        _cities = cities is List<City> cList ? cList : cities.ToList();
+        _factorDefinitions = factorDefinitions is List<FactorDefinition> fList ? fList : factorDefinitions.ToList();
     }
 }

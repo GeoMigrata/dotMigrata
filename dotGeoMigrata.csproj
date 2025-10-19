@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="src\Simulation\Config\" />
+      <Folder Include="src\Data\" />
     </ItemGroup>
 
 </Project>

@@ -5,29 +5,29 @@ namespace dotGeoMigrata.Core.Domain.Entities;
 
 internal class City : IIdentifiable
 {
-    public string Id { get; init; }
-    public string? DisplayName { get; init; }
+    public string DisplayName { get; init; }
     public double Area { get; set; }
     public (double, double) Position { get; init; }
-    public List<FactorValue> FactorValues { get; init; }
-    public List<PopulationGroup> PopulationGroups { get; init; }
 
-    public City(string id,
+    private readonly List<FactorValue> _factorValues;
+    public IReadOnlyList<FactorValue> FactorValues => _factorValues;
+
+    private readonly List<PopulationGroup> _populationGroups;
+    public IReadOnlyList<PopulationGroup> PopulationGroups => _populationGroups;
+
+    public City(
+        string displayName,
         double area,
         (double, double) position,
-        string? displayName = null,
-        List<FactorValue>? factorValues = null,
-        List<PopulationGroup>? populationGroups = null) =>
-        (Id, Area, Position, DisplayName, FactorValues, PopulationGroups) = (
-            !string.IsNullOrWhiteSpace(id)
-                ? id
-                : throw new ArgumentException("Id of City must be non-empty", nameof(id)),
+        IEnumerable<FactorValue>? factorValues = null,
+        IEnumerable<PopulationGroup>? populationGroups = null) =>
+        (Area, Position, DisplayName, _factorValues, _populationGroups) = (
             area > 0 ? area : throw new ArgumentException("Area must be greater than 0", nameof(area)),
             position,
             displayName,
-            factorValues ?? [],
-            populationGroups ?? []
+            factorValues?.ToList() ?? [],
+            populationGroups?.ToList() ?? []
         );
 
-    public int Population => PopulationGroups.Sum(g => g.Count);
+    public int Population => _populationGroups.Sum(g => g.Count);
 }

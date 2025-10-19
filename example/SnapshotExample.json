@@ -1,0 +1,40 @@
+﻿{
+  "Version": "1.0",
+  "World": {
+    "DisplayName": "MyWorld",
+    "Cities": {
+      "Shanghai": {
+        "DisplayName": "Shanghai, China",
+        "Area": 10.0,
+        "Position": {
+          "Latitude": 31.22,
+          "Longitude": 121.45
+        },
+        "FactorValues": {
+          "Pollution": 0.4
+        },
+        "PopulationGroups": {
+          "UnemployedTeen20-25": {
+            "DisplayName": "Unemployed Teenagers 20-25 y.o.",
+            "FactorSensitivities": {
+              "Pollution": {
+                "Value": "10",
+                "OverriddenFactorType": null
+              }
+            }
+          }
+        }
+      }
+    },
+    "FactorDefinitions": {
+      "Pollution": {
+        "DisplayName": "Pollution Rate",
+        "Type": "Positive",
+        "MaxValue": 1,
+        "MinValue": 0,
+        "Transform": null
+      }
+    }
+  },
+  "EngineConfigOverride": {}
+}
