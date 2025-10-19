@@ -30,4 +30,16 @@ internal class City : IIdentifiable
         );
 
     public int Population => _populationGroups.Sum(g => g.Count);
+
+    /// <summary>
+    /// Replace or an existing FactorValue for the specified factor definition.
+    /// This keeps FactorValue immutable but allows controlled updates via City API.
+    /// </summary>
+    public void UpdateFactorIntensity(FactorDefinition factor, double newIntensity)
+    {
+        var idx = _factorValues.FindIndex(fv => fv.Factor == factor);
+        if (idx < 0) throw new ArgumentException($"FactorDefinition {factor} not found. ", nameof(factor));
+
+        _factorValues[idx] = new FactorValue { Factor = factor, Intensity = newIntensity };
+    }
 }

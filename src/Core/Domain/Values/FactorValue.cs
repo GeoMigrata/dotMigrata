@@ -2,9 +2,10 @@
 
 namespace dotGeoMigrata.Core.Domain.Values;
 
-internal record struct FactorValue(FactorDefinition Factor, double Intensity)
+internal record struct FactorValue
 {
-    public FactorDefinition Factor { get; init; } = Factor;
+    public required FactorDefinition Factor { get; init; }
+    public required double Intensity { get; set; }
 
     private double Normalize(FactorDefinition fd) => fd.Normalize(Intensity);
 }

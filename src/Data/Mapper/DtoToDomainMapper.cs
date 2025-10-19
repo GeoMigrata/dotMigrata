@@ -31,7 +31,8 @@ internal static class DtoToDomainMapper
 
     private static City CreateCity(string id, CityDto dto, Dictionary<string, FactorDefinition> factorDefinitions)
     {
-        var factorValues = dto.FactorValues.Select(kv => new FactorValue(factorDefinitions[kv.Key], kv.Value));
+        var factorValues = dto.FactorValues.Select(kv => new FactorValue
+            { Factor = factorDefinitions[kv.Key], Intensity = kv.Value });
         var populationGroups =
             dto.PopulationGroups.Select(kv => CreateGroup(kv.Key, kv.Value, factorDefinitions));
 
