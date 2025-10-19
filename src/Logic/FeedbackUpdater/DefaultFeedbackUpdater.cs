@@ -8,7 +8,7 @@ namespace dotGeoMigrata.Logic.FeedbackUpdater;
 /// Default implementation of feedback updater.
 /// Updates city factor values based on population changes after migration.
 /// </summary>
-internal sealed class DefaultFeedbackUpdater : IFeedbackUpdater
+public sealed class DefaultFeedbackUpdater : IFeedbackUpdater
 {
     private readonly double _smoothingAlpha;
 
@@ -51,24 +51,23 @@ internal sealed class DefaultFeedbackUpdater : IFeedbackUpdater
 
             var popChangeRatio = deltaPop[city] / totalPop;
 
-            foreach (var fv in city.FactorValues)
+            // ✅ Create snapshot to avoid modifying during enumeration
+            var factorSnapshot = city.FactorValues.ToList();
+
+            foreach (var fv in factorSnapshot)
             {
                 var oldValue = fv.Intensity;
-
-                // Basic heuristic rules (can be customized per factor type)
                 var newValue = fv.Factor.Type switch
                 {
-                    FactorType.Positive =>
-                        // More population => slight decrease (pressure on resources)
-                        oldValue * (1 - .15 * popChangeRatio),
-                    FactorType.Negative =>
-                        // More population => increase (pollution, congestion)
-                        oldValue * (1 + .25 * popChangeRatio),
+                    FactorType.Positive => oldValue * (1 - .15 * popChangeRatio),
+                    FactorType.Negative => oldValue * (1 + .25 * popChangeRatio),
                     _ => oldValue * (1 + .05 * popChangeRatio)
                 };
 
-                // Apply exponential smoothing to stabilize dynamics
-                city.UpdateFactorIntensity(fv.Factor, oldValue * (1 - _smoothingAlpha) + newValue * _smoothingAlpha);
+                city.UpdateFactorIntensity(
+                    fv.Factor,
+                    oldValue * (1 - _smoothingAlpha) + newValue * _smoothingAlpha
+                );
             }
         }
     }

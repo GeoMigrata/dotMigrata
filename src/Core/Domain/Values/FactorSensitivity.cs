@@ -4,7 +4,7 @@ using dotGeoMigrata.Core.Domain.Enums;
 
 namespace dotGeoMigrata.Core.Domain.Values;
 
-internal readonly record struct FactorSensitivity
+public readonly record struct FactorSensitivity
 {
     public FactorDefinition Factor { get; init; }
     public int Sensitivity { get; init; }

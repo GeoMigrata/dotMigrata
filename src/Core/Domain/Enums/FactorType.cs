@@ -1,6 +1,6 @@
 ﻿namespace dotGeoMigrata.Core.Domain.Enums;
 
-internal enum FactorType
+public enum FactorType
 {
     Negative, Positive
 }

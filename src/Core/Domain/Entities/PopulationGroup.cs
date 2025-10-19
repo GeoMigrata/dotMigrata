@@ -3,7 +3,7 @@ using dotGeoMigrata.Interfaces;
 
 namespace dotGeoMigrata.Core.Domain.Entities;
 
-internal sealed record PopulationGroup : IIdentifiable
+public sealed record PopulationGroup : IIdentifiable
 {
     public int Count { get; init; }
     public string DisplayName { get; init; }
@@ -18,16 +18,16 @@ internal sealed record PopulationGroup : IIdentifiable
         string displayName,
         int count,
         double movingWillingness,
-        double maxMigrationThreshold,
-        double minMigrationThreshold,
+        double migrationThreshold,
+        double acceptanceThreshold,
         IEnumerable<FactorSensitivity>? sensitivities = null)
     {
         (DisplayName, Count, MovingWillingness, MigrationThreshold, AcceptanceThreshold, _sensitivities) = (
             displayName,
             count > 0 ? count : throw new ArgumentException("Count must be larger than zero", nameof(count)),
             movingWillingness,
-            maxMigrationThreshold,
-            minMigrationThreshold,
+            migrationThreshold,
+            acceptanceThreshold,
             sensitivities == null ? [] : sensitivities.ToList());
     }
 }

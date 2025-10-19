@@ -5,7 +5,7 @@ namespace dotGeoMigrata.Interfaces.Logic;
 /// <summary>
 /// Interface for updating city factors after population changes.
 /// </summary>
-internal interface IFeedbackUpdater
+public interface IFeedbackUpdater
 {
     /// <summary>
     /// Update factor values of all cities based on migration results.

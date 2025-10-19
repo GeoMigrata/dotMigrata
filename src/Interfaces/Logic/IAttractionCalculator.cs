@@ -5,7 +5,7 @@ namespace dotGeoMigrata.Interfaces.Logic;
 /// <summary>
 /// Interface for computing attraction index of a city for a given population group.
 /// </summary>
-internal interface IAttractionCalculator
+public interface IAttractionCalculator
 {
     /// <summary>
     /// Compute the attraction index of a city for the given population group.

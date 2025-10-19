@@ -9,8 +9,7 @@ namespace dotGeoMigrata.Logic.MigrationCalculator;
 /// Computes migration flows based on attraction differences,
 /// thresholds, and distance-based decay.
 /// </summary>
-internal sealed class DefaultMigrationCalculator
-    : IMigrationCalculator
+public sealed class DefaultMigrationCalculator : IMigrationCalculator
 {
     private readonly double _sigmoidSteepness;
     private readonly double _distanceCostFactor;
@@ -34,18 +33,19 @@ internal sealed class DefaultMigrationCalculator
     }
 
     /// <summary>
-    /// Computes expected migration numbers for all population groups between cities.
+    /// Computes expected migration numbers for all population groups between cities,
+    /// using an origin-aware attraction function.
     /// </summary>
-    /// <param name="world">The simulated world containing cities and groups.</param>
+    /// <param name="world">The simulated world containing all cities and groups.</param>
     /// <param name="attractionFunc">
-    /// A delegate returning attraction index for (city, group).
+    /// A delegate returning attraction index for (group, origin, target).
     /// </param>
     /// <returns>
     /// Dictionary of migration results:
     /// key = (origin city, target city, group), value = expected migrants (double).
     /// </returns>
     public IReadOnlyDictionary<(City origin, City target, PopulationGroup group), double>
-        ComputeMigrations(World world, Func<City, PopulationGroup, double> attractionFunc)
+        ComputeMigrations(World world, Func<PopulationGroup, City, City, double> attractionFunc)
     {
         var result = new Dictionary<(City, City, PopulationGroup), double>();
 
@@ -53,17 +53,23 @@ internal sealed class DefaultMigrationCalculator
         {
             foreach (var group in origin.PopulationGroups)
             {
-                var aOrigin = attractionFunc(origin, group);
+                // Compute attraction for the origin city (self-attraction)
+                var aOrigin = attractionFunc(group, origin, origin);
 
                 foreach (var target in world.Cities)
                 {
                     if (target == origin)
                         continue;
 
-                    var aTarget = attractionFunc(target, group);
+                    // Compute attraction for the target city relative to this origin
+                    var aTarget = attractionFunc(group, origin, target);
+                    
+                    Console.WriteLine($"[{group.DisplayName}] {origin.DisplayName}->{target.DisplayName} = {(aTarget - aOrigin):F3}");
 
                     // Trigger condition: only consider migration if thresholds are met
-                    if (!(aOrigin <= group.AcceptanceThreshold) || !(aTarget >= group.MigrationThreshold)) continue;
+                    if (aOrigin > group.AcceptanceThreshold || aTarget < group.MigrationThreshold)
+                        continue;
+
                     var delta = aTarget - aOrigin;
 
                     // Step 1. Convert attraction difference into a probability (sigmoid)

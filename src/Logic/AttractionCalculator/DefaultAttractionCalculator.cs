@@ -9,7 +9,7 @@ namespace dotGeoMigrata.Logic.AttractionCalculator;
 /// Default implementation of IAttractionCalculator.
 /// Computes attraction based on group sensitivities, moving willingness, city factor values, and distance.
 /// </summary>
-internal class DefaultAttractionCalculator : IAttractionCalculator
+public class DefaultAttractionCalculator : IAttractionCalculator
 {
     private readonly double _distanceDecayFactor;
 

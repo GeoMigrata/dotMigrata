@@ -3,7 +3,7 @@ using dotGeoMigrata.Interfaces;
 
 namespace dotGeoMigrata.Core.Domain.Entities;
 
-internal class World : IIdentifiable
+public class World : IIdentifiable
 {
     public string DisplayName { get; init; }
 

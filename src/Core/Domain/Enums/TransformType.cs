@@ -1,6 +1,6 @@
 ﻿namespace dotGeoMigrata.Core.Domain.Enums;
 
-internal enum TransformType
+public enum TransformType
 {
     Linear,
     Log,

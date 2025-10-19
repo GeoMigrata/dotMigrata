@@ -6,7 +6,7 @@ namespace dotGeoMigrata.Core.Domain.Values;
 /// <summary>
 /// Defines a factor including its transformation type, direction, and normalization rule.
 /// </summary>
-internal readonly record struct FactorDefinition(
+public readonly record struct FactorDefinition(
     string DisplayName,
     FactorType Type,
     double MinValue = 0,
@@ -17,8 +17,8 @@ internal readonly record struct FactorDefinition(
     public FactorType Type { get; init; } = Type;
     public TransformType? Transform { get; init; } = Transform;
 
-    public double MinValue { get; init; }
-    public double MaxValue { get; init; }
+    public double MinValue { get; init; } = MinValue;
+    public double MaxValue { get; init; } = MaxValue;
 
     public double Normalize(double rawValue)
     {

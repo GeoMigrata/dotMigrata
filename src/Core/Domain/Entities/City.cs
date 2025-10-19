@@ -3,31 +3,26 @@ using dotGeoMigrata.Interfaces;
 
 namespace dotGeoMigrata.Core.Domain.Entities;
 
-internal class City : IIdentifiable
+public class City(
+    string displayName,
+    double area,
+    Coordinate position,
+    IEnumerable<FactorValue>? factorValues = null,
+    IEnumerable<PopulationGroup>? populationGroups = null)
+    : IIdentifiable
 {
-    public string DisplayName { get; init; }
-    public double Area { get; set; }
-    public Coordinate Position { get; init; }
+    public string DisplayName { get; init; } = displayName;
 
-    private readonly List<FactorValue> _factorValues;
+    public double Area { get; set; } =
+        area > 0 ? area : throw new ArgumentException("Area must be greater than 0", nameof(area));
+
+    public Coordinate Position { get; init; } = position;
+
+    private readonly List<FactorValue> _factorValues = factorValues?.ToList() ?? [];
     public IReadOnlyList<FactorValue> FactorValues => _factorValues;
 
-    private readonly List<PopulationGroup> _populationGroups;
+    private readonly List<PopulationGroup> _populationGroups = populationGroups?.ToList() ?? [];
     public IReadOnlyList<PopulationGroup> PopulationGroups => _populationGroups;
-
-    public City(
-        string displayName,
-        double area,
-        Coordinate position,
-        IEnumerable<FactorValue>? factorValues = null,
-        IEnumerable<PopulationGroup>? populationGroups = null) =>
-        (Area, Position, DisplayName, _factorValues, _populationGroups) = (
-            area > 0 ? area : throw new ArgumentException("Area must be greater than 0", nameof(area)),
-            position,
-            displayName,
-            factorValues?.ToList() ?? [],
-            populationGroups?.ToList() ?? []
-        );
 
     public int Population => _populationGroups.Sum(g => g.Count);
 
