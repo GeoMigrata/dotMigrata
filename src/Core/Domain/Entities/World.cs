@@ -1,9 +1,8 @@
 ﻿using dotGeoMigrata.Core.Domain.Values;
-using dotGeoMigrata.Interfaces;
 
 namespace dotGeoMigrata.Core.Domain.Entities;
 
-public class World : IIdentifiable
+public class World
 {
     public string DisplayName { get; init; }
 

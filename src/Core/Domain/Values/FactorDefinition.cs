@@ -1,26 +1,19 @@
 ﻿using dotGeoMigrata.Core.Domain.Enums;
-using dotGeoMigrata.Interfaces;
 
 namespace dotGeoMigrata.Core.Domain.Values;
 
 /// <summary>
 /// Defines a factor including its transformation type, direction, and normalization rule.
 /// </summary>
-public readonly record struct FactorDefinition(
-    string DisplayName,
-    FactorType Type,
-    double MinValue = 0,
-    double MaxValue = 1,
-    TransformType? Transform = null) : IIdentifiable
+public record FactorDefinition
 {
-    public string DisplayName { get; init; } = DisplayName;
-    public FactorType Type { get; init; } = Type;
-    public TransformType? Transform { get; init; } = Transform;
+    public required string DisplayName { get; init; }
+    public required FactorType Type { get; init; }
+    public required double MinValue { get; init; }
+    public required double MaxValue { get; init; }
+    public required TransformType? Transform { get; init; }
 
-    public double MinValue { get; init; } = MinValue;
-    public double MaxValue { get; init; } = MaxValue;
-
-    public double Normalize(double rawValue)
+    internal double Normalize(double rawValue)
     {
         // Clamp raw value to valid range
         var clamped = Math.Clamp(rawValue, MinValue, MaxValue);
@@ -49,7 +42,6 @@ public readonly record struct FactorDefinition(
                 break;
         }
 
-        // Reverse value if the factor type is Negative
-        return Type == FactorType.Positive ? t : 1.0 - t;
+        return t;
     }
 }

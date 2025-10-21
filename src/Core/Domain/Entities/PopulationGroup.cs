@@ -1,33 +1,19 @@
 ﻿using dotGeoMigrata.Core.Domain.Values;
-using dotGeoMigrata.Interfaces;
 
 namespace dotGeoMigrata.Core.Domain.Entities;
 
-public sealed record PopulationGroup : IIdentifiable
+public sealed record PopulationGroup
 {
-    public int Count { get; init; }
-    public string DisplayName { get; init; }
+    public required int Count { get; init; }
+    public required string DisplayName { get; init; }
     public double MovingWillingness { get; init; }
-    public double MigrationThreshold { get; init; }
-    public double AcceptanceThreshold { get; init; }
-    
+    public double RetentionRate { get; init; }
+
     private readonly List<FactorSensitivity> _sensitivities;
     public IReadOnlyList<FactorSensitivity> Sensitivities => _sensitivities;
-
-    public PopulationGroup(
-        string displayName,
-        int count,
-        double movingWillingness,
-        double migrationThreshold,
-        double acceptanceThreshold,
-        IEnumerable<FactorSensitivity>? sensitivities = null)
+    
+    public PopulationGroup(List<FactorSensitivity> sensitivities)
     {
-        (DisplayName, Count, MovingWillingness, MigrationThreshold, AcceptanceThreshold, _sensitivities) = (
-            displayName,
-            count > 0 ? count : throw new ArgumentException("Count must be larger than zero", nameof(count)),
-            movingWillingness,
-            migrationThreshold,
-            acceptanceThreshold,
-            sensitivities == null ? [] : sensitivities.ToList());
+        _sensitivities = sensitivities;
     }
 }

@@ -1,15 +1,27 @@
 ﻿namespace dotGeoMigrata.Core.Domain.Values;
 
-public readonly struct Coordinate
+public readonly record struct Coordinate
 {
     public required double Longitude { get; init; }
     public required double Latitude { get; init; }
 
     /// <summary>
+    /// Computes the Euclidean distance (approximately) between this city and another given one.
+    /// </summary>
+    /// <param name="other">Other city between this and which distance is calculated.</param>
+    /// <returns>Distance between this and given city.</returns>
+    public double DistanceTo(Coordinate other)
+    {
+        return DistanceBetween(this, other);
+    }
+
+    /// <summary>
     /// Computes the Euclidean distance (approximate) between two coordinates using Haversine formula.
     /// </summary>
-    public static double CalculateDistance(Coordinate c1, Coordinate c2)
+    public static double DistanceBetween(Coordinate c1, Coordinate c2)
     {
+        if (c1 == c2) return 0;
+
         const double r = 6371; // Earth radius in km
         var lat1Rad = DegreesToRadians(c1.Latitude);
         var lat2Rad = DegreesToRadians(c2.Latitude);

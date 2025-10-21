@@ -1,5 +1,5 @@
-﻿using dotGeoMigrata.Core.Domain.Values;
-using dotGeoMigrata.Interfaces;
+﻿using System.Runtime.CompilerServices;
+using dotGeoMigrata.Core.Domain.Values;
 
 namespace dotGeoMigrata.Core.Domain.Entities;
 
@@ -9,7 +9,6 @@ public class City(
     Coordinate position,
     IEnumerable<FactorValue>? factorValues = null,
     IEnumerable<PopulationGroup>? populationGroups = null)
-    : IIdentifiable
 {
     public string DisplayName { get; init; } = displayName;
 
@@ -32,9 +31,14 @@ public class City(
     /// </summary>
     public void UpdateFactorIntensity(FactorDefinition factor, double newIntensity)
     {
-        var idx = _factorValues.FindIndex(fv => fv.Factor == factor);
-        if (idx < 0) throw new ArgumentException($"FactorDefinition {factor} not found. ", nameof(factor));
+        var item = _factorValues.FirstOrDefault(fv => fv.Factor == factor);
+        if (item == null)
+            throw new ArgumentException("Given factor has no matched value in this city.", nameof(factor));
 
-        _factorValues[idx] = new FactorValue { Factor = factor, Intensity = newIntensity };
+        item.Intensity = newIntensity;
     }
+
+    public void AddPopulationGroup(PopulationGroup group) => _populationGroups.Add(group);
+
+    public void RemovePopulationGroup(PopulationGroup group) => _populationGroups.Remove(group);
 }
