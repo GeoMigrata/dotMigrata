@@ -6,5 +6,5 @@ public readonly record struct FactorSensitivity
 {
     public required FactorDefinition Factor { get; init; }
     public required int Sensitivity { get; init; }
-    public required FactorType? OverriddenFactorType { get; init; }
+    public FactorType? OverriddenFactorType { get; init; }
 }
