@@ -7,10 +7,19 @@ namespace dotGeoMigrata.Logic.Feedback;
 /// </summary>
 public sealed class FeedbackCalculator
 {
+    private double _smoothingFactor;
+
     /// <summary>
     /// Smoothing factor for gradual updates (0-1).
+    /// Higher values result in more gradual changes.
     /// </summary>
-    public double SmoothingFactor { get; init; } = 0.3;
+    public double SmoothingFactor
+    {
+        get => _smoothingFactor;
+        init => _smoothingFactor = value is >= 0 and <= 1
+            ? value
+            : throw new ArgumentException("SmoothingFactor must be between 0 and 1.", nameof(value));
+    }
 
     /// <summary>
     /// Applies feedback effects to city factors after migration.
@@ -19,11 +28,19 @@ public sealed class FeedbackCalculator
     /// <param name="city">The city to update.</param>
     /// <param name="previousPopulation">The population before migration.</param>
     /// <param name="currentPopulation">The population after migration.</param>
+    /// <exception cref="ArgumentNullException">Thrown when city is null.</exception>
     public void ApplyFeedback(City city, int previousPopulation, int currentPopulation)
     {
-        if (city == null) throw new ArgumentNullException(nameof(city));
+        ArgumentNullException.ThrowIfNull(city);
 
-        if (previousPopulation <= 0) return; // Avoid division by zero
+        if (previousPopulation < 0)
+            throw new ArgumentException("Previous population cannot be negative.", nameof(previousPopulation));
+
+        if (currentPopulation < 0)
+            throw new ArgumentException("Current population cannot be negative.", nameof(currentPopulation));
+
+        if (previousPopulation == 0)
+            return; // Avoid division by zero
 
         var populationChange = currentPopulation - previousPopulation;
         var populationRatio = (double)currentPopulation / previousPopulation;

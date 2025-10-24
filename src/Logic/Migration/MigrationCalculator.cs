@@ -11,12 +11,12 @@ public sealed class MigrationCalculator
     /// <summary>
     /// Base migration cost per unit distance.
     /// </summary>
-    public double BaseMigrationCost { get; init; } = 0.001;
+    public double BaseMigrationCost { get; init; } = .001;
 
     /// <summary>
     /// Minimum attraction difference required to trigger migration consideration.
     /// </summary>
-    public double MinimumAttractionThreshold { get; init; } = 0.1;
+    public double MinimumAttractionThreshold { get; init; } = .1;
 
     /// <summary>
     /// Calculates potential migration flows for a population group from a source city.
@@ -27,6 +27,7 @@ public sealed class MigrationCalculator
     /// <param name="world">The world context.</param>
     /// <param name="random">Random number generator for probabilistic sampling.</param>
     /// <returns>List of migration flows.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
     public IReadOnlyList<MigrationFlow> CalculateMigrationFlows(
         City sourceCity,
         PopulationGroup group,
@@ -34,84 +35,64 @@ public sealed class MigrationCalculator
         World world,
         Random random)
     {
-        if (sourceCity == null) throw new ArgumentNullException(nameof(sourceCity));
-        if (group == null) throw new ArgumentNullException(nameof(group));
-        if (attractions == null) throw new ArgumentNullException(nameof(attractions));
-        if (world == null) throw new ArgumentNullException(nameof(world));
-        if (random == null) throw new ArgumentNullException(nameof(random));
-
-        var flows = new List<MigrationFlow>();
+        ArgumentNullException.ThrowIfNull(sourceCity);
+        ArgumentNullException.ThrowIfNull(group);
+        ArgumentNullException.ThrowIfNull(attractions);
+        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(random);
 
         // Find the attraction of the source city
         var sourceAttraction = attractions.FirstOrDefault(a => a.City == sourceCity);
-        if (sourceAttraction == null) return flows;
+        if (sourceAttraction is null)
+            return [];
 
         // Consider migration to each destination city
-        foreach (var destAttraction in attractions)
-        {
-            if (destAttraction.City == sourceCity) continue;
 
-            var attractionDiff = destAttraction.AttractionScore - sourceAttraction.AttractionScore;
-
-            // Only consider migration if destination is more attractive
-            if (attractionDiff <= MinimumAttractionThreshold) continue;
-
-            // Calculate migration cost based on distance
-            var distance = sourceCity.Position.DistanceTo(destAttraction.City.Position);
-            var migrationCost = BaseMigrationCost * distance;
-
-            // Net attraction after considering migration cost
-            var netAttraction = attractionDiff - migrationCost;
-            if (netAttraction <= 0) continue;
-
-            // Calculate migration probability
-            var baseProbability = group.MovingWillingness * (1.0 - group.RetentionRate);
-            var attractionFactor = Math.Tanh(netAttraction); // Sigmoid-like function to bound probability
-            var migrationProbability = baseProbability * attractionFactor;
-
-            // Sample actual number of migrants
-            var potentialMigrants = group.Count;
-            var expectedMigrants = potentialMigrants * migrationProbability;
-
-            // Use binomial-like sampling for more realistic partial migration
-            var actualMigrants = SampleMigrants(potentialMigrants, migrationProbability, random);
-
-            if (actualMigrants > 0)
-            {
-                flows.Add(new MigrationFlow
+        return (from destAttraction in attractions
+                where destAttraction.City != sourceCity
+                let attractionDiff = destAttraction.AttractionScore - sourceAttraction.AttractionScore
+                where !(attractionDiff <= MinimumAttractionThreshold)
+                let distance = sourceCity.Position.DistanceTo(destAttraction.City.Position)
+                let migrationCost = BaseMigrationCost * distance
+                let netAttraction = attractionDiff - migrationCost
+                where !(netAttraction <= 0)
+                let baseProbability = @group.MovingWillingness * (1.0 - @group.RetentionRate)
+                let attractionFactor = Math.Tanh(netAttraction)
+                let migrationProbability = baseProbability * attractionFactor
+                let actualMigrants = SampleMigrants(@group.Count, migrationProbability, random)
+                where actualMigrants > 0
+                select new MigrationFlow
                 {
                     SourceCity = sourceCity,
                     DestinationCity = destAttraction.City,
-                    PopulationGroup = group,
+                    PopulationGroup = @group,
                     MigrantCount = actualMigrants,
                     MigrationProbability = migrationProbability,
                     AttractionDifference = attractionDiff
-                });
-            }
-        }
-
-        return flows;
+                })
+            .ToList();
     }
 
     /// <summary>
     /// Samples the actual number of migrants using binomial-like distribution.
     /// </summary>
-    private int SampleMigrants(int totalPopulation, double probability, Random random)
+    /// <param name="totalPopulation">Total population that could migrate.</param>
+    /// <param name="probability">Migration probability (0-1).</param>
+    /// <param name="random">Random number generator.</param>
+    /// <returns>Number of actual migrants.</returns>
+    private static int SampleMigrants(int totalPopulation, double probability, Random random)
     {
-        if (totalPopulation == 0 || probability <= 0) return 0;
-        if (probability >= 1.0) return totalPopulation;
+        if (totalPopulation <= 0 || probability <= 0)
+            return 0;
+
+        if (probability >= 1.0)
+            return totalPopulation;
 
         // For small populations, sample each individual
         if (totalPopulation <= 100)
         {
-            var count = 0;
-            for (var i = 0; i < totalPopulation; i++)
-            {
-                if (random.NextDouble() < probability)
-                    count++;
-            }
-
-            return count;
+            return Enumerable.Range(0, totalPopulation)
+                .Count(_ => random.NextDouble() < probability);
         }
 
         // For larger populations, use normal approximation to binomial
@@ -125,6 +106,6 @@ public sealed class MigrationCalculator
         var z = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Cos(2.0 * Math.PI * u2);
         var sample = mean + stdDev * z;
 
-        return Math.Max(0, Math.Min(totalPopulation, (int)Math.Round(sample)));
+        return Math.Clamp((int)Math.Round(sample), 0, totalPopulation);
     }
 }
