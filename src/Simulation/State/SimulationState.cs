@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents the current state of a simulation run.
 /// </summary>
-public sealed class SimulationState
+public sealed class SimulationState(int? randomSeed = null)
 {
     /// <summary>
     /// Current step number in the simulation.
@@ -33,17 +33,7 @@ public sealed class SimulationState
     /// <summary>
     /// The random number generator for this simulation run.
     /// </summary>
-    internal Random Random { get; }
-
-    public SimulationState(int? randomSeed = null)
-    {
-        Random = randomSeed.HasValue ? new Random(randomSeed.Value) : new Random();
-        CurrentStep = 0;
-        LastStepMigrations = 0;
-        TotalMigrations = 0;
-        IsStabilized = false;
-        IsCompleted = false;
-    }
+    internal Random Random { get; } = randomSeed.HasValue ? new Random(randomSeed.Value) : new Random();
 
     /// <summary>
     /// Advances to the next step and records migration statistics.
@@ -58,16 +48,11 @@ public sealed class SimulationState
     /// <summary>
     /// Marks the simulation as stabilized.
     /// </summary>
-    internal void MarkStabilized()
-    {
-        IsStabilized = true;
-    }
+    internal void MarkStabilized() => IsStabilized = true;
+
 
     /// <summary>
     /// Marks the simulation as completed.
     /// </summary>
-    internal void MarkCompleted()
-    {
-        IsCompleted = true;
-    }
+    internal void MarkCompleted() => IsCompleted = true;
 }
