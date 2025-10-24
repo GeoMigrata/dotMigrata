@@ -51,4 +51,26 @@ public sealed class AttractionCalculator
             AttractionScore = totalScore
         };
     }
+
+    /// <summary>
+    /// Calculates attraction scores for a population group across all cities.
+    /// </summary>
+    /// <param name="world">The world containing cities.</param>
+    /// <param name="group">The population group.</param>
+    /// <returns>Collection of attraction results for all cities.</returns>
+    public IReadOnlyList<AttractionResult> CalculateAttractionForAllCities(World world, PopulationGroup group)
+    {
+        if (world == null) throw new ArgumentNullException(nameof(world));
+        if (group == null) throw new ArgumentNullException(nameof(group));
+
+        var results = new List<AttractionResult>();
+
+        foreach (var city in world.Cities)
+        {
+            var result = CalculateAttraction(city, group, world);
+            results.Add(result);
+        }
+
+        return results;
+    }
 }
