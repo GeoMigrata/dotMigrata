@@ -4,7 +4,7 @@ namespace dotGeoMigrata.Core.Domain.Entities;
 
 public class World
 {
-    public string DisplayName { get; init; }
+    public required string DisplayName { get; init; }
 
     private readonly List<City> _cities;
     public IReadOnlyList<City> Cities => _cities;
@@ -13,10 +13,18 @@ public class World
 
     public int Population => _cities.Sum(c => c.Population);
 
-    public World(string displayName, IEnumerable<City> cities, IEnumerable<FactorDefinition> factorDefinitions)
+    public World(IEnumerable<City> cities, IEnumerable<FactorDefinition> factorDefinitions)
     {
-        DisplayName = displayName;
-        _cities = cities is List<City> cList ? cList : cities.ToList();
-        _factorDefinitions = factorDefinitions is List<FactorDefinition> fList ? fList : factorDefinitions.ToList();
+        ArgumentNullException.ThrowIfNull(cities);
+        ArgumentNullException.ThrowIfNull(factorDefinitions);
+
+        _cities = cities.ToList();
+        _factorDefinitions = factorDefinitions.ToList();
+
+        if (_cities.Count == 0)
+            throw new ArgumentException("World must contain at least one city.", nameof(cities));
+        if (_factorDefinitions.Count == 0)
+            throw new ArgumentException("World must contain at least one factor definition.",
+                nameof(factorDefinitions));
     }
 }
