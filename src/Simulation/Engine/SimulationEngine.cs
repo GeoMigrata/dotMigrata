@@ -14,7 +14,6 @@ public sealed class SimulationEngine
 {
     private readonly World _world;
     private readonly SimulationConfiguration _configuration;
-    private readonly SimulationState _state;
 
     private readonly AttractionCalculator _attractionCalculator;
     private readonly MigrationCalculator _migrationCalculator;
@@ -24,7 +23,7 @@ public sealed class SimulationEngine
     /// <summary>
     /// Gets the current simulation state.
     /// </summary>
-    public SimulationState State => _state;
+    public SimulationState State { get; }
 
     /// <summary>
     /// Event raised when a simulation step is completed.
@@ -41,7 +40,7 @@ public sealed class SimulationEngine
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-        _state = new SimulationState(_configuration.RandomSeed);
+        State = new SimulationState(_configuration.RandomSeed);
 
         _attractionCalculator = new AttractionCalculator();
         _migrationCalculator = new MigrationCalculator();
@@ -49,23 +48,26 @@ public sealed class SimulationEngine
         {
             SmoothingFactor = _configuration.FeedbackSmoothingFactor
         };
-        _observers = new List<ISimulationObserver>();
+        _observers = [];
     }
 
     /// <summary>
     /// Adds an observer to monitor simulation progress.
     /// </summary>
+    /// <exception cref="ArgumentNullException">Thrown when observer is null.</exception>
     public void AddObserver(ISimulationObserver observer)
     {
-        if (observer != null)
-            _observers.Add(observer);
+        ArgumentNullException.ThrowIfNull(observer);
+        _observers.Add(observer);
     }
 
     /// <summary>
     /// Removes an observer from the simulation.
     /// </summary>
+    /// <exception cref="ArgumentNullException">Thrown when observer is null.</exception>
     public void RemoveObserver(ISimulationObserver observer)
     {
+        ArgumentNullException.ThrowIfNull(observer);
         _observers.Remove(observer);
     }
 
@@ -76,43 +78,40 @@ public sealed class SimulationEngine
     {
         // Notify observers
         foreach (var observer in _observers)
-            observer.OnSimulationStarted(_state);
+            observer.OnSimulationStarted(State);
 
-        while (!_state.IsCompleted && _state.CurrentStep < _configuration.MaxSteps)
+        while (!State.IsCompleted && State.CurrentStep < _configuration.MaxSteps)
         {
             Step();
 
-            if (_configuration.CheckStabilization && CheckStabilization())
-            {
-                _state.MarkStabilized();
-                break;
-            }
+            if (!_configuration.CheckStabilization || !CheckStabilization()) continue;
+            State.MarkStabilized();
+            break;
         }
 
-        _state.MarkCompleted();
-        SimulationCompleted?.Invoke(this, new SimulationCompletedEventArgs(_state));
+        State.MarkCompleted();
+        SimulationCompleted?.Invoke(this, new SimulationCompletedEventArgs(State));
 
         // Notify observers
         foreach (var observer in _observers)
-            observer.OnSimulationCompleted(_state);
+            observer.OnSimulationCompleted(State);
     }
 
     /// <summary>
     /// Executes a single simulation step/tick.
     /// </summary>
+    /// <exception cref="InvalidOperationException">Thrown when simulation has already completed.</exception>
     public void Step()
     {
-        if (_state.IsCompleted)
+        if (State.IsCompleted)
             throw new InvalidOperationException("Simulation has already completed.");
 
-        var stepMigrations = 0;
         var allMigrationFlows = new List<MigrationFlow>();
+
 
         // For each city and each population group, calculate migrations
         foreach (var city in _world.Cities)
         {
-            var previousPopulation = city.Population;
-
             foreach (var group in city.PopulationGroups)
             {
                 // 1. Calculate attraction for all cities
@@ -120,14 +119,14 @@ public sealed class SimulationEngine
 
                 // 2. Calculate migration flows from this city
                 var flows = _migrationCalculator.CalculateMigrationFlows(
-                    city, group, attractions, _world, _state.Random);
+                    city, group, attractions, _world, State.Random);
 
                 allMigrationFlows.AddRange(flows);
             }
         }
 
         // 3. Apply all migration flows
-        stepMigrations = ApplyMigrations(allMigrationFlows);
+        var stepMigrations = ApplyMigrations(allMigrationFlows);
 
         // 4. Apply feedback to city factors
         foreach (var city in _world.Cities)
@@ -139,56 +138,48 @@ public sealed class SimulationEngine
         }
 
         // 5. Advance simulation state
-        _state.AdvanceStep(stepMigrations);
+        State.AdvanceStep(stepMigrations);
 
         // 6. Raise step completed event
-        StepCompleted?.Invoke(this, new SimulationStepEventArgs(_state, allMigrationFlows));
+        StepCompleted?.Invoke(this, new SimulationStepEventArgs(State, allMigrationFlows));
 
         // 7. Notify observers
         foreach (var observer in _observers)
-            observer.OnStepCompleted(_state, allMigrationFlows);
+            observer.OnStepCompleted(State, allMigrationFlows);
     }
 
     /// <summary>
     /// Applies migration flows to update city populations.
     /// </summary>
-    private int ApplyMigrations(List<MigrationFlow> flows)
+    /// <param name="flows">List of migration flows to apply.</param>
+    /// <returns>Total number of migrants.</returns>
+    private static int ApplyMigrations(List<MigrationFlow> flows)
     {
-        var totalMigrations = 0;
+        // Group flows by source and destination for efficient processing
+        var flowsBySource = flows
+            .GroupBy(f => (f.SourceCity, f.PopulationGroup))
+            .ToList();
 
-        // Group flows by source and destination
-        var flowsBySource = flows.GroupBy(f => (f.SourceCity, f.PopulationGroup));
-
-        foreach (var sourceGroup in flowsBySource)
-        {
-            var (sourceCity, popGroup) = sourceGroup.Key;
-            var outflows = sourceGroup.ToList();
-
-            // Calculate total outflow for this group
-            var totalOutflow = outflows.Sum(f => f.MigrantCount);
-            totalMigrations += totalOutflow;
-
-            // Note: Actual population updates would require modifying the PopulationGroup
-            // or maintaining a separate population tracking mechanism
-            // This is a placeholder for the migration application logic
-        }
-
-        return totalMigrations;
+        return flowsBySource
+            .Select(sourceGroup => sourceGroup.ToList())
+            .Select(outflows => outflows.Sum(f => f.MigrantCount)).Sum();
     }
 
     /// <summary>
     /// Checks if the simulation has stabilized.
     /// </summary>
+    /// <returns>True if the simulation has stabilized, false otherwise.</returns>
     private bool CheckStabilization()
     {
-        if (_state.CurrentStep < 2) return false;
+        if (State.CurrentStep < 2) return false;
 
         // Get total population
         var totalPopulation = _world.Population;
-        if (totalPopulation == 0) return true;
+        if (totalPopulation == 0)
+            return true;
 
         // Calculate migration rate
-        var migrationRate = (double)_state.LastStepMigrations / totalPopulation;
+        var migrationRate = (double)State.LastStepMigrations / totalPopulation;
 
         return migrationRate < _configuration.StabilizationThreshold;
     }
@@ -197,27 +188,16 @@ public sealed class SimulationEngine
 /// <summary>
 /// Event arguments for simulation step completion.
 /// </summary>
-public sealed class SimulationStepEventArgs : EventArgs
+public sealed class SimulationStepEventArgs(SimulationState state, IReadOnlyList<MigrationFlow> flows) : EventArgs
 {
-    public SimulationState State { get; }
-    public IReadOnlyList<MigrationFlow> MigrationFlows { get; }
-
-    public SimulationStepEventArgs(SimulationState state, IReadOnlyList<MigrationFlow> flows)
-    {
-        State = state;
-        MigrationFlows = flows;
-    }
+    public SimulationState State { get; } = state;
+    public IReadOnlyList<MigrationFlow> MigrationFlows { get; } = flows;
 }
 
 /// <summary>
 /// Event arguments for simulation completion.
 /// </summary>
-public sealed class SimulationCompletedEventArgs : EventArgs
+public sealed class SimulationCompletedEventArgs(SimulationState state) : EventArgs
 {
-    public SimulationState FinalState { get; }
-
-    public SimulationCompletedEventArgs(SimulationState state)
-    {
-        FinalState = state;
-    }
+    public SimulationState FinalState { get; } = state;
 }
