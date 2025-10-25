@@ -109,17 +109,17 @@ public sealed class SimulationEngine
         var allMigrationFlows = new List<MigrationFlow>();
 
 
-        // For each city and each population group, calculate migrations
+        // For each city and each population group definition, calculate migrations
         foreach (var city in _world.Cities)
         {
-            foreach (var group in city.PopulationGroups)
+            foreach (var groupDefinition in _world.PopulationGroupDefinitions)
             {
                 // 1. Calculate attraction for all cities
-                var attractions = _attractionCalculator.CalculateAttractionForAllCities(_world, group);
+                var attractions = _attractionCalculator.CalculateAttractionForAllCities(_world, groupDefinition);
 
                 // 2. Calculate migration flows from this city
                 var flows = _migrationCalculator.CalculateMigrationFlows(
-                    city, group, attractions, _world, State.Random);
+                    city, groupDefinition, attractions, _world, State.Random);
 
                 allMigrationFlows.AddRange(flows);
             }
@@ -155,14 +155,41 @@ public sealed class SimulationEngine
     /// <returns>Total number of migrants.</returns>
     private static int ApplyMigrations(List<MigrationFlow> flows)
     {
-        // Group flows by source and destination for efficient processing
+        // Group flows by source city and population group definition
         var flowsBySource = flows
-            .GroupBy(f => (f.SourceCity, f.PopulationGroup))
+            .GroupBy(f => (f.SourceCity, f.PopulationGroupDefinition))
             .ToList();
 
-        return flowsBySource
-            .Select(sourceGroup => sourceGroup.ToList())
-            .Select(outflows => outflows.Sum(f => f.MigrantCount)).Sum();
+        // Apply outflows (reduce population in source cities)
+        foreach (var sourceGroup in flowsBySource)
+        {
+            var (sourceCity, groupDefinition) = sourceGroup.Key;
+            var totalOutflow = sourceGroup.Sum(f => f.MigrantCount);
+
+            if (sourceCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) && groupValue is not null)
+            {
+                groupValue.Count = Math.Max(0, groupValue.Count - totalOutflow);
+            }
+        }
+
+        // Group flows by destination city and population group definition
+        var flowsByDestination = flows
+            .GroupBy(f => (f.DestinationCity, f.PopulationGroupDefinition))
+            .ToList();
+
+        // Apply inflows (increase population in destination cities)
+        foreach (var destGroup in flowsByDestination)
+        {
+            var (destCity, groupDefinition) = destGroup.Key;
+            var totalInflow = destGroup.Sum(f => f.MigrantCount);
+
+            if (destCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) && groupValue is not null)
+            {
+                groupValue.Count += totalInflow;
+            }
+        }
+
+        return flows.Sum(f => f.MigrantCount);
     }
 
     /// <summary>

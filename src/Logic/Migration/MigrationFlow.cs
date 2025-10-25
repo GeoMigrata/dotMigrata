@@ -1,9 +1,10 @@
 ﻿using dotGeoMigrata.Core.Entities;
+using dotGeoMigrata.Core.Values;
 
 namespace dotGeoMigrata.Logic.Migration;
 
 /// <summary>
-/// Represents a migration flow from one city to another for a specific population group.
+/// Represents a migration flow from one city to another for a specific population group definition.
 /// </summary>
 public sealed record MigrationFlow
 {
@@ -18,9 +19,9 @@ public sealed record MigrationFlow
     public required City DestinationCity { get; init; }
 
     /// <summary>
-    /// The population group that is migrating.
+    /// The population group definition that is migrating.
     /// </summary>
-    public required PopulationGroup PopulationGroup { get; init; }
+    public required PopulationGroupDefinition PopulationGroupDefinition { get; init; }
 
     /// <summary>
     /// The number of people migrating.

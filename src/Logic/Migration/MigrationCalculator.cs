@@ -1,4 +1,5 @@
 ﻿using dotGeoMigrata.Core.Entities;
+using dotGeoMigrata.Core.Values;
 using dotGeoMigrata.Logic.Attraction;
 
 namespace dotGeoMigrata.Logic.Migration;
@@ -19,10 +20,10 @@ public sealed class MigrationCalculator
     public double MinimumAttractionThreshold { get; init; } = .1;
 
     /// <summary>
-    /// Calculates potential migration flows for a population group from a source city.
+    /// Calculates potential migration flows for a population group definition from a source city.
     /// </summary>
     /// <param name="sourceCity">The city from which migration originates.</param>
-    /// <param name="group">The population group considering migration.</param>
+    /// <param name="groupDefinition">The population group definition considering migration.</param>
     /// <param name="attractions">Attraction results for all cities.</param>
     /// <param name="world">The world context.</param>
     /// <param name="random">Random number generator for probabilistic sampling.</param>
@@ -30,16 +31,24 @@ public sealed class MigrationCalculator
     /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
     public IReadOnlyList<MigrationFlow> CalculateMigrationFlows(
         City sourceCity,
-        PopulationGroup group,
+        PopulationGroupDefinition groupDefinition,
         IReadOnlyList<AttractionResult> attractions,
         World world,
         Random random)
     {
         ArgumentNullException.ThrowIfNull(sourceCity);
-        ArgumentNullException.ThrowIfNull(group);
+        ArgumentNullException.ThrowIfNull(groupDefinition);
         ArgumentNullException.ThrowIfNull(attractions);
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(random);
+
+        // Get the population count for this group in the source city
+        if (!sourceCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) || groupValue is null)
+            return [];
+
+        var populationCount = groupValue.Count;
+        if (populationCount <= 0)
+            return [];
 
         // Find the attraction of the source city
         var sourceAttraction = attractions.FirstOrDefault(a => a.City == sourceCity);
@@ -56,16 +65,16 @@ public sealed class MigrationCalculator
                 let migrationCost = BaseMigrationCost * distance
                 let netAttraction = attractionDiff - migrationCost
                 where !(netAttraction <= 0)
-                let baseProbability = @group.MovingWillingness * (1.0 - @group.RetentionRate)
+                let baseProbability = groupDefinition.MovingWillingness * (1.0 - groupDefinition.RetentionRate)
                 let attractionFactor = Math.Tanh(netAttraction)
                 let migrationProbability = baseProbability * attractionFactor
-                let actualMigrants = SampleMigrants(@group.Count, migrationProbability, random)
+                let actualMigrants = SampleMigrants(populationCount, migrationProbability, random)
                 where actualMigrants > 0
                 select new MigrationFlow
                 {
                     SourceCity = sourceCity,
                     DestinationCity = destAttraction.City,
-                    PopulationGroup = @group,
+                    PopulationGroupDefinition = groupDefinition,
                     MigrantCount = actualMigrants,
                     MigrationProbability = migrationProbability,
                     AttractionDifference = attractionDiff

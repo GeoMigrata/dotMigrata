@@ -34,7 +34,7 @@ public class ConsoleSimulationObserver : ISimulationObserver
             foreach (var flow in migrationFlows)
             {
                 Console.WriteLine($"    {flow.SourceCity.DisplayName} -> {flow.DestinationCity.DisplayName}: " +
-                                  $"{flow.MigrantCount} people ({flow.PopulationGroup.DisplayName})");
+                                  $"{flow.MigrantCount} people ({flow.PopulationGroupDefinition.DisplayName})");
             }
         }
 

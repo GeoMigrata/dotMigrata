@@ -1,9 +1,10 @@
 ﻿using dotGeoMigrata.Core.Entities;
+using dotGeoMigrata.Core.Values;
 
 namespace dotGeoMigrata.Logic.Attraction;
 
 /// <summary>
-/// Represents the calculated attraction score of a city for a specific population group.
+/// Represents the calculated attraction score of a city for a specific population group definition.
 /// </summary>
 public sealed record AttractionResult
 {
@@ -13,9 +14,9 @@ public sealed record AttractionResult
     public required City City { get; init; }
 
     /// <summary>
-    /// The population group for which attraction is calculated.
+    /// The population group definition for which attraction is calculated.
     /// </summary>
-    public required PopulationGroup PopulationGroup { get; init; }
+    public required PopulationGroupDefinition PopulationGroupDefinition { get; init; }
 
     /// <summary>
     /// The calculated attraction score.

@@ -3,7 +3,7 @@
 namespace dotGeoMigrata.Core.Entities;
 
 /// <summary>
-/// Represents a city with geographic location, factors, and population groups.
+/// Represents a city with geographic location, factors, and population group values.
 /// </summary>
 public class City
 {
@@ -13,18 +13,24 @@ public class City
 
     private readonly List<FactorValue> _factorValues;
 
-    private readonly List<PopulationGroup> _populationGroups;
+    private readonly Dictionary<PopulationGroupDefinition, PopulationGroupValue> _populationGroupLookup;
+
+    private readonly List<PopulationGroupValue> _populationGroupValues;
 
     /// <summary>
     /// Initializes a new instance of the City class.
     /// </summary>
     /// <param name="factorValues">Optional initial factor values.</param>
-    /// <param name="populationGroups">Optional initial population groups.</param>
-    public City(IEnumerable<FactorValue>? factorValues = null, IEnumerable<PopulationGroup>? populationGroups = null)
+    /// <param name="populationGroupValues">Optional initial population group values.</param>
+    public City(
+        IEnumerable<FactorValue>? factorValues = null,
+        IEnumerable<PopulationGroupValue>? populationGroupValues = null)
     {
         _factorValues = factorValues?.ToList() ?? [];
-        _populationGroups = populationGroups?.ToList() ?? [];
-        _factorLookup = _factorValues.ToDictionary(fv => fv.Factor, fv => fv);
+        _populationGroupValues = populationGroupValues?.ToList() ?? [];
+
+        _factorLookup = _factorValues.ToDictionary(fv => fv.Definition, fv => fv);
+        _populationGroupLookup = _populationGroupValues.ToDictionary(pgv => pgv.Definition, pgv => pgv);
     }
 
     /// <summary>
@@ -53,18 +59,18 @@ public class City
     public IReadOnlyList<FactorValue> FactorValues => _factorValues;
 
     /// <summary>
-    /// Gets the read-only list of population groups in this city.
+    /// Gets the read-only list of population group values in this city.
     /// </summary>
-    public IReadOnlyList<PopulationGroup> PopulationGroups => _populationGroups;
+    public IReadOnlyList<PopulationGroupValue> PopulationGroupValues => _populationGroupValues;
 
     /// <summary>
     /// Gets the total population of all groups in this city.
     /// </summary>
-    public int Population => _populationGroups.Sum(g => g.Count);
+    public int Population => _populationGroupValues.Sum(pgv => pgv.Count);
 
     /// <summary>
-    ///     Updates the intensity of an existing FactorValue for the specified factor definition.
-    ///     This keeps FactorValue immutable but allows controlled updates via City API.
+    /// Updates the intensity of an existing FactorValue for the specified factor definition.
+    /// This keeps FactorValue immutable but allows controlled updates via City API.
     /// </summary>
     /// <exception cref="ArgumentNullException">Thrown when factor is null.</exception>
     /// <exception cref="ArgumentException">Thrown when factor has no matched value in this city.</exception>
@@ -79,7 +85,7 @@ public class City
     }
 
     /// <summary>
-    ///     Tries to get the factor value for the specified factor definition.
+    /// Tries to get the factor value for the specified factor definition.
     /// </summary>
     /// <param name="factor">The factor definition to look up.</param>
     /// <param name="factorValue">The factor value if found.</param>
@@ -91,22 +97,35 @@ public class City
     }
 
     /// <summary>
-    ///     Adds a population group to this city.
+    /// Tries to get the population group value for the specified population group definition.
     /// </summary>
-    /// <exception cref="ArgumentNullException">Thrown when group is null.</exception>
-    public void AddPopulationGroup(PopulationGroup group)
+    /// <param name="definition">The population group definition to look up.</param>
+    /// <param name="groupValue">The population group value if found.</param>
+    /// <returns>True if the population group value exists, false otherwise.</returns>
+    public bool TryGetPopulationGroupValue(PopulationGroupDefinition definition, out PopulationGroupValue? groupValue)
     {
-        ArgumentNullException.ThrowIfNull(group);
-        _populationGroups.Add(group);
+        ArgumentNullException.ThrowIfNull(definition);
+        return _populationGroupLookup.TryGetValue(definition, out groupValue);
     }
 
     /// <summary>
-    ///     Removes a population group from this city.
+    /// Updates the population count for a specific population group definition.
     /// </summary>
-    /// <exception cref="ArgumentNullException">Thrown when group is null.</exception>
-    public void RemovePopulationGroup(PopulationGroup group)
+    /// <param name="definition">The population group definition.</param>
+    /// <param name="newCount">The new population count.</param>
+    /// <exception cref="ArgumentNullException">Thrown when definition is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when the definition has no matched value in this city or when newCount is negative.</exception>
+    public void UpdatePopulationCount(PopulationGroupDefinition definition, int newCount)
     {
-        ArgumentNullException.ThrowIfNull(group);
-        _populationGroups.Remove(group);
+        ArgumentNullException.ThrowIfNull(definition);
+
+        if (newCount < 0)
+            throw new ArgumentException("Population count cannot be negative.", nameof(newCount));
+
+        if (!_populationGroupLookup.TryGetValue(definition, out var groupValue))
+            throw new ArgumentException("Given population group definition has no matched value in this city.",
+                nameof(definition));
+
+        groupValue.Count = newCount;
     }
 }

@@ -1,39 +1,23 @@
-﻿using dotGeoMigrata.Core.Values;
-
-namespace dotGeoMigrata.Core.Entities;
+﻿namespace dotGeoMigrata.Core.Values;
 
 /// <summary>
-/// Represents a subset of city residents with shared migration behavior and factor sensitivities.
+/// Defines a population group's characteristics including migration behavior and factor sensitivities.
 /// </summary>
-public sealed record PopulationGroup
+public sealed record PopulationGroupDefinition
 {
-    private readonly int _count;
-
     private readonly double _movingWillingness;
-
     private readonly double _retentionRate;
-
     private readonly List<FactorSensitivity> _sensitivities;
 
     /// <summary>
-    /// Initializes a new instance of the PopulationGroup record.
+    /// Initializes a new instance of the PopulationGroupDefinition record.
     /// </summary>
     /// <param name="sensitivities">The factor sensitivities for this group.</param>
     /// <exception cref="ArgumentNullException">Thrown when sensitivities is null.</exception>
-    public PopulationGroup(List<FactorSensitivity> sensitivities)
+    public PopulationGroupDefinition(IEnumerable<FactorSensitivity> sensitivities)
     {
         ArgumentNullException.ThrowIfNull(sensitivities, nameof(sensitivities));
         _sensitivities = sensitivities.ToList();
-    }
-
-    /// <summary>
-    /// Gets or initializes the population count.
-    /// Must be non-negative.
-    /// </summary>
-    public required int Count
-    {
-        get => _count;
-        init => _count = value >= 0 ? value : throw new ArgumentException("Count cannot be negative.", nameof(value));
     }
 
     /// <summary>

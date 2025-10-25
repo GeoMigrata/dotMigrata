@@ -1,5 +1,6 @@
 ﻿using dotGeoMigrata.Core.Entities;
 using dotGeoMigrata.Core.Enums;
+using dotGeoMigrata.Core.Values;
 
 namespace dotGeoMigrata.Logic.Attraction;
 
@@ -9,23 +10,23 @@ namespace dotGeoMigrata.Logic.Attraction;
 public sealed class AttractionCalculator
 {
     /// <summary>
-    /// Calculates the attraction score of a city for a specific population group.
+    /// Calculates the attraction score of a city for a specific population group definition.
     /// </summary>
     /// <param name="city">The city to evaluate.</param>
-    /// <param name="group">The population group.</param>
+    /// <param name="groupDefinition">The population group definition.</param>
     /// <param name="world">The world context for factor definitions.</param>
     /// <returns>The attraction result.</returns>
     /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
-    public AttractionResult CalculateAttraction(City city, PopulationGroup group, World world)
+    public static AttractionResult CalculateAttraction(City city, PopulationGroupDefinition groupDefinition, World world)
     {
         ArgumentNullException.ThrowIfNull(city);
-        ArgumentNullException.ThrowIfNull(group);
+        ArgumentNullException.ThrowIfNull(groupDefinition);
         ArgumentNullException.ThrowIfNull(world);
 
         var totalScore = 0.0;
 
         // Calculate weighted sum of normalized factors
-        foreach (var sensitivity in group.Sensitivities)
+        foreach (var sensitivity in groupDefinition.Sensitivities)
         {
             if (!city.TryGetFactorValue(sensitivity.Factor, out var factorValue) || factorValue is null)
                 continue;
@@ -47,25 +48,27 @@ public sealed class AttractionCalculator
         return new AttractionResult
         {
             City = city,
-            PopulationGroup = group,
+            PopulationGroupDefinition = groupDefinition,
             AttractionScore = totalScore
         };
     }
 
     /// <summary>
-    /// Calculates attraction scores for a population group across all cities.
+    /// Calculates attraction scores for a population group definition across all cities.
     /// </summary>
     /// <param name="world">The world containing cities.</param>
-    /// <param name="group">The population group.</param>
+    /// <param name="groupDefinition">The population group definition.</param>
     /// <returns>Collection of attraction results for all cities.</returns>
     /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
-    public IReadOnlyList<AttractionResult> CalculateAttractionForAllCities(World world, PopulationGroup group)
+    public IReadOnlyList<AttractionResult> CalculateAttractionForAllCities(
+        World world,
+        PopulationGroupDefinition groupDefinition)
     {
         ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(group);
+        ArgumentNullException.ThrowIfNull(groupDefinition);
 
         return world.Cities
-            .Select(city => CalculateAttraction(city, group, world))
+            .Select(city => CalculateAttraction(city, groupDefinition, world))
             .ToList();
     }
 }
