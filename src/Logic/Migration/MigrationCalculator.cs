@@ -52,7 +52,7 @@ public sealed class MigrationCalculator
                 where destAttraction.City != sourceCity
                 let attractionDiff = destAttraction.AttractionScore - sourceAttraction.AttractionScore
                 where !(attractionDiff <= MinimumAttractionThreshold)
-                let distance = sourceCity.Position.DistanceTo(destAttraction.City.Position)
+                let distance = sourceCity.Location.DistanceTo(destAttraction.City.Location)
                 let migrationCost = BaseMigrationCost * distance
                 let netAttraction = attractionDiff - migrationCost
                 where !(netAttraction <= 0)

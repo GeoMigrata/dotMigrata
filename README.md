@@ -1,6 +1,6 @@
 ﻿# dotGeoMigrata
 
-**README Version:** Oct 11, 2025
+**README Version:** Oct 25, 2025
 
 dotGeoMigrata is a C# .NET 9.0 simulation framework designed to model population migration and city evolution in a
 multi-city, multi-population system. The framework captures how city characteristics influence population movement and
@@ -49,14 +49,18 @@ process.
 
 ## Installation & Usage
 
-Clone the repository and open in Visual Studio 2022+ with .NET 9.0. Build and run the simulation by configuring the
-`World` object and population/city parameters.
+Clone the repository and open in Visual Studio 2022+ or use the .NET 9.0 SDK. Build the project with `dotnet build`.
 
-```csharp
-// Example pseudo-usage
-var world = new World(...);
-world.RunSimulation(steps: 100);
-```
+This is a library framework. To use it, reference the `dotGeoMigrata` library in your project and create a simulation by:
+1. Defining your factor definitions
+2. Creating cities with factor values
+3. Adding population groups with sensitivities
+4. Configuring the simulation engine
+5. Running the simulation
+
+For detailed algorithm documentation, see:
+- `/src/Logic/README.md` - Logic layer algorithms
+- `/src/Simulation/README.md` - Simulation engine design
 
 ## Contributing
 
