@@ -1,10 +1,22 @@
-﻿using dotGeoMigrata.Core.Domain.Values;
+﻿using dotGeoMigrata.Core.Values;
 
-namespace dotGeoMigrata.Core.Domain.Entities;
+namespace dotGeoMigrata.Core.Entities;
 
 public sealed record PopulationGroup
 {
     private readonly int _count;
+
+    private readonly double _movingWillingness;
+
+    private readonly double _retentionRate;
+
+    private readonly List<FactorSensitivity> _sensitivities;
+
+    public PopulationGroup(List<FactorSensitivity> sensitivities)
+    {
+        ArgumentNullException.ThrowIfNull(sensitivities, nameof(sensitivities));
+        _sensitivities = sensitivities.ToList();
+    }
 
     public required int Count
     {
@@ -14,8 +26,6 @@ public sealed record PopulationGroup
 
     public required string DisplayName { get; init; }
 
-    private readonly double _movingWillingness;
-
     public double MovingWillingness
     {
         get => _movingWillingness;
@@ -23,8 +33,6 @@ public sealed record PopulationGroup
             ? value
             : throw new ArgumentException("MovingWillingness must be between 0 and 1.", nameof(value));
     }
-
-    private readonly double _retentionRate;
 
     public double RetentionRate
     {
@@ -34,12 +42,5 @@ public sealed record PopulationGroup
             : throw new ArgumentException("RetentionRate must be between 0 and 1.", nameof(value));
     }
 
-    private readonly List<FactorSensitivity> _sensitivities;
     public IReadOnlyList<FactorSensitivity> Sensitivities => _sensitivities;
-
-    public PopulationGroup(List<FactorSensitivity> sensitivities)
-    {
-        ArgumentNullException.ThrowIfNull(sensitivities, nameof(sensitivities));
-        _sensitivities = sensitivities.ToList();
-    }
 }

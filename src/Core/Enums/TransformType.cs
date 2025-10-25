@@ -1,4 +1,4 @@
-﻿namespace dotGeoMigrata.Core.Domain.Enums;
+﻿namespace dotGeoMigrata.Core.Enums;
 
 public enum TransformType
 {

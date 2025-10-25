@@ -1,4 +1,4 @@
-﻿namespace dotGeoMigrata.Core.Domain.Values;
+﻿namespace dotGeoMigrata.Core.Values;
 
 public readonly record struct Coordinate
 {

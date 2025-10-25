@@ -1,6 +1,6 @@
-﻿using dotGeoMigrata.Core.Domain.Enums;
+﻿using dotGeoMigrata.Core.Enums;
 
-namespace dotGeoMigrata.Core.Domain.Values;
+namespace dotGeoMigrata.Core.Values;
 
 public readonly record struct FactorSensitivity
 {

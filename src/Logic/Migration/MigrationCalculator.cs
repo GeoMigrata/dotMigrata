@@ -1,4 +1,4 @@
-﻿using dotGeoMigrata.Core.Domain.Entities;
+﻿using dotGeoMigrata.Core.Entities;
 using dotGeoMigrata.Logic.Attraction;
 
 namespace dotGeoMigrata.Logic.Migration;

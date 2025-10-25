@@ -1,17 +1,11 @@
-﻿using dotGeoMigrata.Core.Domain.Values;
+﻿using dotGeoMigrata.Core.Values;
 
-namespace dotGeoMigrata.Core.Domain.Entities;
+namespace dotGeoMigrata.Core.Entities;
 
 public class World
 {
-    public required string DisplayName { get; init; }
-
     private readonly List<City> _cities;
-    public IReadOnlyList<City> Cities => _cities;
     private readonly List<FactorDefinition> _factorDefinitions;
-    public IReadOnlyList<FactorDefinition> FactorDefinitions => _factorDefinitions;
-
-    public int Population => _cities.Sum(c => c.Population);
 
     public World(IEnumerable<City> cities, IEnumerable<FactorDefinition> factorDefinitions)
     {
@@ -27,4 +21,10 @@ public class World
             throw new ArgumentException("World must contain at least one factor definition.",
                 nameof(factorDefinitions));
     }
+
+    public required string DisplayName { get; init; }
+    public IReadOnlyList<City> Cities => _cities;
+    public IReadOnlyList<FactorDefinition> FactorDefinitions => _factorDefinitions;
+
+    public int Population => _cities.Sum(c => c.Population);
 }

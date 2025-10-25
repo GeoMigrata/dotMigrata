@@ -1,6 +1,5 @@
-﻿using dotGeoMigrata.Core.Domain.Entities;
-using dotGeoMigrata.Core.Domain.Enums;
-using dotGeoMigrata.Core.Domain.Values;
+﻿using dotGeoMigrata.Core.Entities;
+using dotGeoMigrata.Core.Enums;
 
 namespace dotGeoMigrata.Logic.Attraction;
 
