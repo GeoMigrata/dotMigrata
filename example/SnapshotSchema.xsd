@@ -53,6 +53,8 @@
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
+            <xs:element name="World.SimulationConfig" type="SimulationConfigType" minOccurs="0"/>
+            <xs:element name="World.Simulation" type="SimulationStateType" minOccurs="0"/>
         </xs:sequence>
         <xs:attribute name="Version" type="xs:string" use="required"/>
         <xs:attribute name="DisplayName" type="xs:string" use="required"/>
@@ -139,11 +141,33 @@
         <xs:attribute name="Population" type="xs:positiveInteger" use="required"/>
     </xs:complexType>
 
+    <!-- SimulationConfig Type -->
+    <xs:complexType name="SimulationConfigType">
+        <xs:sequence>
+            <xs:element name="MaxSteps" type="xs:positiveInteger" minOccurs="0"/>
+            <xs:element name="StabilizationThreshold" type="xs:double" minOccurs="0"/>
+            <xs:element name="CheckStabilization" type="xs:boolean" minOccurs="0"/>
+            <xs:element name="FeedbackSmoothingFactor" type="xs:double" minOccurs="0"/>
+            <xs:element name="RandomSeed" type="xs:integer" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- SimulationState Type -->
+    <xs:complexType name="SimulationStateType">
+        <xs:sequence>
+            <xs:element name="CurrentStep" type="xs:nonNegativeInteger" minOccurs="0"/>
+            <xs:element name="LastStepMigrations" type="xs:nonNegativeInteger" minOccurs="0"/>
+            <xs:element name="TotalMigrations" type="xs:nonNegativeInteger" minOccurs="0"/>
+            <xs:element name="IsStabilized" type="xs:boolean" minOccurs="0"/>
+            <xs:element name="IsCompleted" type="xs:boolean" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    
     <!-- Enumeration Types -->
     <xs:simpleType name="FactorTypeEnum">
         <xs:restriction base="xs:string">
-            <xs:enumeration value="Cost"/>
-            <xs:enumeration value="Benefit"/>
+            <xs:enumeration value="Negative"/>
+            <xs:enumeration value="Positive"/>
         </xs:restriction>
     </xs:simpleType>
 

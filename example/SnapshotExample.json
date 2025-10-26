@@ -171,8 +171,11 @@
       }
     }
   },
-  "simulationConfig": {
-  },
-  "simulation": {
+  "SimulationConfiguration": {
+    "MaxSteps": 100,
+    "StabilizationThreshold": 0.01,
+    "CheckStabilization": true,
+    "FeedbackSmoothingFactor": 0.3,
+    "RandomSeed": 42
   }
 }

@@ -10,11 +10,11 @@
        xsi:noNamespaceSchemaLocation="SnapshotSchema.xsd">
 
     <World.FactorDefinitions>
-        <FactorDefinition Id="fd_housing" DisplayName="Housing Cost" Type="Cost" MinValue="500" MaxValue="10000"
+        <FactorDefinition Id="fd_housing" DisplayName="Housing Cost" Type="Negative" MinValue="500" MaxValue="10000"
                           Transform="Linear"/>
-        <FactorDefinition Id="fd_jobs" DisplayName="Job Opportunities" Type="Benefit" MinValue="1000" MaxValue="500000"
+        <FactorDefinition Id="fd_jobs" DisplayName="Job Opportunities" Type="Positive" MinValue="1000" MaxValue="500000"
                           Transform="Log"/>
-        <FactorDefinition Id="fd_parks" DisplayName="Green Space" Type="Benefit" MinValue="1" MaxValue="25"
+        <FactorDefinition Id="fd_parks" DisplayName="Green Space" Type="Positive" MinValue="1" MaxValue="25"
                           Transform="Linear"/>
     </World.FactorDefinitions>
 
@@ -74,6 +74,22 @@
             </City.PopulationGroupValues>
         </City>
     </World.Cities>
+
+    <World.SimulationConfig>
+        <MaxSteps>100</MaxSteps>
+        <StabilizationThreshold>0.01</StabilizationThreshold>
+        <CheckStabilization>true</CheckStabilization>
+        <FeedbackSmoothingFactor>0.3</FeedbackSmoothingFactor>
+        <RandomSeed>42</RandomSeed>
+    </World.SimulationConfig>
+
+    <World.Simulation>
+        <CurrentStep>0</CurrentStep>
+        <LastStepMigrations>0</LastStepMigrations>
+        <TotalMigrations>0</TotalMigrations>
+        <IsStabilized>false</IsStabilized>
+        <IsCompleted>false</IsCompleted>
+    </World.Simulation>
 
 </World>
 
