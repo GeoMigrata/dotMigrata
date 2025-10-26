@@ -1,0 +1,178 @@
+﻿{
+  "DisplayName": "Example World 1",
+  "version": "1.0",
+  "initialization": {
+    "FactorDefinitions": {
+      "pollution": {
+        "DisplayName": "Pollution",
+        "Type": "Negative",
+        "MaxValue": "100",
+        "MinValue": "0",
+        "Transform": "Linear"
+      },
+      "income": {
+        "DisplayName": "Avg. Income",
+        "Type": "Positive",
+        "MaxValue": "10000",
+        "MinValue": "0",
+        "Transform": "Sigmoid"
+      },
+      "education": {
+        "DisplayName": "Education Level",
+        "Type": "Positive",
+        "MaxValue": "10",
+        "MinValue": "0",
+        "Transform": "Log"
+      }
+    },
+    "PopulationGroupDefinitions": {
+      "youngProfessionals": {
+        "DisplayName": "Young Professionals",
+        "FactorSensitivities": {
+          "income": {
+            "Sensitivity": 0.9,
+            "OverriddenFactorType": null
+          },
+          "education": {
+            "Sensitivity": 0.4,
+            "OverriddenFactorType": null
+          },
+          "pollution": {
+            "Sensitivity": 0.2,
+            "OverriddenFactorType": null
+          }
+        }
+      },
+      "family": {
+        "DisplayName": "Families w/ child",
+        "FactorSensitivities": {
+          "income": {
+            "Sensitivity": 0.7,
+            "OverriddenFactorType": null
+          },
+          "education": {
+            "Sensitivity": 0.8,
+            "OverriddenFactorType": null
+          },
+          "pollution": {
+            "Sensitivity": 0.7,
+            "OverriddenFactorType": null
+          }
+        }
+      },
+      "retirees": {
+        "DisplayName": "Old retirees",
+        "FactorSensitivities": {
+          "income": {
+            "Sensitivity": 0.1,
+            "OverriddenFactorType": null
+          },
+          "education": {
+            "Sensitivity": 0.3,
+            "OverriddenFactorType": null
+          },
+          "pollution": {
+            "Sensitivity": 0.9,
+            "OverriddenFactorType": null
+          }
+        }
+      }
+    },
+    "Cities": {
+      "fuzhou": {
+        "DisplayName": "Fuzhou",
+        "Location": {
+          "Latitude": 26.0745,
+          "Longitude": 119.2965
+        },
+        "Area": 12000,
+        "FactorValues": {
+          "pollution": {
+            "Intensity": 40
+          },
+          "income": {
+            "Intensity": 4000
+          },
+          "education": {
+            "Intensity": 9
+          }
+        },
+        "PopulationGroupValues": {
+          "youngProfessionals": {
+            "Population": 1200
+          },
+          "family": {
+            "Population": 3000
+          },
+          "retirees": {
+            "Population": 2000
+          }
+        }
+      },
+      "xiamen": {
+        "DisplayName": "Xiamen",
+        "Location": {
+          "Latitude": 24.4798,
+          "Longitude": 118.0895
+        },
+        "Area": 8000,
+        "FactorValues": {
+          "pollution": {
+            "Intensity": 75
+          },
+          "income": {
+            "Intensity": 7000
+          },
+          "education": {
+            "Intensity": 6
+          }
+        },
+        "PopulationGroupValues": {
+          "youngProfessionals": {
+            "Population": 1200
+          },
+          "family": {
+            "Population": 3000
+          },
+          "retirees": {
+            "Population": 2000
+          }
+        }
+      },
+      "zhangzhou": {
+        "DisplayName": "Zhangzhou",
+        "Location": {
+          "Latitude": 24.5133,
+          "Longitude": 117.6618
+        },
+        "Area": 10000,
+        "FactorValues": {
+          "pollution": {
+            "Intensity": 10
+          },
+          "income": {
+            "Intensity": 3000
+          },
+          "education": {
+            "Intensity": 4
+          }
+        },
+        "PopulationGroupValues": {
+          "youngProfessionals": {
+            "Population": 1200
+          },
+          "family": {
+            "Population": 3000
+          },
+          "retirees": {
+            "Population": 2000
+          }
+        }
+      }
+    }
+  },
+  "simulationConfig": {
+  },
+  "simulation": {
+  }
+}

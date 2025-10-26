@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+  GeoMigrata World Snapshot
+  Version: 1.0
+  This XML file represents a snapshot of the simulation world, including all its cities, 
+  population groups, and influencing factors.
+-->
+<World Version="1.0" DisplayName="Mega-City Region"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="SnapshotSchema.xsd">
+
+    <World.FactorDefinitions>
+        <FactorDefinition Id="fd_housing" DisplayName="Housing Cost" Type="Cost" MinValue="500" MaxValue="10000"
+                          Transform="Linear"/>
+        <FactorDefinition Id="fd_jobs" DisplayName="Job Opportunities" Type="Benefit" MinValue="1000" MaxValue="500000"
+                          Transform="Log"/>
+        <FactorDefinition Id="fd_parks" DisplayName="Green Space" Type="Benefit" MinValue="1" MaxValue="25"
+                          Transform="Linear"/>
+    </World.FactorDefinitions>
+
+    <!-- 
+      PopulationGroupDefinitions define different groups of people with distinct 
+      behaviors and sensitivities to factors.
+    -->
+    <World.PopulationGroupDefinitions>
+        <PopulationGroupDefinition Id="pgd_young_professionals" DisplayName="Young Professionals"
+                                   MovingWillingness="0.8" RetentionRate="0.3">
+            <PopulationGroupDefinition.Sensitivities>
+                <FactorSensitivity FactorRef="fd_jobs" Sensitivity="10"/>
+                <FactorSensitivity FactorRef="fd_housing" Sensitivity="-8"/>
+                <FactorSensitivity FactorRef="fd_parks" Sensitivity="5"/>
+            </PopulationGroupDefinition.Sensitivities>
+        </PopulationGroupDefinition>
+        <PopulationGroupDefinition Id="pgd_families" DisplayName="Families" MovingWillingness="0.4" RetentionRate="0.7">
+            <PopulationGroupDefinition.Sensitivities>
+                <FactorSensitivity FactorRef="fd_housing" Sensitivity="-10"/>
+                <FactorSensitivity FactorRef="fd_parks" Sensitivity="8"/>
+                <FactorSensitivity FactorRef="fd_jobs" Sensitivity="4"/>
+            </PopulationGroupDefinition.Sensitivities>
+        </PopulationGroupDefinition>
+    </World.PopulationGroupDefinitions>
+
+    <!-- 
+      Cities are the core entities in the simulation, containing populations 
+      and specific factor values.
+    -->
+    <World.Cities>
+        <City DisplayName="Metropolis" Area="1200.5">
+            <City.Location>
+                <Coordinate Latitude="34.0522" Longitude="-118.2437"/>
+            </City.Location>
+            <City.FactorValues>
+                <FactorValue FactorRef="fd_housing" Intensity="8500"/>
+                <FactorValue FactorRef="fd_jobs" Intensity="450000"/>
+                <FactorValue FactorRef="fd_parks" Intensity="8"/>
+            </City.FactorValues>
+            <City.PopulationGroupValues>
+                <PopulationGroupValue PopulationGroupRef="pgd_young_professionals" Population="150000"/>
+                <PopulationGroupValue PopulationGroupRef="pgd_families" Population="80000"/>
+            </City.PopulationGroupValues>
+        </City>
+        <City DisplayName="Suburbia" Area="850.0">
+            <City.Location>
+                <Coordinate Latitude="34.1522" Longitude="-118.4437"/>
+            </City.Location>
+            <City.FactorValues>
+                <FactorValue FactorRef="fd_housing" Intensity="4500"/>
+                <FactorValue FactorRef="fd_jobs" Intensity="80000"/>
+                <FactorValue FactorRef="fd_parks" Intensity="22"/>
+            </City.FactorValues>
+            <City.PopulationGroupValues>
+                <PopulationGroupValue PopulationGroupRef="pgd_young_professionals" Population="40000"/>
+                <PopulationGroupValue PopulationGroupRef="pgd_families" Population="120000"/>
+            </City.PopulationGroupValues>
+        </City>
+    </World.Cities>
+
+</World>
+
