@@ -168,7 +168,7 @@ public sealed class SimulationEngine
 
             if (sourceCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) && groupValue is not null)
             {
-                groupValue.Count = Math.Max(0, groupValue.Count - totalOutflow);
+                groupValue.Population = Math.Max(0, groupValue.Population - totalOutflow);
             }
         }
 
@@ -185,7 +185,7 @@ public sealed class SimulationEngine
 
             if (destCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) && groupValue is not null)
             {
-                groupValue.Count += totalInflow;
+                groupValue.Population += totalInflow;
             }
         }
 

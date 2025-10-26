@@ -46,7 +46,7 @@ public sealed class MigrationCalculator
         if (!sourceCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) || groupValue is null)
             return [];
 
-        var populationCount = groupValue.Count;
+        var populationCount = groupValue.Population;
         if (populationCount <= 0)
             return [];
 

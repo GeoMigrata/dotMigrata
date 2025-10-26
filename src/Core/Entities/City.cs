@@ -66,7 +66,7 @@ public class City
     /// <summary>
     /// Gets the total population of all groups in this city.
     /// </summary>
-    public int Population => _populationGroupValues.Sum(pgv => pgv.Count);
+    public int Population => _populationGroupValues.Sum(pgv => pgv.Population);
 
     /// <summary>
     /// Updates the intensity of an existing FactorValue for the specified factor definition.
@@ -126,6 +126,6 @@ public class City
             throw new ArgumentException("Given population group definition has no matched value in this city.",
                 nameof(definition));
 
-        groupValue.Count = newCount;
+        groupValue.Population = newCount;
     }
 }

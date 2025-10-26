@@ -5,7 +5,7 @@
 /// </summary>
 public sealed class PopulationGroupValue
 {
-    private int _count;
+    private int _population;
 
     /// <summary>
     /// Gets or initializes the population group definition this value is for.
@@ -16,9 +16,9 @@ public sealed class PopulationGroupValue
     /// Gets or sets the population count.
     /// Must be non-negative.
     /// </summary>
-    public int Count
+    public int Population
     {
-        get => _count;
-        set => _count = value >= 0 ? value : throw new ArgumentException("Count cannot be negative.", nameof(value));
+        get => _population;
+        set => _population = value >= 0 ? value : throw new ArgumentException("Count cannot be negative.", nameof(value));
     }
 }
