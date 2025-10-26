@@ -177,5 +177,8 @@
     "CheckStabilization": true,
     "FeedbackSmoothingFactor": 0.3,
     "RandomSeed": 42
+  },
+  "Simulation": {
+    "CurrentStep": 10
   }
 }
