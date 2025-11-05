@@ -162,7 +162,7 @@
             <xs:element name="IsCompleted" type="xs:boolean" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
-    
+
     <!-- Enumeration Types -->
     <xs:simpleType name="FactorTypeEnum">
         <xs:restriction base="xs:string">
@@ -180,4 +180,3 @@
     </xs:simpleType>
 
 </xs:schema>
-

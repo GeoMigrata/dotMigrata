@@ -1,184 +1,185 @@
 ﻿{
-  "DisplayName": "Example World 1",
-  "version": "1.0",
-  "initialization": {
-    "FactorDefinitions": {
+  "displayName": "Example World 1",
+  "_version": "1.0",
+  "_initialization": {
+    "factorDefinitions": {
       "pollution": {
-        "DisplayName": "Pollution",
-        "Type": "Negative",
-        "MaxValue": "100",
-        "MinValue": "0",
-        "Transform": "Linear"
+        "displayName": "Pollution",
+        "type": "Negative",
+        "maxValue": "100",
+        "minValue": "0",
+        "transform": "Linear"
       },
       "income": {
-        "DisplayName": "Avg. Income",
-        "Type": "Positive",
-        "MaxValue": "10000",
-        "MinValue": "0",
-        "Transform": "Sigmoid"
+        "displayName": "Avg. Income",
+        "type": "Positive",
+        "maxValue": "10000",
+        "minValue": "0",
+        "transform": "Sigmoid"
       },
       "education": {
-        "DisplayName": "Education Level",
-        "Type": "Positive",
-        "MaxValue": "10",
-        "MinValue": "0",
-        "Transform": "Log"
+        "displayName": "Education Level",
+        "type": "Positive",
+        "maxValue": "10",
+        "minValue": "0",
+        "transform": "Log"
       }
     },
-    "PopulationGroupDefinitions": {
+    "populationGroupDefinitions": {
       "youngProfessionals": {
-        "DisplayName": "Young Professionals",
-        "FactorSensitivities": {
+        "displayName": "Young Professionals",
+        "movingWillingness": 0.8,
+        "retentionRate": 0.3,
+        "factorSensitivities": {
           "income": {
-            "Sensitivity": 0.9,
-            "OverriddenFactorType": null
+            "sensitivity": 9
           },
           "education": {
-            "Sensitivity": 0.4,
-            "OverriddenFactorType": null
+            "sensitivity": 4
           },
           "pollution": {
-            "Sensitivity": 0.2,
-            "OverriddenFactorType": null
+            "sensitivity": 2
           }
         }
       },
       "family": {
-        "DisplayName": "Families w/ child",
-        "FactorSensitivities": {
+        "displayName": "Families w/ child",
+        "movingWillingness": 0.4,
+        "retentionRate": 0.7,
+        "factorSensitivities": {
           "income": {
-            "Sensitivity": 0.7,
-            "OverriddenFactorType": null
+            "sensitivity": 7
           },
           "education": {
-            "Sensitivity": 0.8,
-            "OverriddenFactorType": null
+            "sensitivity": 8
           },
           "pollution": {
-            "Sensitivity": 0.7,
-            "OverriddenFactorType": null
+            "sensitivity": 7
           }
         }
       },
       "retirees": {
-        "DisplayName": "Old retirees",
-        "FactorSensitivities": {
+        "displayName": "Old retirees",
+        "movingWillingness": 0.2,
+        "retentionRate": 0.9,
+        "factorSensitivities": {
           "income": {
-            "Sensitivity": 0.1,
-            "OverriddenFactorType": null
+            "sensitivity": 1
           },
           "education": {
-            "Sensitivity": 0.3,
-            "OverriddenFactorType": null
+            "sensitivity": 3
           },
           "pollution": {
-            "Sensitivity": 0.9,
-            "OverriddenFactorType": null
+            "sensitivity": 9
           }
         }
       }
     },
-    "Cities": {
+    "cities": {
       "fuzhou": {
-        "DisplayName": "Fuzhou",
-        "Location": {
-          "Latitude": 26.0745,
-          "Longitude": 119.2965
+        "displayName": "Fuzhou",
+        "location": {
+          "latitude": 26.0745,
+          "longitude": 119.2965
         },
-        "Area": 12000,
-        "FactorValues": {
+        "area": 12000,
+        "factorValues": {
           "pollution": {
-            "Intensity": 40
+            "intensity": 40
           },
           "income": {
-            "Intensity": 4000
+            "intensity": 4000
           },
           "education": {
-            "Intensity": 9
+            "intensity": 9
           }
         },
-        "PopulationGroupValues": {
+        "populationGroupValues": {
           "youngProfessionals": {
-            "Population": 1200
+            "population": 1200
           },
           "family": {
-            "Population": 3000
+            "population": 3000
           },
           "retirees": {
-            "Population": 2000
+            "population": 2000
           }
         }
       },
       "xiamen": {
-        "DisplayName": "Xiamen",
-        "Location": {
-          "Latitude": 24.4798,
-          "Longitude": 118.0895
+        "displayName": "Xiamen",
+        "location": {
+          "latitude": 24.4798,
+          "longitude": 118.0895
         },
-        "Area": 8000,
-        "FactorValues": {
+        "area": 8000,
+        "factorValues": {
           "pollution": {
-            "Intensity": 75
+            "intensity": 75
           },
           "income": {
-            "Intensity": 7000
+            "intensity": 7000
           },
           "education": {
-            "Intensity": 6
+            "intensity": 6
           }
         },
-        "PopulationGroupValues": {
+        "populationGroupValues": {
           "youngProfessionals": {
-            "Population": 1200
+            "population": 1200
           },
           "family": {
-            "Population": 3000
+            "population": 3000
           },
           "retirees": {
-            "Population": 2000
+            "population": 2000
           }
         }
       },
       "zhangzhou": {
-        "DisplayName": "Zhangzhou",
-        "Location": {
-          "Latitude": 24.5133,
-          "Longitude": 117.6618
+        "displayName": "Zhangzhou",
+        "location": {
+          "latitude": 24.5133,
+          "longitude": 117.6618
         },
-        "Area": 10000,
-        "FactorValues": {
+        "area": 10000,
+        "factorValues": {
           "pollution": {
-            "Intensity": 10
+            "intensity": 10
           },
           "income": {
-            "Intensity": 3000
+            "intensity": 3000
           },
           "education": {
-            "Intensity": 4
+            "intensity": 4
           }
         },
-        "PopulationGroupValues": {
+        "populationGroupValues": {
           "youngProfessionals": {
-            "Population": 1200
+            "population": 1200
           },
           "family": {
-            "Population": 3000
+            "population": 3000
           },
           "retirees": {
-            "Population": 2000
+            "population": 2000
           }
         }
       }
     }
   },
-  "SimulationConfiguration": {
-    "MaxSteps": 100,
-    "StabilizationThreshold": 0.01,
-    "CheckStabilization": true,
-    "FeedbackSmoothingFactor": 0.3,
-    "RandomSeed": 42
+  "_simulationConfig": {
+    "maxSteps": 100,
+    "stabilizationThreshold": 0.01,
+    "checkStabilization": true,
+    "feedbackSmoothingFactor": 0.3,
+    "randomSeed": 42
   },
-  "Simulation": {
-    "CurrentStep": 10
+  "_simulation": {
+    "currentStep": 10,
+    "lastStepMigrations": 50,
+    "totalMigrations": 500,
+    "isStabilized": false,
+    "isCompleted": false
   }
 }

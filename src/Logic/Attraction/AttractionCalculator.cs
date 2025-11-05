@@ -17,11 +17,12 @@ public sealed class AttractionCalculator
     /// <param name="world">The world context for factor definitions.</param>
     /// <returns>The attraction result.</returns>
     /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
-    public static AttractionResult CalculateAttraction(City city, PopulationGroupDefinition groupDefinition, World world)
+    public static AttractionResult CalculateAttraction(City city, PopulationGroupDefinition groupDefinition,
+        World world)
     {
-        ArgumentNullException.ThrowIfNull(city);
-        ArgumentNullException.ThrowIfNull(groupDefinition);
-        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(city, nameof(city));
+        ArgumentNullException.ThrowIfNull(groupDefinition, nameof(groupDefinition));
+        ArgumentNullException.ThrowIfNull(world, nameof(world));
 
         var totalScore = 0.0;
 
@@ -60,12 +61,12 @@ public sealed class AttractionCalculator
     /// <param name="groupDefinition">The population group definition.</param>
     /// <returns>Collection of attraction results for all cities.</returns>
     /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
-    public IReadOnlyList<AttractionResult> CalculateAttractionForAllCities(
+    public static IReadOnlyList<AttractionResult> CalculateAttractionForAllCities(
         World world,
         PopulationGroupDefinition groupDefinition)
     {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(groupDefinition);
+        ArgumentNullException.ThrowIfNull(world, nameof(world));
+        ArgumentNullException.ThrowIfNull(groupDefinition, nameof(groupDefinition));
 
         return world.Cities
             .Select(city => CalculateAttraction(city, groupDefinition, world))

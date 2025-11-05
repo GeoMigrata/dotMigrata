@@ -4,6 +4,10 @@
   Version: 1.0
   This XML file represents a snapshot of the simulation world, including all its cities, 
   population groups, and influencing factors.
+  
+  ID Convention:
+  - Lowercase attributes (id, ref, version) are for XML structure
+  - PascalCase attributes (DisplayName, Intensity) are for data that maps to C# DTOs
 -->
 <World Version="1.0" DisplayName="Mega-City Region"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -27,13 +31,13 @@
                                    MovingWillingness="0.8" RetentionRate="0.3">
             <PopulationGroupDefinition.Sensitivities>
                 <FactorSensitivity FactorRef="fd_jobs" Sensitivity="10"/>
-                <FactorSensitivity FactorRef="fd_housing" Sensitivity="-8"/>
+                <FactorSensitivity FactorRef="fd_housing" Sensitivity="8"/>
                 <FactorSensitivity FactorRef="fd_parks" Sensitivity="5"/>
             </PopulationGroupDefinition.Sensitivities>
         </PopulationGroupDefinition>
         <PopulationGroupDefinition Id="pgd_families" DisplayName="Families" MovingWillingness="0.4" RetentionRate="0.7">
             <PopulationGroupDefinition.Sensitivities>
-                <FactorSensitivity FactorRef="fd_housing" Sensitivity="-10"/>
+                <FactorSensitivity FactorRef="fd_housing" Sensitivity="10"/>
                 <FactorSensitivity FactorRef="fd_parks" Sensitivity="8"/>
                 <FactorSensitivity FactorRef="fd_jobs" Sensitivity="4"/>
             </PopulationGroupDefinition.Sensitivities>
@@ -92,4 +96,3 @@
     </World.Simulation>
 
 </World>
-

@@ -115,7 +115,7 @@ public sealed class SimulationEngine
             foreach (var groupDefinition in _world.PopulationGroupDefinitions)
             {
                 // 1. Calculate attraction for all cities
-                var attractions = _attractionCalculator.CalculateAttractionForAllCities(_world, groupDefinition);
+                var attractions = AttractionCalculator.CalculateAttractionForAllCities(_world, groupDefinition);
 
                 // 2. Calculate migration flows from this city
                 var flows = _migrationCalculator.CalculateMigrationFlows(

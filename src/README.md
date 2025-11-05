@@ -1,4 +1,4 @@
-﻿# Source Code Organization
+﻿﻿# Source Code Organization
 
 This directory contains the source code for the dotGeoMigrata simulation framework.
 
@@ -8,25 +8,27 @@ This directory contains the source code for the dotGeoMigrata simulation framewo
 src/
 ├── Core/           # Core domain models and entities
 ├── Logic/          # Business logic for calculations
-└── Simulation/     # Simulation orchestration and state
+├── Simulation/     # Simulation orchestration and state
+└── Snapshot/       # Serialization and deserialization
 ```
 
 ## Layer Descriptions
 
 ### Core
-**Path:** `src/Core/Domain/`
+**Path:** `src/Core/`
 
 Contains the fundamental domain models representing the world, cities, populations, and factors.
 
 **Sub-directories:**
-- **Entities**: Main domain entities (World, City, PopulationGroup)
-- **Values**: Value objects (FactorDefinition, FactorValue, FactorSensitivity, Coordinate)
+- **Entities**: Main domain entities (World, City)
+- **Values**: Value objects (FactorDefinition, FactorValue, FactorSensitivity, PopulationGroupDefinition, Coordinate)
 - **Enums**: Enumeration types (FactorType, TransformType)
 
 **Key Classes:**
 - `World` - Top-level container for the entire simulation
 - `City` - Represents a city with location, factors, and populations
-- `PopulationGroup` - A subset of residents with shared migration behavior
+- `PopulationGroupDefinition` - Defines a population group with migration behavior
+- `PopulationGroupValue` - Represents population count for a group in a city
 - `FactorDefinition` - Defines a factor's metadata and normalization
 - `FactorValue` - A factor's current value in a city
 - `Coordinate` - Geographic position with distance calculation
@@ -36,6 +38,7 @@ Contains the fundamental domain models representing the world, cities, populatio
 - No dependencies on other layers
 - Immutable where possible
 - Rich validation in constructors/initializers
+- Uses object references (not IDs) for type safety
 
 ---
 
@@ -79,19 +82,48 @@ Contains the simulation engine that orchestrates the step-by-step execution.
 
 ---
 
+### Snapshot
+**Path:** `src/Snapshot/`
+
+Contains serialization and deserialization for persisting and loading simulation worlds.
+
+**Sub-directories:**
+- **Models**: Data transfer objects for snapshots
+- **Services**: Snapshot service interface and implementation
+- **Serialization**: Format-specific serializers (JSON, XML)
+- **Extensions**: Helper extension methods
+
+**Key Classes:**
+- `ISnapshotService` - Interface for snapshot operations
+- `SnapshotService` - Main service for exporting/importing snapshots
+- `JsonSnapshotSerializer` - JSON format serializer
+- `XmlSnapshotSerializer` - XML format serializer
+- `WorldSnapshot` - Complete snapshot structure
+
+**Features:**
+- Support for JSON and XML formats
+- ID-based references in snapshots, converted to object references in domain
+- Standardized naming conventions (underscore prefix for metadata in JSON)
+- Comprehensive error handling and validation
+
+**See:** [Snapshot README](Snapshot/README.md) for detailed snapshot system documentation
+
+---
+
 ## Dependency Flow
 
 ```
-Simulation
-    ↓ (depends on)
-Logic
-    ↓ (depends on)
-Core
+Snapshot ←→ Simulation
+              ↓ (depends on)
+            Logic
+              ↓ (depends on)
+            Core
 ```
 
 - **Core** has no dependencies (pure domain)
 - **Logic** depends on Core (uses domain models)
 - **Simulation** depends on Logic and Core (orchestrates everything)
+- **Snapshot** depends on Core and Simulation (serializes domain objects and state)
 
 ---
 
@@ -100,9 +132,11 @@ Core
 All namespaces follow the pattern: `dotGeoMigrata.{Layer}.{SubFolder}`
 
 Examples:
-- `dotGeoMigrata.Core.Domain.Entities`
+- `dotGeoMigrata.Core.Entities`
+- `dotGeoMigrata.Core.Values`
 - `dotGeoMigrata.Logic.Attraction`
 - `dotGeoMigrata.Simulation.Engine`
+- `dotGeoMigrata.Snapshot.Services`
 
 ---
 
@@ -114,6 +148,7 @@ Examples:
 4. **Dependency Inversion**: Higher layers depend on abstractions
 5. **Immutability**: Prefer immutable objects where appropriate
 6. **Validation**: Validate at construction time
+7. **Type Safety**: Use object references instead of IDs in domain layer
 
 ---
 
@@ -131,10 +166,16 @@ Examples:
 3. React to simulation events as needed
 
 ### Adding New Domain Entities
-1. Add to `Core/Domain/Entities/` or `Core/Domain/Values/`
+1. Add to `Core/Entities/` or `Core/Values/`
 2. Follow existing patterns (records for values, classes for entities)
 3. Add validation in initializers
 4. Document with XML comments
+
+### Extending Snapshot Support
+1. Update snapshot models in `Snapshot/Models/`
+2. Update both JSON and XML serializers
+3. Maintain backward compatibility when possible
+4. Document changes in `Snapshot/README.md`
 
 ---
 
@@ -144,8 +185,9 @@ Examples:
 - **Validation**: Validate inputs in constructors and property initializers
 - **Naming**: Use clear, descriptive names following C# conventions
 - **Null Safety**: Use C#'s nullable reference types (`enable` in project)
-- **Exception Messages**: Provide clear, actionable error messages
+- **Exception Messages**: Provide clear, actionable error messages with parameter names
 - **Readonly**: Use `readonly` for fields that shouldn't change
+- **Modern C#**: Leverage C# 12.0 and .NET 9.0 features where appropriate
 
 ---
 
@@ -153,24 +195,48 @@ Examples:
 
 To use this framework:
 
-1. **Create a World**:
+1. **Create or Load a World**:
    ```csharp
-   var world = new World(cities, factorDefinitions);
+   // Option 1: Create programmatically
+   var world = new World(cities, factorDefinitions, populationGroupDefinitions) 
+   {
+       DisplayName = "My World"
+   };
+   
+   // Option 2: Load from snapshot
+   var snapshotService = new SnapshotService();
+   var snapshot = await snapshotService.LoadJsonAsync("world.json");
+   var world = snapshotService.ImportWorld(snapshot);
    ```
 
 2. **Configure Simulation**:
    ```csharp
-   var config = new SimulationConfiguration { MaxSteps = 100 };
+   var config = new SimulationConfiguration 
+   { 
+       MaxSteps = 100,
+       StabilizationThreshold = 0.01,
+       CheckStabilization = true,
+       FeedbackSmoothingFactor = 0.3,
+       RandomSeed = 42  // For reproducibility
+   };
    ```
 
-3. **Create Engine**:
+3. **Create Engine and Add Observers**:
    ```csharp
    var engine = new SimulationEngine(world, config);
+   engine.AddObserver(new ConsoleSimulationObserver(verbose: true));
    ```
 
-4. **Run**:
+4. **Run Simulation**:
    ```csharp
    engine.Run();
+   ```
+
+5. **Save Results** (Optional):
+   ```csharp
+   var resultSnapshot = snapshotService.ExportToSnapshot(
+       world, config, engine.State);
+   await snapshotService.SaveJsonAsync(resultSnapshot, "results.json");
    ```
 
 See the README files in each subdirectory for detailed documentation.

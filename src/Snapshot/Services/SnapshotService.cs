@@ -3,6 +3,7 @@ using dotGeoMigrata.Core.Enums;
 using dotGeoMigrata.Core.Values;
 using dotGeoMigrata.Simulation.Configuration;
 using dotGeoMigrata.Simulation.State;
+using dotGeoMigrata.Snapshot.Extensions;
 using dotGeoMigrata.Snapshot.Models;
 using dotGeoMigrata.Snapshot.Serialization;
 
@@ -17,7 +18,7 @@ public sealed class SnapshotService : ISnapshotService
     public WorldSnapshot ExportToSnapshot(World world, SimulationConfiguration? config = null,
         SimulationState? state = null)
     {
-        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(world, nameof(world));
 
         // Create initialization snapshot
         var initialization = new InitializationSnapshot
@@ -43,8 +44,10 @@ public sealed class SnapshotService : ISnapshotService
     /// <inheritdoc />
     public World ImportWorld(WorldSnapshot snapshot)
     {
-        ArgumentNullException.ThrowIfNull(snapshot);
-        ArgumentNullException.ThrowIfNull(snapshot.Initialization);
+        ArgumentNullException.ThrowIfNull(snapshot, nameof(snapshot));
+
+        if (snapshot.Initialization == null)
+            throw new ArgumentException("Snapshot must contain initialization data.", nameof(snapshot));
 
         // First, import factor definitions and build lookup by snapshot key
         var factorLookup = new Dictionary<string, FactorDefinition>();
@@ -78,7 +81,7 @@ public sealed class SnapshotService : ISnapshotService
     /// <inheritdoc />
     public SimulationConfiguration? ImportSimulationConfiguration(WorldSnapshot snapshot)
     {
-        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(snapshot, nameof(snapshot));
 
         var config = snapshot.SimulationConfig;
 
@@ -126,11 +129,11 @@ public sealed class SnapshotService : ISnapshotService
         IReadOnlyList<FactorDefinition> factorDefinitions)
     {
         var result = new Dictionary<string, FactorDefinitionSnapshot>();
-        var index = 0;
 
-        foreach (var fd in factorDefinitions)
+        for (var index = 0; index < factorDefinitions.Count; index++)
         {
-            var key = $"fd_{index++}";
+            var fd = factorDefinitions[index];
+            var key = $"fd_{index}";
             result[key] = new FactorDefinitionSnapshot
             {
                 DisplayName = fd.DisplayName,
@@ -149,16 +152,16 @@ public sealed class SnapshotService : ISnapshotService
         IReadOnlyList<FactorDefinition> factorDefinitions)
     {
         var result = new Dictionary<string, PopulationGroupDefinitionSnapshot>();
-        var index = 0;
 
-        foreach (var pgd in populationGroupDefinitions)
+        for (var index = 0; index < populationGroupDefinitions.Count; index++)
         {
-            var key = $"pgd_{index++}";
+            var pgd = populationGroupDefinitions[index];
+            var key = $"pgd_{index}";
             var sensitivities = new Dictionary<string, FactorSensitivitySnapshot>();
 
             foreach (var sensitivity in pgd.Sensitivities)
             {
-                var factorKey = GetFactorKeyByDefinition(sensitivity.Factor, factorDefinitions);
+                var factorKey = sensitivity.Factor.GetKey(factorDefinitions);
                 sensitivities[factorKey] = new FactorSensitivitySnapshot
                 {
                     Sensitivity = sensitivity.Sensitivity,
@@ -184,23 +187,23 @@ public sealed class SnapshotService : ISnapshotService
         IReadOnlyList<PopulationGroupDefinition> populationGroupDefinitions)
     {
         var result = new Dictionary<string, CitySnapshot>();
-        var index = 0;
 
-        foreach (var city in cities)
+        for (var index = 0; index < cities.Count; index++)
         {
-            var key = $"city_{index++}";
+            var city = cities[index];
+            var key = $"city_{index}";
 
             var factorValues = new Dictionary<string, FactorValueSnapshot>();
             foreach (var fv in city.FactorValues)
             {
-                var factorKey = GetFactorKeyByDefinition(fv.Definition, factorDefinitions);
+                var factorKey = fv.Definition.GetKey(factorDefinitions);
                 factorValues[factorKey] = new FactorValueSnapshot { Intensity = fv.Intensity };
             }
 
             var popGroupValues = new Dictionary<string, PopulationGroupValueSnapshot>();
             foreach (var pgv in city.PopulationGroupValues)
             {
-                var popGroupKey = GetPopGroupKeyByDefinition(pgv.Definition, populationGroupDefinitions);
+                var popGroupKey = pgv.Definition.GetKey(populationGroupDefinitions);
                 popGroupValues[popGroupKey] = new PopulationGroupValueSnapshot { Population = pgv.Population };
             }
 
@@ -251,13 +254,28 @@ public sealed class SnapshotService : ISnapshotService
 
     private static FactorDefinition ImportFactorDefinition(FactorDefinitionSnapshot snapshot)
     {
-        var factorType = Enum.Parse<FactorType>(snapshot.Type, ignoreCase: true);
-        var minValue = double.Parse(snapshot.MinValue);
-        var maxValue = double.Parse(snapshot.MaxValue);
-        TransformType? transform = null;
+        if (!Enum.TryParse<FactorType>(snapshot.Type, ignoreCase: true, out var factorType))
+            throw new InvalidOperationException($"Invalid factor type: {snapshot.Type}");
 
-        if (!string.IsNullOrEmpty(snapshot.Transform))
-            transform = Enum.Parse<TransformType>(snapshot.Transform, ignoreCase: true);
+        if (!double.TryParse(snapshot.MinValue, out var minValue))
+            throw new InvalidOperationException($"Invalid MinValue: {snapshot.MinValue}");
+
+        if (!double.TryParse(snapshot.MaxValue, out var maxValue))
+            throw new InvalidOperationException($"Invalid MaxValue: {snapshot.MaxValue}");
+
+        TransformType? transform = null;
+        if (string.IsNullOrEmpty(snapshot.Transform))
+            return new FactorDefinition
+            {
+                DisplayName = snapshot.DisplayName,
+                Type = factorType,
+                MinValue = minValue,
+                MaxValue = maxValue,
+                Transform = transform
+            };
+        if (!Enum.TryParse<TransformType>(snapshot.Transform, ignoreCase: true, out var transformType))
+            throw new InvalidOperationException($"Invalid transform type: {snapshot.Transform}");
+        transform = transformType;
 
         return new FactorDefinition
         {
@@ -282,7 +300,13 @@ public sealed class SnapshotService : ISnapshotService
 
             FactorType? overriddenType = null;
             if (!string.IsNullOrEmpty(sensitivitySnapshot.OverriddenFactorType))
-                overriddenType = Enum.Parse<FactorType>(sensitivitySnapshot.OverriddenFactorType, ignoreCase: true);
+            {
+                if (!Enum.TryParse<FactorType>(sensitivitySnapshot.OverriddenFactorType, ignoreCase: true,
+                        out var parsedType))
+                    throw new InvalidOperationException(
+                        $"Invalid overridden factor type: {sensitivitySnapshot.OverriddenFactorType}");
+                overriddenType = parsedType;
+            }
 
             sensitivities.Add(new FactorSensitivity
             {
@@ -342,34 +366,6 @@ public sealed class SnapshotService : ISnapshotService
                 Longitude = citySnapshot.Location.Longitude
             }
         };
-    }
-
-    #endregion
-
-    #region Helper Methods
-
-    private static string GetFactorKeyByDefinition(FactorDefinition fd,
-        IReadOnlyList<FactorDefinition> factorDefinitions)
-    {
-        for (var i = 0; i < factorDefinitions.Count; i++)
-        {
-            if (factorDefinitions[i] == fd)
-                return $"fd_{i}";
-        }
-
-        throw new InvalidOperationException("Factor definition not found in collection.");
-    }
-
-    private static string GetPopGroupKeyByDefinition(PopulationGroupDefinition pgd,
-        IReadOnlyList<PopulationGroupDefinition> popGroupDefinitions)
-    {
-        for (var i = 0; i < popGroupDefinitions.Count; i++)
-        {
-            if (popGroupDefinitions[i] == pgd)
-                return $"pgd_{i}";
-        }
-
-        throw new InvalidOperationException("Population group definition not found in collection.");
     }
 
     #endregion

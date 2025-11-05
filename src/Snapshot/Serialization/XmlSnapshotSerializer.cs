@@ -20,7 +20,7 @@ public sealed class XmlSnapshotSerializer
         ArgumentNullException.ThrowIfNull(snapshot);
 
         var worldElement = new XElement("World",
-            new XAttribute("Version", snapshot.Version),
+            new XAttribute("version", snapshot.Version),
             new XAttribute("DisplayName", snapshot.DisplayName));
 
         // Factor Definitions
@@ -29,7 +29,7 @@ public sealed class XmlSnapshotSerializer
         {
             var factorElement = new XElement(
                 "FactorDefinition",
-                new XAttribute("Id", id),
+                new XAttribute("id", id),
                 new XAttribute("DisplayName", fd.DisplayName),
                 new XAttribute("Type", fd.Type),
                 new XAttribute("MinValue", fd.MinValue),
@@ -50,7 +50,7 @@ public sealed class XmlSnapshotSerializer
         {
             var popGroupElement = new XElement(
                 "PopulationGroupDefinition",
-                new XAttribute("Id", id),
+                new XAttribute("id", id),
                 new XAttribute("DisplayName", pgd.DisplayName));
 
             if (pgd.MovingWillingness.HasValue)
@@ -63,7 +63,7 @@ public sealed class XmlSnapshotSerializer
             {
                 var sensitivityElement = new XElement(
                     "FactorSensitivity",
-                    new XAttribute("FactorRef", factorRef),
+                    new XAttribute("ref", factorRef),
                     new XAttribute("Sensitivity", fs.Sensitivity));
 
                 if (!string.IsNullOrEmpty(fs.OverriddenFactorType))
@@ -98,7 +98,7 @@ public sealed class XmlSnapshotSerializer
             foreach (var (factorRef, fv) in city.FactorValues)
             {
                 factorValuesElement.Add(new XElement("FactorValue",
-                    new XAttribute("FactorRef", factorRef),
+                    new XAttribute("ref", factorRef),
                     new XAttribute("Intensity", fv.Intensity)));
             }
 
@@ -109,7 +109,7 @@ public sealed class XmlSnapshotSerializer
             foreach (var (popGroupRef, pgv) in city.PopulationGroupValues)
             {
                 popGroupValuesElement.Add(new XElement("PopulationGroupValue",
-                    new XAttribute("PopulationGroupRef", popGroupRef),
+                    new XAttribute("ref", popGroupRef),
                     new XAttribute("Population", pgv.Population)));
             }
 
@@ -184,7 +184,7 @@ public sealed class XmlSnapshotSerializer
 
         var snapshot = new WorldSnapshot
         {
-            Version = worldElement.Attribute("Version")?.Value ?? "1.0",
+            Version = worldElement.Attribute("version")?.Value ?? "1.0",
             DisplayName = worldElement.Attribute("DisplayName")?.Value ??
                           throw new InvalidOperationException("DisplayName attribute is required."),
             Initialization = new InitializationSnapshot
@@ -201,8 +201,8 @@ public sealed class XmlSnapshotSerializer
         {
             foreach (var factorElement in factorDefsElement.Elements("FactorDefinition"))
             {
-                var id = factorElement.Attribute("Id")?.Value
-                         ?? throw new InvalidOperationException("FactorDefinition Id is required.");
+                var id = factorElement.Attribute("id")?.Value
+                         ?? throw new InvalidOperationException("FactorDefinition id is required.");
 
                 snapshot.Initialization.FactorDefinitions[id] = new FactorDefinitionSnapshot
                 {
@@ -225,8 +225,8 @@ public sealed class XmlSnapshotSerializer
         {
             foreach (var popGroupElement in popGroupDefsElement.Elements("PopulationGroupDefinition"))
             {
-                var id = popGroupElement.Attribute("Id")?.Value
-                         ?? throw new InvalidOperationException("PopulationGroupDefinition Id is required.");
+                var id = popGroupElement.Attribute("id")?.Value
+                         ?? throw new InvalidOperationException("PopulationGroupDefinition id is required.");
 
                 var movingWillingness = popGroupElement.Attribute("MovingWillingness")?.Value;
                 var retentionRate = popGroupElement.Attribute("RetentionRate")?.Value;
@@ -237,11 +237,11 @@ public sealed class XmlSnapshotSerializer
 
                 foreach (var sensitivityElement in sensitivitiesElement.Elements("FactorSensitivity"))
                 {
-                    var factorRef = sensitivityElement.Attribute("FactorRef")?.Value ??
-                                    throw new InvalidOperationException("FactorSensitivity FactorRef is required.");
-                    var sensitivityValue = sensitivityElement.Attribute("Value")?.Value ??
+                    var factorRef = sensitivityElement.Attribute("ref")?.Value ??
+                                    throw new InvalidOperationException("FactorSensitivity ref is required.");
+                    var sensitivityValue = sensitivityElement.Attribute("Sensitivity")?.Value ??
                                            throw new InvalidOperationException(
-                                               "FactorSensitivity Value is required.");
+                                               "FactorSensitivity Sensitivity is required.");
 
                     sensitivities[factorRef] = new FactorSensitivitySnapshot
                     {
@@ -290,32 +290,36 @@ public sealed class XmlSnapshotSerializer
                 // Parse factor values
                 var factorValues = new Dictionary<string, FactorValueSnapshot>();
                 var factorValuesElement = cityElement.Element("City.FactorValues");
-                if (factorValuesElement == null) continue;
-                foreach (var factorValueElement in factorValuesElement.Elements("FactorValue"))
+                if (factorValuesElement != null)
                 {
-                    var factorRef = factorValueElement.Attribute("FactorRef")?.Value
-                                    ?? throw new InvalidOperationException("FactorValue FactorRef is required.");
-                    var intensity = double.Parse(factorValuesElement.Attribute("Intensity")?.Value ??
-                                                 throw new InvalidOperationException(
-                                                     "FactorValue Intensity is required"));
+                    foreach (var factorValueElement in factorValuesElement.Elements("FactorValue"))
+                    {
+                        var factorRef = factorValueElement.Attribute("ref")?.Value
+                                        ?? throw new InvalidOperationException("FactorValue ref is required.");
+                        var intensity = double.Parse(factorValueElement.Attribute("Intensity")?.Value ??
+                                                     throw new InvalidOperationException(
+                                                         "FactorValue Intensity is required"));
 
-                    factorValues[factorRef] = new FactorValueSnapshot { Intensity = intensity };
+                        factorValues[factorRef] = new FactorValueSnapshot { Intensity = intensity };
+                    }
                 }
 
                 // Parse population group values
                 var popGroupValues = new Dictionary<string, PopulationGroupValueSnapshot>();
                 var popGroupValuesElement = cityElement.Element("City.PopulationGroupValues");
-                if (popGroupValuesElement == null) continue;
-                foreach (var popGroupValueElement in popGroupValuesElement.Elements("PopulationGroupValue"))
+                if (popGroupValuesElement != null)
                 {
-                    var popGroupRef = popGroupValuesElement.Attribute("PopulationGroupRef")?.Value
-                                      ?? throw new InvalidOperationException(
-                                          "PopulationGroupValue PopulationGroupRef is required.");
-                    var population = int.Parse(popGroupValuesElement.Attribute("Population")?.Value ??
-                                               throw new InvalidOperationException(
-                                                   "PopulationGroupValue Population is required"));
+                    foreach (var popGroupValueElement in popGroupValuesElement.Elements("PopulationGroupValue"))
+                    {
+                        var popGroupRef = popGroupValueElement.Attribute("ref")?.Value
+                                          ?? throw new InvalidOperationException(
+                                              "PopulationGroupValue ref is required.");
+                        var population = int.Parse(popGroupValueElement.Attribute("Population")?.Value ??
+                                                   throw new InvalidOperationException(
+                                                       "PopulationGroupValue Population is required"));
 
-                    popGroupValues[popGroupRef] = new PopulationGroupValueSnapshot { Population = population };
+                        popGroupValues[popGroupRef] = new PopulationGroupValueSnapshot { Population = population };
+                    }
                 }
 
                 snapshot.Initialization.Cities[cityId] = new CitySnapshot
