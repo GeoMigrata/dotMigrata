@@ -1,5 +1,4 @@
 ﻿using dotGeoMigrata.Logic.Migration;
-using dotGeoMigrata.Simulation.Pipeline;
 
 namespace dotGeoMigrata.Simulation.Pipeline.Stages;
 
@@ -24,9 +23,7 @@ public sealed class MigrationApplicationStage : ISimulationStage
             // Retrieve migration flows from previous stage
             if (!context.SharedData.TryGetValue("MigrationFlows", out var flowsObj) ||
                 flowsObj is not List<MigrationFlow> flows)
-            {
                 return SimulationStageResult.Failed("Migration flows data not found from previous stage");
-            }
 
             // Track previous populations for feedback calculation
             var previousPopulations = context.World.Cities
@@ -68,9 +65,7 @@ public sealed class MigrationApplicationStage : ISimulationStage
             var totalOutflow = sourceGroup.Sum(f => f.MigrantCount);
 
             if (sourceCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) && groupValue is not null)
-            {
                 groupValue.Population = Math.Max(0, groupValue.Population - totalOutflow);
-            }
         }
 
         // Group flows by destination city and population group definition
@@ -85,9 +80,7 @@ public sealed class MigrationApplicationStage : ISimulationStage
             var totalInflow = destGroup.Sum(f => f.MigrantCount);
 
             if (destCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) && groupValue is not null)
-            {
                 groupValue.Population += totalInflow;
-            }
         }
 
         return flows.Sum(f => f.MigrantCount);

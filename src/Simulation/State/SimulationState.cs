@@ -48,11 +48,17 @@ public sealed class SimulationState(int? randomSeed = null)
     /// <summary>
     /// Marks the simulation as stabilized.
     /// </summary>
-    internal void MarkStabilized() => IsStabilized = true;
+    internal void MarkStabilized()
+    {
+        IsStabilized = true;
+    }
 
 
     /// <summary>
     /// Marks the simulation as completed.
     /// </summary>
-    internal void MarkCompleted() => IsCompleted = true;
+    internal void MarkCompleted()
+    {
+        IsCompleted = true;
+    }
 }

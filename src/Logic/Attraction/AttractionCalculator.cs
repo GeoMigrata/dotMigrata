@@ -10,7 +10,7 @@ namespace dotGeoMigrata.Logic.Attraction;
 /// </summary>
 /// This is the original implementation maintained for backward compatibility.
 /// <remarks>
-/// This implementation is deprecated. Use <see cref="EnhancedAttractionCalculator"/> for new projects.
+/// This implementation is deprecated. Use <see cref="EnhancedAttractionCalculator" /> for new projects.
 /// The enhanced version implements the pull-push factor model per LogicModel.md specification.
 /// </remarks>
 [Obsolete("Use EnhancedAttractionCalculator for new projects. " +

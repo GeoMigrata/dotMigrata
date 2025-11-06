@@ -15,16 +15,19 @@ src/
 ## Layer Descriptions
 
 ### Core
+
 **Path:** `src/Core/`
 
 Contains the fundamental domain models representing the world, cities, populations, and factors.
 
 **Sub-directories:**
+
 - **Entities**: Main domain entities (World, City)
 - **Values**: Value objects (FactorDefinition, FactorValue, FactorSensitivity, PopulationGroupDefinition, Coordinate)
 - **Enums**: Enumeration types (FactorType, TransformType)
 
 **Key Classes:**
+
 - `World` - Top-level container for the entire simulation
 - `City` - Represents a city with location, factors, and populations
 - `PopulationGroupDefinition` - Defines a population group with migration behavior
@@ -34,6 +37,7 @@ Contains the fundamental domain models representing the world, cities, populatio
 - `Coordinate` - Geographic position with distance calculation
 
 **Characteristics:**
+
 - Pure domain models
 - No dependencies on other layers
 - Immutable where possible
@@ -43,16 +47,19 @@ Contains the fundamental domain models representing the world, cities, populatio
 ---
 
 ### Logic
+
 **Path:** `src/Logic/`
 
 Contains the algorithms and calculators that implement the simulation's core logic.
 
 **Sub-directories:**
+
 - **Attraction**: City attractiveness calculation
 - **Migration**: Migration flow determination
 - **Feedback**: Post-migration factor updates
 
 **Key Classes:**
+
 - `AttractionCalculator` - Computes city attractiveness for population groups
 - `MigrationCalculator` - Determines migration flows based on attraction differences
 - `FeedbackCalculator` - Updates city factors after migration
@@ -62,16 +69,19 @@ Contains the algorithms and calculators that implement the simulation's core log
 ---
 
 ### Simulation
+
 **Path:** `src/Simulation/`
 
 Contains the simulation engine that orchestrates the step-by-step execution.
 
 **Sub-directories:**
+
 - **Engine**: Main simulation orchestrator and observers
 - **Configuration**: Simulation parameters
 - **State**: Runtime state tracking
 
 **Key Classes:**
+
 - `SimulationEngine` - Main orchestrator coordinating all calculations
 - `SimulationConfiguration` - Configuration parameters (max steps, thresholds, etc.)
 - `SimulationState` - Tracks current step, migrations, and status
@@ -83,17 +93,20 @@ Contains the simulation engine that orchestrates the step-by-step execution.
 ---
 
 ### Snapshot
+
 **Path:** `src/Snapshot/`
 
 Contains serialization and deserialization for persisting and loading simulation worlds.
 
 **Sub-directories:**
+
 - **Models**: Data transfer objects for snapshots
 - **Services**: Snapshot service interface and implementation
 - **Serialization**: Format-specific serializers (JSON, XML)
 - **Extensions**: Helper extension methods
 
 **Key Classes:**
+
 - `ISnapshotService` - Interface for snapshot operations
 - `SnapshotService` - Main service for exporting/importing snapshots
 - `JsonSnapshotSerializer` - JSON format serializer
@@ -101,6 +114,7 @@ Contains serialization and deserialization for persisting and loading simulation
 - `WorldSnapshot` - Complete snapshot structure
 
 **Features:**
+
 - Support for JSON and XML formats
 - ID-based references in snapshots, converted to object references in domain
 - Standardized naming conventions (underscore prefix for metadata in JSON)
@@ -132,6 +146,7 @@ Snapshot ←→ Simulation
 All namespaces follow the pattern: `dotGeoMigrata.{Layer}.{SubFolder}`
 
 Examples:
+
 - `dotGeoMigrata.Core.Entities`
 - `dotGeoMigrata.Core.Values`
 - `dotGeoMigrata.Logic.Attraction`
@@ -155,23 +170,27 @@ Examples:
 ## Extension Points
 
 ### Adding New Calculators
+
 1. Create a new class in `Logic/`
 2. Follow the pattern of existing calculators
 3. Add comprehensive XML documentation
 4. Document algorithms in `Logic/README.md`
 
 ### Adding New Observers
+
 1. Implement `ISimulationObserver` interface
 2. Add to simulation via `engine.AddObserver()`
 3. React to simulation events as needed
 
 ### Adding New Domain Entities
+
 1. Add to `Core/Entities/` or `Core/Values/`
 2. Follow existing patterns (records for values, classes for entities)
 3. Add validation in initializers
 4. Document with XML comments
 
 ### Extending Snapshot Support
+
 1. Update snapshot models in `Snapshot/Models/`
 2. Update both JSON and XML serializers
 3. Maintain backward compatibility when possible

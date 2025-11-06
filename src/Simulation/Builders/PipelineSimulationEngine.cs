@@ -15,25 +15,9 @@ namespace dotGeoMigrata.Simulation.Engine;
 /// </summary>
 public sealed class PipelineSimulationEngine
 {
-    private readonly World _world;
     private readonly SimulationConfiguration _configuration;
-    private readonly ISimulationPipeline _pipeline;
     private readonly List<ISimulationObserver> _observers;
-
-    /// <summary>
-    /// Gets the current simulation state.
-    /// </summary>
-    public SimulationState State { get; }
-
-    /// <summary>
-    /// Event raised when a simulation step is completed.
-    /// </summary>
-    public event EventHandler<SimulationStepEventArgs>? StepCompleted;
-
-    /// <summary>
-    /// Event raised when the simulation is completed.
-    /// </summary>
-    public event EventHandler<SimulationCompletedEventArgs>? SimulationCompleted;
+    private readonly World _world;
 
     /// <summary>
     /// Initializes a new instance of the PipelineSimulationEngine class with default pipeline stages.
@@ -62,11 +46,11 @@ public sealed class PipelineSimulationEngine
         _observers = [];
 
         // Initialize pipeline with default stages
-        _pipeline = new SimulationPipeline();
-        _pipeline.AddStage(new AttractionStage(attractionCalculator));
-        _pipeline.AddStage(new MigrationStage(migrationCalculator));
-        _pipeline.AddStage(new MigrationApplicationStage());
-        _pipeline.AddStage(new FeedbackStage(feedbackCalculator));
+        Pipeline = new SimulationPipeline();
+        Pipeline.AddStage(new AttractionStage(attractionCalculator));
+        Pipeline.AddStage(new MigrationStage(migrationCalculator));
+        Pipeline.AddStage(new MigrationApplicationStage());
+        Pipeline.AddStage(new FeedbackStage(feedbackCalculator));
     }
 
     /// <summary>
@@ -83,16 +67,31 @@ public sealed class PipelineSimulationEngine
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
+        Pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
 
         State = new SimulationState(_configuration.RandomSeed);
         _observers = [];
     }
 
     /// <summary>
+    /// Gets the current simulation state.
+    /// </summary>
+    public SimulationState State { get; }
+
+    /// <summary>
     /// Gets the simulation pipeline for inspection or customization.
     /// </summary>
-    public ISimulationPipeline Pipeline => _pipeline;
+    public ISimulationPipeline Pipeline { get; }
+
+    /// <summary>
+    /// Event raised when a simulation step is completed.
+    /// </summary>
+    public event EventHandler<SimulationStepEventArgs>? StepCompleted;
+
+    /// <summary>
+    /// Event raised when the simulation is completed.
+    /// </summary>
+    public event EventHandler<SimulationCompletedEventArgs>? SimulationCompleted;
 
     /// <summary>
     /// Adds an observer to monitor simulation progress.
@@ -158,7 +157,7 @@ public sealed class PipelineSimulationEngine
         };
 
         // Execute the pipeline
-        var success = _pipeline.Execute(context);
+        var success = Pipeline.Execute(context);
 
         if (!success)
             throw new InvalidOperationException("Pipeline execution failed during simulation step.");

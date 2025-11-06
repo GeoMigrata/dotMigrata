@@ -1,6 +1,4 @@
 ﻿using System.Xml.Linq;
-using System.Xml.Serialization;
-using dotGeoMigrata.Core.Enums;
 using dotGeoMigrata.Snapshot.Models;
 
 namespace dotGeoMigrata.Snapshot.Serialization;
@@ -96,22 +94,18 @@ public sealed class XmlSnapshotSerializer
             // Factor Values
             var factorValuesElement = new XElement("City.FactorValues");
             foreach (var (factorRef, fv) in city.FactorValues)
-            {
                 factorValuesElement.Add(new XElement("FactorValue",
                     new XAttribute("ref", factorRef),
                     new XAttribute("Intensity", fv.Intensity)));
-            }
 
             cityElement.Add(factorValuesElement);
 
             // Population Group Values
             var popGroupValuesElement = new XElement("City.PopulationGroupValues");
             foreach (var (popGroupRef, pgv) in city.PopulationGroupValues)
-            {
                 popGroupValuesElement.Add(new XElement("PopulationGroupValue",
                     new XAttribute("ref", popGroupRef),
                     new XAttribute("Population", pgv.Population)));
-            }
 
             cityElement.Add(popGroupValuesElement);
 
@@ -198,7 +192,6 @@ public sealed class XmlSnapshotSerializer
         // Parse Factor Definitions
         var factorDefsElement = worldElement.Element("World.FactorDefinitions");
         if (factorDefsElement != null)
-        {
             foreach (var factorElement in factorDefsElement.Elements("FactorDefinition"))
             {
                 var id = factorElement.Attribute("id")?.Value
@@ -217,12 +210,10 @@ public sealed class XmlSnapshotSerializer
                     Transform = factorElement.Attribute("Transform")?.Value
                 };
             }
-        }
 
         // Parse Population Group Definitions
         var popGroupDefsElement = worldElement.Element("World.PopulationGroupDefinitions");
         if (popGroupDefsElement != null)
-        {
             foreach (var popGroupElement in popGroupDefsElement.Elements("PopulationGroupDefinition"))
             {
                 var id = popGroupElement.Attribute("id")?.Value
@@ -260,7 +251,6 @@ public sealed class XmlSnapshotSerializer
                     FactorSensitivities = sensitivities
                 };
             }
-        }
 
         // Parse Cities
         var citiesElement = worldElement.Element("World.Cities");
@@ -291,7 +281,6 @@ public sealed class XmlSnapshotSerializer
                 var factorValues = new Dictionary<string, FactorValueSnapshot>();
                 var factorValuesElement = cityElement.Element("City.FactorValues");
                 if (factorValuesElement != null)
-                {
                     foreach (var factorValueElement in factorValuesElement.Elements("FactorValue"))
                     {
                         var factorRef = factorValueElement.Attribute("ref")?.Value
@@ -302,13 +291,11 @@ public sealed class XmlSnapshotSerializer
 
                         factorValues[factorRef] = new FactorValueSnapshot { Intensity = intensity };
                     }
-                }
 
                 // Parse population group values
                 var popGroupValues = new Dictionary<string, PopulationGroupValueSnapshot>();
                 var popGroupValuesElement = cityElement.Element("City.PopulationGroupValues");
                 if (popGroupValuesElement != null)
-                {
                     foreach (var popGroupValueElement in popGroupValuesElement.Elements("PopulationGroupValue"))
                     {
                         var popGroupRef = popGroupValueElement.Attribute("ref")?.Value
@@ -320,7 +307,6 @@ public sealed class XmlSnapshotSerializer
 
                         popGroupValues[popGroupRef] = new PopulationGroupValueSnapshot { Population = population };
                     }
-                }
 
                 snapshot.Initialization.Cities[cityId] = new CitySnapshot
                 {
@@ -336,7 +322,6 @@ public sealed class XmlSnapshotSerializer
         // Parse Simulation Config (if present)
         var configElement = worldElement.Element("World.SimulationConfig");
         if (configElement != null)
-        {
             snapshot.SimulationConfig = new SimulationConfigSnapshot
             {
                 MaxSteps = ParseIntElement(configElement, "MaxSteps"),
@@ -344,12 +329,10 @@ public sealed class XmlSnapshotSerializer
                 CheckStabilization = ParseBoolElement(configElement, "CheckStabilization"),
                 RandomSeed = ParseIntElement(configElement, "RandomSeed")
             };
-        }
 
         // Parse Simulation State (if present)
         var stateElement = worldElement.Element("World.Simulation");
         if (stateElement != null)
-        {
             snapshot.Simulation = new SimulationStateSnapshot
             {
                 CurrentStep = ParseIntElement(stateElement, "CurrentStep"),
@@ -358,7 +341,6 @@ public sealed class XmlSnapshotSerializer
                 IsStabilized = ParseBoolElement(stateElement, "IsStabilized"),
                 IsCompleted = ParseBoolElement(stateElement, "IsCompleted")
             };
-        }
 
         return snapshot;
     }

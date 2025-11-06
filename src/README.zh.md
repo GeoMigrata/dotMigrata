@@ -14,16 +14,19 @@ src/
 ## 层级说明
 
 ### Core（核心层）
+
 **路径：** `src/Core/Domain/`
 
 包含表示世界、城市、人口和因素的基础领域模型。
 
 **子目录：**
+
 - **Entities**：主要领域实体（World、City、PopulationGroup）
 - **Values**：值对象（FactorDefinition、FactorValue、FactorSensitivity、Coordinate）
 - **Enums**：枚举类型（FactorType、TransformType）
 
 **关键类：**
+
 - `World` - 整个模拟的顶层容器
 - `City` - 表示具有位置、因素和人口的城市
 - `PopulationGroup` - 具有共同迁移行为的居民子集
@@ -32,6 +35,7 @@ src/
 - `Coordinate` - 地理位置及距离计算
 
 **特点：**
+
 - 纯领域模型
 - 不依赖其他层
 - 尽可能使用不可变对象
@@ -40,16 +44,19 @@ src/
 ---
 
 ### Logic（逻辑层）
+
 **路径：** `src/Logic/`
 
 包含实现模拟核心逻辑的算法和计算器。
 
 **子目录：**
+
 - **Attraction**：城市吸引力计算
 - **Migration**：迁移流量判定
 - **Feedback**：迁移后因素更新
 
 **关键类：**
+
 - `AttractionCalculator` - 计算人口群体对城市的吸引力
 - `MigrationCalculator` - 根据吸引力差异确定迁移流量
 - `FeedbackCalculator` - 迁移后更新城市因素
@@ -59,16 +66,19 @@ src/
 ---
 
 ### Simulation（模拟层）
+
 **路径：** `src/Simulation/`
 
 包含编排逐步执行的模拟引擎。
 
 **子目录：**
+
 - **Engine**：主模拟编排器和观察者
 - **Configuration**：模拟参数
 - **State**：运行时状态跟踪
 
 **关键类：**
+
 - `SimulationEngine` - 协调所有计算的主编排器
 - `SimulationConfiguration` - 配置参数（最大步数、阈值等）
 - `SimulationState` - 跟踪当前步数、迁移和状态
@@ -100,6 +110,7 @@ Core（核心层）
 所有命名空间遵循模式：`dotGeoMigrata.{层级}.{子文件夹}`
 
 示例：
+
 - `dotGeoMigrata.Core.Domain.Entities`
 - `dotGeoMigrata.Logic.Attraction`
 - `dotGeoMigrata.Simulation.Engine`
@@ -120,17 +131,20 @@ Core（核心层）
 ## 扩展点
 
 ### 添加新计算器
+
 1. 在 `Logic/` 中创建新类
 2. 遵循现有计算器的模式
 3. 添加完整的 XML 文档
 4. 在 `Logic/README.zh.md` 中记录算法
 
 ### 添加新观察者
+
 1. 实现 `ISimulationObserver` 接口
 2. 通过 `engine.AddObserver()` 添加到模拟
 3. 根据需要响应模拟事件
 
 ### 添加新领域实体
+
 1. 添加到 `Core/Domain/Entities/` 或 `Core/Domain/Values/`
 2. 遵循现有模式（值使用 record，实体使用 class）
 3. 在初始化器中添加验证

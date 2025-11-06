@@ -121,7 +121,10 @@ public class City
     /// <param name="definition">The population group definition.</param>
     /// <param name="newCount">The new population count.</param>
     /// <exception cref="ArgumentNullException">Thrown when definition is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when the definition has no matched value in this city or when newCount is negative.</exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the definition has no matched value in this city or when newCount is
+    /// negative.
+    /// </exception>
     public void UpdatePopulationCount(PopulationGroupDefinition definition, int newCount)
     {
         ArgumentNullException.ThrowIfNull(definition);

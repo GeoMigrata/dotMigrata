@@ -5,6 +5,7 @@
 ## 为什么要迁移？
 
 新的管线架构提供：
+
 - ✅ **更好的可扩展性** - 轻松添加自定义阶段
 - ✅ **更清晰的结构** - 每个阶段职责单一
 - ✅ **更强大的算法** - 基于 LogicModel.md 的增强实现
@@ -16,6 +17,7 @@
 ### 步骤 1：了解新旧差异
 
 #### 旧版代码（仍然有效）
+
 ```csharp
 var engine = new SimulationEngine(world, configuration);
 engine.AddObserver(new ConsoleSimulationObserver());
@@ -23,6 +25,7 @@ engine.Run();
 ```
 
 #### 新版代码（推荐）
+
 ```csharp
 var engine = new SimulationEngineBuilder()
     .WithWorld(world)
@@ -91,6 +94,7 @@ var engine = new SimulationEngineBuilder()
 #### 添加人口群体新属性
 
 旧版：
+
 ```csharp
 var groupDef = new PopulationGroupDefinition(sensitivities)
 {
@@ -101,6 +105,7 @@ var groupDef = new PopulationGroupDefinition(sensitivities)
 ```
 
 新版（可选新属性）：
+
 ```csharp
 var groupDef = new PopulationGroupDefinition(sensitivities)
 {
@@ -116,6 +121,7 @@ var groupDef = new PopulationGroupDefinition(sensitivities)
 #### 添加城市容量
 
 旧版：
+
 ```csharp
 var city = new City(factorValues, populationValues)
 {
@@ -126,6 +132,7 @@ var city = new City(factorValues, populationValues)
 ```
 
 新版（可选容量限制）：
+
 ```csharp
 var city = new City(factorValues, populationValues)
 {
@@ -213,22 +220,28 @@ var engine = new SimulationEngineBuilder()
 ## 常见问题
 
 ### Q1: 旧代码还能用吗？
+
 **A:** 是的！`SimulationEngine` 保持不变，所有旧代码都能正常运行。
 
 ### Q2: 新旧算法结果一样吗？
+
 **A:** 不完全一样。增强版实现了更精确的算法（基于 LogicModel.md），但如果使用 `UseOriginal*` 方法，行为与旧版相同。
 
 ### Q3: 必须同时升级所有组件吗？
+
 **A:** 不必须。可以混用原始和增强版计算器。
 
 ### Q4: 如何验证迁移结果？
+
 **A:**
+
 1. 先使用原始计算器运行，记录结果
 2. 逐个切换到增强版，对比差异
 3. 使用小规模数据集测试
 4. 添加日志观察各阶段输出
 
 ### Q5: 性能会受影响吗？
+
 **A:** 管线架构本身开销极小。增强版算法可能稍慢（因为更复杂），但通常差异不大。
 
 ## 迁移检查清单
@@ -247,6 +260,7 @@ var engine = new SimulationEngineBuilder()
 ## 示例：完整迁移对比
 
 ### 迁移前
+
 ```csharp
 // 创建世界
 var world = new World(cities, factorDefinitions, populationGroupDefinitions)
@@ -272,6 +286,7 @@ Console.WriteLine($"模拟完成：{finalState.CurrentStep} 步");
 ```
 
 ### 迁移后
+
 ```csharp
 // 创建世界（添加容量）
 var cities = CreateCitiesWithCapacity();  // 新增容量属性
@@ -338,6 +353,7 @@ Console.WriteLine($"管线阶段数：{pipeline?.Stages.Count}");
 ## 总结
 
 迁移到新架构的好处：
+
 - ✅ 更现代化的设计
 - ✅ 更强大的功能
 - ✅ 更好的可扩展性

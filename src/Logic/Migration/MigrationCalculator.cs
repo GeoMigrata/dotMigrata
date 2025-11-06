@@ -10,7 +10,7 @@ namespace dotGeoMigrata.Logic.Migration;
 /// </summary>
 /// This is the original implementation maintained for backward compatibility.
 /// <remarks>
-/// This implementation is deprecated. Use <see cref="EnhancedMigrationCalculator"/> for new projects.
+/// This implementation is deprecated. Use <see cref="EnhancedMigrationCalculator" /> for new projects.
 /// The enhanced version implements sigmoid probability, cost decay, and capacity constraints per LogicModel.md.
 /// </remarks>
 [Obsolete("Use EnhancedMigrationCalculator for new projects. " +
@@ -107,10 +107,8 @@ public sealed class MigrationCalculator : IMigrationCalculator
 
         // For small populations, sample each individual
         if (totalPopulation <= 100)
-        {
             return Enumerable.Range(0, totalPopulation)
                 .Count(_ => random.NextDouble() < probability);
-        }
 
         // For larger populations, use normal approximation to binomial
         var mean = totalPopulation * probability;

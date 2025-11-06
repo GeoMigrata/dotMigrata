@@ -54,15 +54,18 @@ public interface ISimulationPipeline
 **功能**：计算所有城市对各人口群体的吸引力
 
 **输入**：
+
 - World（城市、因素、人口群体定义）
 - IAttractionCalculator（吸引力计算器）
 
 **输出**：
+
 - SharedData["Attractions"] - 吸引力结果字典
     - Key: 人口群体名称
     - Value: 所有城市的吸引力结果列表
 
 **使用的计算器**：
+
 - `AttractionCalculator` - 原始实现
 - `EnhancedAttractionCalculator` - 增强版（拉力-推力模型）
 
@@ -71,13 +74,16 @@ public interface ISimulationPipeline
 **功能**：基于吸引力差异计算迁移流
 
 **输入**：
+
 - SharedData["Attractions"] - 前一阶段的吸引力结果
 - IMigrationCalculator（迁移计算器）
 
 **输出**：
+
 - SharedData["MigrationFlows"] - 迁移流列表
 
 **使用的计算器**：
+
 - `MigrationCalculator` - 原始实现
 - `EnhancedMigrationCalculator` - 增强版（Sigmoid概率、成本衰减）
 
@@ -86,13 +92,16 @@ public interface ISimulationPipeline
 **功能**：应用迁移流，更新城市人口
 
 **输入**：
+
 - SharedData["MigrationFlows"] - 迁移流列表
 
 **输出**：
+
 - SharedData["PreviousPopulations"] - 迁移前的城市人口字典
 - SharedData["TotalMigrants"] - 总迁移人数
 
 **处理逻辑**：
+
 1. 记录迁移前各城市人口
 2. 按源城市分组，减少人口（迁出）
 3. 按目标城市分组，增加人口（迁入）
@@ -103,13 +112,16 @@ public interface ISimulationPipeline
 **功能**：根据人口变化更新城市因素
 
 **输入**：
+
 - SharedData["PreviousPopulations"] - 迁移前人口
 - IFeedbackCalculator（反馈计算器）
 
 **输出**：
+
 - 更新后的城市因素值
 
 **使用的计算器**：
+
 - `FeedbackCalculator` - 原始实现
 - `EnhancedFeedbackCalculator` - 增强版（多种反馈机制）
 
@@ -210,26 +222,31 @@ public class CustomAnalysisStage : ISimulationStage
 ## 优势
 
 ### 1. 高度模块化
+
 - 每个阶段职责单一
 - 可独立开发、测试和维护
 - 易于理解和调试
 
 ### 2. 可扩展性
+
 - 轻松添加新阶段
 - 通过 Order 属性控制执行顺序
 - 支持在任意位置插入自定义逻辑
 
 ### 3. 低耦合
+
 - 阶段间通过 SharedData 通信
 - 不直接依赖其他阶段
 - 使用接口而非具体实现
 
 ### 4. 灵活配置
+
 - 可选择不同的计算器实现
 - 支持完全自定义的管线
 - Builder 模式简化配置
 
 ### 5. 易于测试
+
 - 每个阶段可独立单元测试
 - 可模拟上下文和共享数据
 - 便于集成测试
@@ -237,6 +254,7 @@ public class CustomAnalysisStage : ISimulationStage
 ## 向后兼容性
 
 原始的 `SimulationEngine` 仍然保留并正常工作。用户可以：
+
 - 继续使用 `SimulationEngine`（原始非管线版本）
 - 迁移到 `PipelineSimulationEngine`（新管线版本）
 - 通过 `SimulationEngineBuilder` 灵活选择

@@ -52,6 +52,7 @@ Console.WriteLine($"Push component: {result.PushComponent}");
 ### Extended Return Value
 
 `AttractionResult` now includes:
+
 - `AttractionScore`: Comprehensive attraction score
 - `PullComponent`: Sum of pull components
 - `PushComponent`: Sum of push components
@@ -63,6 +64,7 @@ Console.WriteLine($"Push component: {result.PushComponent}");
 ### Algorithm Overview
 
 Implements complete migration decision workflow:
+
 1. Emigration decision (based on attraction thresholds)
 2. Destination city selection
 3. Sigmoid probability calculation
@@ -94,6 +96,7 @@ Where:
 #### 3. Emigration Conditions
 
 Migration is considered only when both conditions are met:
+
 ```
 ΔA > τ                      # Attraction difference exceeds threshold
 A(C,G) > α_min              # Destination attraction above minimum
@@ -109,15 +112,15 @@ If totalInflow > remainingCapacity:
 
 ### Parameter Reference
 
-| Parameter | Property | Default | Description |
-|-----------|----------|---------|-------------|
-| k | SigmoidSteepness | 1.0 | Sigmoid steepness, higher = faster transition |
-| λ | CostSensitivity | 0.01 | Cost sensitivity, higher = faster decay |
-| baseCost | BaseMigrationCost | 1.0 | Base cost per unit distance |
-| τ | AttractionThreshold | 0.0 | Attraction threshold (group definition) |
-| α_min | MinimumAcceptableAttraction | 0.0 | Minimum acceptable attraction (group definition) |
-| m | MovingWillingness | - | Moving willingness upper limit (group definition) |
-| r | RetentionRate | - | Retention rate (group definition) |
+| Parameter | Property                    | Default | Description                                       |
+|-----------|-----------------------------|---------|---------------------------------------------------|
+| k         | SigmoidSteepness            | 1.0     | Sigmoid steepness, higher = faster transition     |
+| λ         | CostSensitivity             | 0.01    | Cost sensitivity, higher = faster decay           |
+| baseCost  | BaseMigrationCost           | 1.0     | Base cost per unit distance                       |
+| τ         | AttractionThreshold         | 0.0     | Attraction threshold (group definition)           |
+| α_min     | MinimumAcceptableAttraction | 0.0     | Minimum acceptable attraction (group definition)  |
+| m         | MovingWillingness           | -       | Moving willingness upper limit (group definition) |
+| r         | RetentionRate               | -       | Retention rate (group definition)                 |
 
 ### Usage Example
 
@@ -148,13 +151,17 @@ foreach (var flow in flows)
 ### Probabilistic Sampling
 
 #### Small Population (≤100)
+
 Binomial sampling, each person decides independently:
+
 ```csharp
 migrants = population.Count(person => random.NextDouble() < probability);
 ```
 
 #### Large Population (>100)
+
 Normal approximation:
+
 ```csharp
 mean = population × probability
 variance = population × probability × (1 - probability)
@@ -178,13 +185,18 @@ Implements multiple factor feedback mechanisms, dynamically updating city factor
 **Applicable Factors**: Doctors per capita, public services, education resources
 
 **Formula**:
+
 ```
 newValue = oldValue / populationRatio
 ```
+
 **Description**: Assumes total resources unchanged, per-capita value inversely proportional to population.
+
 #### 2. PriceCost
+
 **Applicable Factors**: Housing price, rent, cost of living
 **Formula**:
+
 ```
 ΔPrice = ε × (ΔP / P) × currentValue
 newValue = currentValue + ΔPrice
@@ -194,10 +206,14 @@ Where:
   ΔP = population change
   P = original population
 ```
+
 **Description**: Price change proportional to population change ratio.
+
 #### 3. NegativeExternality
+
 **Applicable Factors**: Pollution, congestion, crime rate
 **Formula**:
+
 ```
 newValue = oldValue + β × ΔP
 
@@ -205,10 +221,14 @@ Where:
   β = externality coefficient (default 0.0001)
   ΔP = population change
 ```
+
 **Description**: Negative externalities increase linearly with population.
+
 #### 4. PositiveExternality
+
 **Applicable Factors**: Economic output, innovation capacity, employment opportunities
 **Formula**:
+
 ```
 saturationRatio = currentPopulation / saturationPoint
 growthFactor = 1 - tanh(saturationRatio)
@@ -219,18 +239,26 @@ newValue = oldValue × (1 + actualGrowth)
 Where:
   saturationPoint = saturation population (default 1,000,000)
 ```
+
 **Description**: Positive externalities grow but with diminishing returns as population approaches saturation.
+
 #### 5. None
+
 Factor value unchanged with population.
+
 ### Smoothing
+
 All updates undergo exponential smoothing:
+
 ```
 finalValue = currentValue + α × (targetValue - currentValue)
 
 Where:
   α = SmoothingFactor ∈ [0,1] (default 0.2)
 ```
+
 ### Usage Example
+
 ```csharp
 // Define feedback rules
 var feedbackRules = new List<FactorFeedbackRule>

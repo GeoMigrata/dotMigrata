@@ -52,18 +52,14 @@ public sealed class SnapshotService : ISnapshotService
         // First, import factor definitions and build lookup by snapshot key
         var factorLookup = new Dictionary<string, FactorDefinition>();
         foreach (var (key, factorSnapshot) in snapshot.Initialization.FactorDefinitions)
-        {
             factorLookup[key] = ImportFactorDefinition(factorSnapshot);
-        }
 
         var factorDefinitions = factorLookup.Values.ToList();
 
         // Then, import population group definitions (which reference factors)
         var popGroupLookup = new Dictionary<string, PopulationGroupDefinition>();
         foreach (var (key, popGroupSnapshot) in snapshot.Initialization.PopulationGroupDefinitions)
-        {
             popGroupLookup[key] = ImportPopulationGroupDefinition(popGroupSnapshot, factorLookup);
-        }
 
         var populationGroupDefinitions = popGroupLookup.Values.ToList();
 
@@ -254,7 +250,7 @@ public sealed class SnapshotService : ISnapshotService
 
     private static FactorDefinition ImportFactorDefinition(FactorDefinitionSnapshot snapshot)
     {
-        if (!Enum.TryParse<FactorType>(snapshot.Type, ignoreCase: true, out var factorType))
+        if (!Enum.TryParse<FactorType>(snapshot.Type, true, out var factorType))
             throw new InvalidOperationException($"Invalid factor type: {snapshot.Type}");
 
         if (!double.TryParse(snapshot.MinValue, out var minValue))
@@ -273,7 +269,7 @@ public sealed class SnapshotService : ISnapshotService
                 MaxValue = maxValue,
                 Transform = transform
             };
-        if (!Enum.TryParse<TransformType>(snapshot.Transform, ignoreCase: true, out var transformType))
+        if (!Enum.TryParse<TransformType>(snapshot.Transform, true, out var transformType))
             throw new InvalidOperationException($"Invalid transform type: {snapshot.Transform}");
         transform = transformType;
 
@@ -301,7 +297,7 @@ public sealed class SnapshotService : ISnapshotService
             FactorType? overriddenType = null;
             if (!string.IsNullOrEmpty(sensitivitySnapshot.OverriddenFactorType))
             {
-                if (!Enum.TryParse<FactorType>(sensitivitySnapshot.OverriddenFactorType, ignoreCase: true,
+                if (!Enum.TryParse<FactorType>(sensitivitySnapshot.OverriddenFactorType, true,
                         out var parsedType))
                     throw new InvalidOperationException(
                         $"Invalid overridden factor type: {sensitivitySnapshot.OverriddenFactorType}");

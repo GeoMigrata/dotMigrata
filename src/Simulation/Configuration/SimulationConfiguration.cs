@@ -5,7 +5,10 @@
 /// </summary>
 public sealed record SimulationConfiguration
 {
+    private readonly double _feedbackSmoothingFactor = 0.3;
     private readonly int _maxSteps;
+
+    private readonly double _stabilizationThreshold = .01;
 
     /// <summary>
     /// Maximum number of steps/ticks to run the simulation.
@@ -17,8 +20,6 @@ public sealed record SimulationConfiguration
             ? value
             : throw new ArgumentException("MaxSteps must be greater than 0.", nameof(value));
     }
-
-    private readonly double _stabilizationThreshold = .01;
 
     /// <summary>
     /// Tolerance for determining if the simulation has stabilized.
@@ -36,8 +37,6 @@ public sealed record SimulationConfiguration
     /// Whether to check for stabilization and potentially end early.
     /// </summary>
     public bool CheckStabilization { get; init; } = true;
-
-    private readonly double _feedbackSmoothingFactor = 0.3;
 
     /// <summary>
     /// Smoothing factor for city factor feedback updates (0-1).

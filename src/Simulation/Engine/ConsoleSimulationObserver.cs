@@ -30,12 +30,10 @@ public class ConsoleSimulationObserver : ISimulationObserver
 
         if (_verbose && migrationFlows.Count > 0)
         {
-            Console.WriteLine($"  Migration details:");
+            Console.WriteLine("  Migration details:");
             foreach (var flow in migrationFlows)
-            {
                 Console.WriteLine($"    {flow.SourceCity.DisplayName} -> {flow.DestinationCity.DisplayName}: " +
                                   $"{flow.MigrantCount} people ({flow.PopulationGroupDefinition.DisplayName})");
-            }
         }
 
         Console.WriteLine();

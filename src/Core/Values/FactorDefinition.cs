@@ -7,10 +7,11 @@ namespace dotGeoMigrata.Core.Values;
 /// </summary>
 public record FactorDefinition
 {
-    public required string DisplayName { get; init; }
-    public required FactorType Type { get; init; }
+    private readonly double _maxValue;
 
     private readonly double _minValue;
+    public required string DisplayName { get; init; }
+    public required FactorType Type { get; init; }
 
     public required double MinValue
     {
@@ -22,8 +23,6 @@ public record FactorDefinition
             _minValue = value;
         }
     }
-
-    private readonly double _maxValue;
 
     public required double MaxValue
     {

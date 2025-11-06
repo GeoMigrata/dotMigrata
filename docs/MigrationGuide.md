@@ -5,6 +5,7 @@ This guide helps you migrate existing code from the original `SimulationEngine` 
 ## Why Migrate?
 
 The new pipeline architecture provides:
+
 - ✅ **Enhanced Extensibility** - Add custom stages effortlessly
 - ✅ **Clearer Structure** - Single-responsibility stages
 - ✅ **Advanced Algorithms** - Based on LogicModel.md specification
@@ -16,6 +17,7 @@ The new pipeline architecture provides:
 ### Step 1: Understand the Differences
 
 #### Legacy Code (Still Supported)
+
 ```csharp
 var engine = new SimulationEngine(world, configuration);
 engine.AddObserver(new ConsoleSimulationObserver());
@@ -23,6 +25,7 @@ engine.Run();
 ```
 
 #### New Architecture (Recommended)
+
 ```csharp
 var engine = new SimulationEngineBuilder()
     .WithWorld(world)
@@ -91,6 +94,7 @@ var engine = new SimulationEngineBuilder()
 #### Add Population Group Attributes
 
 Legacy:
+
 ```csharp
 var groupDef = new PopulationGroupDefinition(sensitivities)
 {
@@ -101,6 +105,7 @@ var groupDef = new PopulationGroupDefinition(sensitivities)
 ```
 
 Enhanced (Optional attributes):
+
 ```csharp
 var groupDef = new PopulationGroupDefinition(sensitivities)
 {
@@ -116,6 +121,7 @@ var groupDef = new PopulationGroupDefinition(sensitivities)
 #### Add City Capacity
 
 Legacy:
+
 ```csharp
 var city = new City(factorValues, populationValues)
 {
@@ -126,6 +132,7 @@ var city = new City(factorValues, populationValues)
 ```
 
 Enhanced (Optional capacity):
+
 ```csharp
 var city = new City(factorValues, populationValues)
 {
@@ -213,16 +220,22 @@ var engine = new SimulationEngineBuilder()
 ## Frequently Asked Questions
 
 ### Q1: Does legacy code still work?
+
 **A:** Yes. `SimulationEngine` remains unchanged. All existing code works without modification.
 
 ### Q2: Are results identical between old and new?
-**A:** Not exactly. Enhanced implementations use more precise algorithms (per LogicModel.md), but using `UseOriginal*` methods maintains legacy behavior.
+
+**A:** Not exactly. Enhanced implementations use more precise algorithms (per LogicModel.md), but using `UseOriginal*`
+methods maintains legacy behavior.
 
 ### Q3: Must all components be upgraded simultaneously?
+
 **A:** No. You can mix original and enhanced calculators.
 
 ### Q4: How to validate migration results?
+
 **A:**
+
 1. Run with original calculators and record results
 2. Switch to enhanced versions one at a time
 3. Compare differences
@@ -230,7 +243,9 @@ var engine = new SimulationEngineBuilder()
 5. Add logging to observe stage outputs
 
 ### Q5: Performance impact?
-**A:** Pipeline overhead is minimal. Enhanced algorithms may be slightly slower due to added complexity, but differences are typically negligible.
+
+**A:** Pipeline overhead is minimal. Enhanced algorithms may be slightly slower due to added complexity, but differences
+are typically negligible.
 
 ## Migration Checklist
 
@@ -248,6 +263,7 @@ var engine = new SimulationEngineBuilder()
 ## Example: Complete Migration
 
 ### Before
+
 ```csharp
 // Create world
 var world = new World(cities, factorDefinitions, populationGroupDefinitions)
@@ -273,6 +289,7 @@ Console.WriteLine($"Simulation completed: {finalState.CurrentStep} steps");
 ```
 
 ### After
+
 ```csharp
 // Create world (with capacity)
 var cities = CreateCitiesWithCapacity();  // Added capacity property
@@ -337,6 +354,7 @@ Recommendations after migrating:
 ## Summary
 
 Benefits of migrating to the new architecture:
+
 - ✅ Modern design patterns
 - ✅ Enhanced capabilities
 - ✅ Better extensibility

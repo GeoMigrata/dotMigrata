@@ -9,8 +9,8 @@
   - Lowercase attributes (id, ref, version) are for XML structure
   - PascalCase attributes (DisplayName, Intensity) are for data that maps to C# DTOs
 -->
-<World Version="1.0" DisplayName="Mega-City Region"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<World xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="1.0"
+       DisplayName="Mega-City Region"
        xsi:noNamespaceSchemaLocation="SnapshotSchema.xsd">
 
     <World.FactorDefinitions>

@@ -4,20 +4,25 @@ This directory contains the simulation engine that orchestrates the population m
 
 ## Overview
 
-The Simulation layer provides the orchestration framework that runs the step-by-step simulation, managing state, configuration, and observation of the simulation process.
+The Simulation layer provides the orchestration framework that runs the step-by-step simulation, managing state,
+configuration, and observation of the simulation process.
 
 ## Components
 
 ### 1. SimulationEngine
+
 The main orchestrator that coordinates all simulation activities.
 
 ### 2. SimulationConfiguration
+
 Configuration parameters that control simulation behavior.
 
 ### 3. SimulationState
+
 Tracks the current state and statistics of a running simulation.
 
 ### 4. ISimulationObserver
+
 Observer interface for monitoring simulation progress.
 
 ---
@@ -27,6 +32,7 @@ Observer interface for monitoring simulation progress.
 ### Architecture
 
 The `SimulationEngine` follows the **Observer Pattern** and coordinates three main calculators:
+
 - `AttractionCalculator` - Computes city attractiveness
 - `MigrationCalculator` - Determines migration flows
 - `FeedbackCalculator` - Updates city factors
@@ -177,12 +183,14 @@ void Step()
 Controls simulation behavior with the following parameters:
 
 #### MaxSteps
+
 - **Type**: `int` (required)
 - **Range**: > 0
 - **Description**: Maximum number of simulation steps to run
 - **Example**: `MaxSteps = 100`
 
 #### StabilizationThreshold
+
 - **Type**: `double`
 - **Range**: [0, 1]
 - **Default**: 0.01
@@ -191,12 +199,14 @@ Controls simulation behavior with the following parameters:
 - **Example**: If threshold is 0.01, simulation stabilizes when < 1% of population migrates per step
 
 #### CheckStabilization
+
 - **Type**: `bool`
 - **Default**: `true`
 - **Description**: Whether to check for stabilization and potentially end early
 - **Example**: `CheckStabilization = true`
 
 #### FeedbackSmoothingFactor
+
 - **Type**: `double`
 - **Range**: [0, 1]
 - **Default**: 0.3
@@ -206,6 +216,7 @@ Controls simulation behavior with the following parameters:
     - 0.3 = gradual changes (recommended)
 
 #### RandomSeed
+
 - **Type**: `int?` (nullable)
 - **Default**: `null` (random seed)
 - **Description**: Seed for random number generator
@@ -265,18 +276,21 @@ Allows external components to monitor simulation progress without coupling to th
 ```csharp
 void OnSimulationStarted(SimulationState state)
 ```
+
 - Called once at the beginning
 - Receives initial state
 
 ```csharp
 void OnStepCompleted(SimulationState state, IReadOnlyList<MigrationFlow> flows)
 ```
+
 - Called after each step
 - Receives updated state and migration flows from that step
 
 ```csharp
 void OnSimulationCompleted(SimulationState state)
 ```
+
 - Called once at the end
 - Receives final state
 
@@ -285,9 +299,11 @@ void OnSimulationCompleted(SimulationState state)
 A simple console logger that outputs simulation progress.
 
 **Constructor Parameters:**
+
 - `verbose` (bool): If true, shows detailed migration flows
 
 **Example Output:**
+
 ```
 === Simulation Started ===
 Initial Step: 0
@@ -314,6 +330,7 @@ Stabilized: true
 ### Custom Observers
 
 You can implement custom observers for:
+
 - Data collection and analysis
 - Visualization updates
 - Logging to files or databases
@@ -321,6 +338,7 @@ You can implement custom observers for:
 - Triggering events based on thresholds
 
 **Example:**
+
 ```csharp
 public class DataCollectorObserver : ISimulationObserver
 {
@@ -373,6 +391,7 @@ bool CheckStabilization()
 ### Why It Matters
 
 Stabilization detection allows simulations to:
+
 1. **End early** when equilibrium is reached (save computation)
 2. **Identify convergence** to steady state
 3. **Study equilibrium** properties of the system
@@ -390,6 +409,7 @@ event EventHandler<SimulationStepEventArgs> StepCompleted
 ```
 
 **EventArgs Properties:**
+
 - `State`: Current simulation state
 - `MigrationFlows`: Flows from this step
 
@@ -400,6 +420,7 @@ event EventHandler<SimulationCompletedEventArgs> SimulationCompleted
 ```
 
 **EventArgs Properties:**
+
 - `FinalState`: Final simulation state
 
 ---
@@ -467,6 +488,7 @@ engine.Run();
 ### Computational Complexity
 
 Per step, for N cities and P population groups:
+
 - **Attraction Calculation**: O(N × P × F) where F is average factors per city
 - **Migration Calculation**: O(N × P × N) = O(N² × P)
 - **Feedback Application**: O(N)

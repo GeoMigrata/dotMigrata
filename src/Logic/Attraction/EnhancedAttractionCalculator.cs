@@ -29,8 +29,8 @@ public sealed class EnhancedAttractionCalculator : IAttractionCalculator
         ArgumentNullException.ThrowIfNull(groupDefinition, nameof(groupDefinition));
         ArgumentNullException.ThrowIfNull(world, nameof(world));
 
-        double pullSum = 0.0;
-        double pushSum = 0.0;
+        var pullSum = 0.0;
+        var pushSum = 0.0;
 
         // Calculate weighted sum of normalized factors, separated by pull/push direction
         foreach (var sensitivity in groupDefinition.Sensitivities)
@@ -49,16 +49,12 @@ public sealed class EnhancedAttractionCalculator : IAttractionCalculator
 
             // Separate pull and push factors according to LogicModel.md
             if (factorType == FactorType.Positive)
-            {
                 // Pull factor: higher normalized value increases attraction
                 pullSum += weightedContribution;
-            }
             else
-            {
                 // Push factor: higher normalized value decreases attraction (repels)
                 // Push contribution uses (1 - normalized_value) so that higher push values reduce attraction
                 pushSum += (1.0 - normalizedValue) * sensitivity.Sensitivity;
-            }
         }
 
         // Calculate comprehensive attraction index: Attraction(C,G) = A_G * (Pull - Push)

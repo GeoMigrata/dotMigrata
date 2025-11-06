@@ -36,9 +36,7 @@ public sealed class FeedbackStage : ISimulationStage
             // Retrieve previous populations from migration application stage
             if (!context.SharedData.TryGetValue("PreviousPopulations", out var populationsObj) ||
                 populationsObj is not Dictionary<City, int> previousPopulations)
-            {
                 return SimulationStageResult.Failed("Previous populations data not found from previous stage");
-            }
 
             // Apply feedback to each city
             var updatedCities = 0;

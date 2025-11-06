@@ -6,7 +6,6 @@ using dotGeoMigrata.Logic.Migration;
 using dotGeoMigrata.Simulation.Configuration;
 using dotGeoMigrata.Simulation.Engine;
 using dotGeoMigrata.Simulation.Pipeline;
-using dotGeoMigrata.Simulation.Pipeline.Stages;
 
 namespace dotGeoMigrata.Simulation.Builders;
 
@@ -15,14 +14,14 @@ namespace dotGeoMigrata.Simulation.Builders;
 /// </summary>
 public sealed class SimulationEngineBuilder
 {
-    private World? _world;
-    private SimulationConfiguration? _configuration;
-    private IAttractionCalculator? _attractionCalculator;
-    private IMigrationCalculator? _migrationCalculator;
-    private IFeedbackCalculator? _feedbackCalculator;
-    private ISimulationPipeline? _customPipeline;
-    private bool _usePipelineEngine = true;
     private readonly List<ISimulationObserver> _observers = [];
+    private IAttractionCalculator? _attractionCalculator;
+    private SimulationConfiguration? _configuration;
+    private ISimulationPipeline? _customPipeline;
+    private IFeedbackCalculator? _feedbackCalculator;
+    private IMigrationCalculator? _migrationCalculator;
+    private bool _usePipelineEngine = true;
+    private World? _world;
 
     /// <summary>
     /// Sets the world to simulate.
@@ -53,7 +52,7 @@ public sealed class SimulationEngineBuilder
     /// </summary>
     /// <returns>This builder instance for chaining.</returns>
     /// <remarks>
-    /// This method is deprecated. Use <see cref="UsePipelineEngine"/> and enhanced calculators instead.
+    /// This method is deprecated. Use <see cref="UsePipelineEngine" /> and enhanced calculators instead.
     /// The original engine lacks the modularity and enhanced algorithms of the pipeline version.
     /// </remarks>
     [Obsolete(
@@ -91,7 +90,7 @@ public sealed class SimulationEngineBuilder
     /// </summary>
     /// <returns>This builder instance for chaining.</returns>
     /// <remarks>
-    /// This method is deprecated. Use <see cref="UseEnhancedAttractionCalculator"/> instead.
+    /// This method is deprecated. Use <see cref="UseEnhancedAttractionCalculator" /> instead.
     /// The enhanced version implements the pull-push factor model per LogicModel.md specification.
     /// </remarks>
     [Obsolete(
@@ -129,7 +128,7 @@ public sealed class SimulationEngineBuilder
     /// </summary>
     /// <returns>This builder instance for chaining.</returns>
     /// <remarks>
-    /// This method is deprecated. Use <see cref="UseEnhancedMigrationCalculator"/> instead.
+    /// This method is deprecated. Use <see cref="UseEnhancedMigrationCalculator" /> instead.
     /// The enhanced version implements sigmoid probability, cost decay, and capacity constraints per LogicModel.md.
     /// </remarks>
     [Obsolete(
@@ -178,7 +177,7 @@ public sealed class SimulationEngineBuilder
     /// </summary>
     /// <returns>This builder instance for chaining.</returns>
     /// <remarks>
-    /// This method is deprecated. Use <see cref="UseEnhancedFeedbackCalculator"/> instead.
+    /// This method is deprecated. Use <see cref="UseEnhancedFeedbackCalculator" /> instead.
     /// The enhanced version implements multiple feedback mechanisms including per-capita resources,
     /// price elasticity, and externalities per LogicModel.md specification.
     /// </remarks>
@@ -284,10 +283,7 @@ public sealed class SimulationEngineBuilder
 
     private PipelineSimulationEngine BuildPipelineEngine()
     {
-        if (_customPipeline != null)
-        {
-            return new PipelineSimulationEngine(_world!, _configuration!, _customPipeline);
-        }
+        if (_customPipeline != null) return new PipelineSimulationEngine(_world!, _configuration!, _customPipeline);
 
         // Use default calculators if not specified
         var attractionCalc = _attractionCalculator ?? new EnhancedAttractionCalculator();

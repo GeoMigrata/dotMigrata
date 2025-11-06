@@ -12,35 +12,19 @@ namespace dotGeoMigrata.Simulation.Engine;
 /// This is the original implementation maintained for backward compatibility.
 /// </summary>
 /// <remarks>
-/// This implementation is deprecated. Use <see cref="PipelineSimulationEngine"/> for new projects.
+/// This implementation is deprecated. Use <see cref="PipelineSimulationEngine" /> for new projects.
 /// The pipeline version provides better modularity, extensibility, and supports enhanced calculators.
-/// See <see cref="Builders.SimulationEngineBuilder"/> for easy configuration.
+/// See <see cref="Builders.SimulationEngineBuilder" /> for easy configuration.
 /// </remarks>
 [Obsolete("Use PipelineSimulationEngine for new projects. This version is maintained for backward compatibility only.")]
 public sealed class SimulationEngine
 {
-    private readonly World _world;
-    private readonly SimulationConfiguration _configuration;
-
     private readonly AttractionCalculator _attractionCalculator;
-    private readonly MigrationCalculator _migrationCalculator;
+    private readonly SimulationConfiguration _configuration;
     private readonly FeedbackCalculator _feedbackCalculator;
+    private readonly MigrationCalculator _migrationCalculator;
     private readonly List<ISimulationObserver> _observers;
-
-    /// <summary>
-    /// Gets the current simulation state.
-    /// </summary>
-    public SimulationState State { get; }
-
-    /// <summary>
-    /// Event raised when a simulation step is completed.
-    /// </summary>
-    public event EventHandler<SimulationStepEventArgs>? StepCompleted;
-
-    /// <summary>
-    /// Event raised when the simulation is completed.
-    /// </summary>
-    public event EventHandler<SimulationCompletedEventArgs>? SimulationCompleted;
+    private readonly World _world;
 
     public SimulationEngine(World world, SimulationConfiguration configuration)
     {
@@ -57,6 +41,21 @@ public sealed class SimulationEngine
         };
         _observers = [];
     }
+
+    /// <summary>
+    /// Gets the current simulation state.
+    /// </summary>
+    public SimulationState State { get; }
+
+    /// <summary>
+    /// Event raised when a simulation step is completed.
+    /// </summary>
+    public event EventHandler<SimulationStepEventArgs>? StepCompleted;
+
+    /// <summary>
+    /// Event raised when the simulation is completed.
+    /// </summary>
+    public event EventHandler<SimulationCompletedEventArgs>? SimulationCompleted;
 
     /// <summary>
     /// Adds an observer to monitor simulation progress.
@@ -118,18 +117,16 @@ public sealed class SimulationEngine
 
         // For each city and each population group definition, calculate migrations
         foreach (var city in _world.Cities)
+        foreach (var groupDefinition in _world.PopulationGroupDefinitions)
         {
-            foreach (var groupDefinition in _world.PopulationGroupDefinitions)
-            {
-                // 1. Calculate attraction for all cities
-                var attractions = _attractionCalculator.CalculateAttractionForAllCities(_world, groupDefinition);
+            // 1. Calculate attraction for all cities
+            var attractions = _attractionCalculator.CalculateAttractionForAllCities(_world, groupDefinition);
 
-                // 2. Calculate migration flows from this city
-                var flows = _migrationCalculator.CalculateMigrationFlows(
-                    city, groupDefinition, attractions, _world, State.Random);
+            // 2. Calculate migration flows from this city
+            var flows = _migrationCalculator.CalculateMigrationFlows(
+                city, groupDefinition, attractions, _world, State.Random);
 
-                allMigrationFlows.AddRange(flows);
-            }
+            allMigrationFlows.AddRange(flows);
         }
 
         // 3. Apply all migration flows
@@ -174,9 +171,7 @@ public sealed class SimulationEngine
             var totalOutflow = sourceGroup.Sum(f => f.MigrantCount);
 
             if (sourceCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) && groupValue is not null)
-            {
                 groupValue.Population = Math.Max(0, groupValue.Population - totalOutflow);
-            }
         }
 
         // Group flows by destination city and population group definition
@@ -191,9 +186,7 @@ public sealed class SimulationEngine
             var totalInflow = destGroup.Sum(f => f.MigrantCount);
 
             if (destCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) && groupValue is not null)
-            {
                 groupValue.Population += totalInflow;
-            }
         }
 
         return flows.Sum(f => f.MigrantCount);

@@ -8,7 +8,7 @@ namespace dotGeoMigrata.Logic.Feedback;
 /// </summary>
 /// This is the original implementation maintained for backward compatibility.
 /// <remarks>
-/// This implementation is deprecated. Use <see cref="EnhancedFeedbackCalculator"/> for new projects.
+/// This implementation is deprecated. Use <see cref="EnhancedFeedbackCalculator" /> for new projects.
 /// The enhanced version implements multiple feedback mechanisms including per-capita resources,
 /// price elasticity, and externalities per LogicModel.md specification.
 /// </remarks>

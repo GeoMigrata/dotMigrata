@@ -92,12 +92,8 @@ public sealed class EnhancedFeedbackCalculator : IFeedbackCalculator
     public EnhancedFeedbackCalculator(IEnumerable<FactorFeedbackRule>? feedbackRules = null)
     {
         if (feedbackRules != null)
-        {
             foreach (var rule in feedbackRules)
-            {
                 _feedbackRules[rule.Factor] = rule;
-            }
-        }
     }
 
     /// <inheritdoc />
@@ -107,17 +103,6 @@ public sealed class EnhancedFeedbackCalculator : IFeedbackCalculator
         set => _smoothingFactor = value is >= 0 and <= 1
             ? value
             : throw new ArgumentException("SmoothingFactor must be between 0 and 1.", nameof(value));
-    }
-
-    /// <summary>
-    /// Adds or updates a feedback rule for a specific factor.
-    /// </summary>
-    /// <param name="rule">The feedback rule to add.</param>
-    /// <exception cref="ArgumentNullException">Thrown when rule is null.</exception>
-    public void AddFeedbackRule(FactorFeedbackRule rule)
-    {
-        ArgumentNullException.ThrowIfNull(rule);
-        _feedbackRules[rule.Factor] = rule;
     }
 
     /// <inheritdoc />
@@ -168,6 +153,17 @@ public sealed class EnhancedFeedbackCalculator : IFeedbackCalculator
             // Update the factor intensity in the city
             city.UpdateFactorIntensity(factorValue.Definition, smoothedValue);
         }
+    }
+
+    /// <summary>
+    /// Adds or updates a feedback rule for a specific factor.
+    /// </summary>
+    /// <param name="rule">The feedback rule to add.</param>
+    /// <exception cref="ArgumentNullException">Thrown when rule is null.</exception>
+    public void AddFeedbackRule(FactorFeedbackRule rule)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+        _feedbackRules[rule.Factor] = rule;
     }
 
     /// <summary>

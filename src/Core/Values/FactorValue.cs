@@ -2,9 +2,8 @@
 
 public sealed record FactorValue
 {
-    public required FactorDefinition Definition { get; init; }
-
     private double _intensity;
+    public required FactorDefinition Definition { get; init; }
 
     public required double Intensity
     {

@@ -19,6 +19,7 @@ public sealed class PopulationGroupValue
     public int Population
     {
         get => _population;
-        set => _population = value >= 0 ? value : throw new ArgumentException("Count cannot be negative.", nameof(value));
+        set => _population =
+            value >= 0 ? value : throw new ArgumentException("Count cannot be negative.", nameof(value));
     }
 }

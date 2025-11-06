@@ -82,14 +82,18 @@ public sealed class SimulationStageResult
     /// <param name="message">Optional success message.</param>
     /// <param name="data">Optional result data.</param>
     /// <returns>A successful stage result.</returns>
-    public static SimulationStageResult Successful(string? message = null, object? data = null) =>
-        new() { Success = true, Message = message, Data = data };
+    public static SimulationStageResult Successful(string? message = null, object? data = null)
+    {
+        return new SimulationStageResult { Success = true, Message = message, Data = data };
+    }
 
     /// <summary>
     /// Creates a failed result.
     /// </summary>
     /// <param name="message">Error message.</param>
     /// <returns>A failed stage result.</returns>
-    public static SimulationStageResult Failed(string message) =>
-        new() { Success = false, Message = message };
+    public static SimulationStageResult Failed(string message)
+    {
+        return new SimulationStageResult { Success = false, Message = message };
+    }
 }

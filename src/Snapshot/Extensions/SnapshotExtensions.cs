@@ -51,10 +51,8 @@ internal static class SnapshotExtensions
     private static int IndexOf<T>(this IReadOnlyList<T> list, T item) where T : class
     {
         for (var i = 0; i < list.Count; i++)
-        {
             if (ReferenceEquals(list[i], item))
                 return i;
-        }
 
         return -1;
     }

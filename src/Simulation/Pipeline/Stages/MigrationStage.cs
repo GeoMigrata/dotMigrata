@@ -1,7 +1,6 @@
 ﻿using dotGeoMigrata.Logic.Attraction;
 using dotGeoMigrata.Logic.Interfaces;
 using dotGeoMigrata.Logic.Migration;
-using dotGeoMigrata.Simulation.Pipeline;
 
 namespace dotGeoMigrata.Simulation.Pipeline.Stages;
 
@@ -38,29 +37,25 @@ public sealed class MigrationStage : ISimulationStage
             // Retrieve attractions from previous stage
             if (!context.SharedData.TryGetValue("Attractions", out var attractionsObj) ||
                 attractionsObj is not Dictionary<string, IReadOnlyList<AttractionResult>> attractionsDict)
-            {
                 return SimulationStageResult.Failed("Attractions data not found from previous stage");
-            }
 
             var allMigrationFlows = new List<MigrationFlow>();
 
             // For each city and each population group definition, calculate migrations
             foreach (var city in context.World.Cities)
+            foreach (var groupDefinition in context.World.PopulationGroupDefinitions)
             {
-                foreach (var groupDefinition in context.World.PopulationGroupDefinitions)
-                {
-                    if (!attractionsDict.TryGetValue(groupDefinition.DisplayName, out var attractions))
-                        continue;
+                if (!attractionsDict.TryGetValue(groupDefinition.DisplayName, out var attractions))
+                    continue;
 
-                    var flows = _calculator.CalculateMigrationFlows(
-                        city,
-                        groupDefinition,
-                        attractions,
-                        context.World,
-                        context.Random);
+                var flows = _calculator.CalculateMigrationFlows(
+                    city,
+                    groupDefinition,
+                    attractions,
+                    context.World,
+                    context.Random);
 
-                    allMigrationFlows.AddRange(flows);
-                }
+                allMigrationFlows.AddRange(flows);
             }
 
             // Store flows in shared data for next stages

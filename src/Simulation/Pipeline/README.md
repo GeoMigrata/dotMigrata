@@ -2,7 +2,9 @@
 
 ## Overview
 
-The new simulation engine uses a modern pipeline architecture, providing enhanced extensibility, modularity, and low coupling. The pipeline architecture decomposes the simulation workflow into independent stages, each responsible for specific functionality.
+The new simulation engine uses a modern pipeline architecture, providing enhanced extensibility, modularity, and low
+coupling. The pipeline architecture decomposes the simulation workflow into independent stages, each responsible for
+specific functionality.
 
 ## Core Components
 
@@ -54,15 +56,18 @@ public interface ISimulationPipeline
 **Purpose**: Calculate city attraction for all population groups
 
 **Input**:
+
 - World (cities, factors, population group definitions)
 - IAttractionCalculator (attraction calculator)
 
 **Output**:
+
 - SharedData["Attractions"] - Attraction results dictionary
     - Key: Population group name
     - Value: List of attraction results for all cities
 
 **Calculators**:
+
 - `AttractionCalculator` - Original implementation
 - `EnhancedAttractionCalculator` - Enhanced (pull-push model)
 
@@ -71,13 +76,16 @@ public interface ISimulationPipeline
 **Purpose**: Calculate migration flows based on attraction differences
 
 **Input**:
+
 - SharedData["Attractions"] - Attraction results from previous stage
 - IMigrationCalculator (migration calculator)
 
 **Output**:
+
 - SharedData["MigrationFlows"] - List of migration flows
 
 **Calculators**:
+
 - `MigrationCalculator` - Original implementation
 - `EnhancedMigrationCalculator` - Enhanced (sigmoid probability, cost decay)
 
@@ -86,13 +94,16 @@ public interface ISimulationPipeline
 **Purpose**: Apply migration flows, update city populations
 
 **Input**:
+
 - SharedData["MigrationFlows"] - Migration flow list
 
 **Output**:
+
 - SharedData["PreviousPopulations"] - City population dictionary before migration
 - SharedData["TotalMigrants"] - Total migrant count
 
 **Logic**:
+
 1. Record pre-migration city populations
 2. Group by source city, reduce population (emigration)
 3. Group by destination city, increase population (immigration)
@@ -103,13 +114,16 @@ public interface ISimulationPipeline
 **Purpose**: Update city factors based on population changes
 
 **Input**:
+
 - SharedData["PreviousPopulations"] - Pre-migration population
 - IFeedbackCalculator (feedback calculator)
 
 **Output**:
+
 - Updated city factor values
 
 **Calculators**:
+
 - `FeedbackCalculator` - Original implementation
 - `EnhancedFeedbackCalculator` - Enhanced (multiple feedback mechanisms)
 
@@ -210,26 +224,31 @@ public class CustomAnalysisStage : ISimulationStage
 ## Advantages
 
 ### 1. High Modularity
+
 - Single-responsibility stages
 - Independent development, testing, and maintenance
 - Easy to understand and debug
 
 ### 2. Extensibility
+
 - Add new stages effortlessly
 - Control execution order via Order property
 - Insert custom logic anywhere
 
 ### 3. Low Coupling
+
 - Stages communicate via SharedData
 - No direct dependencies between stages
 - Use interfaces instead of concrete implementations
 
 ### 4. Flexible Configuration
+
 - Choose different calculator implementations
 - Support fully custom pipelines
 - Builder pattern simplifies configuration
 
 ### 5. Testability
+
 - Each stage can be unit tested independently
 - Mock context and shared data
 - Simplified integration testing
@@ -237,6 +256,7 @@ public class CustomAnalysisStage : ISimulationStage
 ## Backward Compatibility
 
 The original `SimulationEngine` remains intact and functional. Users can:
+
 - Continue using `SimulationEngine` (legacy non-pipeline version)
 - Migrate to `PipelineSimulationEngine` (new pipeline version)
 - Choose flexibly via `SimulationEngineBuilder`

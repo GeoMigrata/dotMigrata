@@ -1,6 +1,5 @@
 ﻿using dotGeoMigrata.Logic.Attraction;
 using dotGeoMigrata.Logic.Interfaces;
-using dotGeoMigrata.Simulation.Pipeline;
 
 namespace dotGeoMigrata.Simulation.Pipeline.Stages;
 

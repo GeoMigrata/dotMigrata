@@ -114,7 +114,6 @@ public sealed class EnhancedMigrationCalculator : IMigrationCalculator
             var actualMigrants = SampleMigrants(potentialMigrants, effectiveProbability, random);
 
             if (actualMigrants > 0)
-            {
                 flows.Add(new MigrationFlow
                 {
                     SourceCity = sourceCity,
@@ -124,7 +123,6 @@ public sealed class EnhancedMigrationCalculator : IMigrationCalculator
                     MigrationProbability = effectiveProbability,
                     AttractionDifference = attractionDiff
                 });
-            }
         }
 
         // Apply capacity constraints if destinations have capacity limits
@@ -162,10 +160,8 @@ public sealed class EnhancedMigrationCalculator : IMigrationCalculator
 
         // For small populations (≤100), sample each individual independently
         if (totalPopulation <= 100)
-        {
             return Enumerable.Range(0, totalPopulation)
                 .Count(_ => random.NextDouble() < probability);
-        }
 
         // For larger populations, use normal approximation to binomial
         var mean = totalPopulation * probability;
@@ -226,10 +222,7 @@ public sealed class EnhancedMigrationCalculator : IMigrationCalculator
             foreach (var flow in destFlows)
             {
                 var adjustedCount = (int)Math.Floor(flow.MigrantCount * scalingFactor);
-                if (adjustedCount > 0)
-                {
-                    yield return flow with { MigrantCount = adjustedCount };
-                }
+                if (adjustedCount > 0) yield return flow with { MigrantCount = adjustedCount };
             }
         }
     }

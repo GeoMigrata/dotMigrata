@@ -1,6 +1,7 @@
 ﻿# Logic Layer Documentation
 
-This directory contains the core logic for calculating attraction, migration flows, and feedback effects in the simulation.
+This directory contains the core logic for calculating attraction, migration flows, and feedback effects in the
+simulation.
 
 ## Overview
 
@@ -16,7 +17,8 @@ The Logic layer consists of three main components:
 
 ### Algorithm Overview
 
-The `AttractionCalculator` computes how attractive a city is to a specific population group based on the city's factor values and the group's sensitivities.
+The `AttractionCalculator` computes how attractive a city is to a specific population group based on the city's factor
+values and the group's sensitivities.
 
 ### Calculation Steps
 
@@ -55,11 +57,13 @@ where:
 ### Example
 
 For a population group "Young Professionals" with sensitivities:
+
 - Income (Positive, sensitivity: 10)
 - Pollution (Negative, sensitivity: 8)
 - Public Services (Positive, sensitivity: 6)
 
 For a city with normalized values:
+
 - Income: 0.7
 - Pollution: 0.4
 - Public Services: 0.8
@@ -72,7 +76,8 @@ Attraction Score = (0.7 × 10) + (-0.4 × 8) + (0.8 × 6) = 7.0 - 3.2 + 4.8 = **
 
 ### Algorithm Overview
 
-The `MigrationCalculator` determines actual migration flows between cities based on attraction differences, distance costs, and probabilistic sampling.
+The `MigrationCalculator` determines actual migration flows between cities based on attraction differences, distance
+costs, and probabilistic sampling.
 
 ### Calculation Steps
 
@@ -129,11 +134,13 @@ The `MigrationCalculator` determines actual migration flows between cities based
 ### Example
 
 For a population group with:
+
 - Count: 10,000
 - MovingWillingness: 0.3
 - RetentionRate: 0.7
 
 From City A (attraction: 5.0) to City B (attraction: 8.0):
+
 - Distance: 500 km
 - AttractionDiff: 3.0
 - MigrationCost: 0.001 × 500 = 0.5
@@ -150,7 +157,8 @@ From City A (attraction: 5.0) to City B (attraction: 8.0):
 
 ### Algorithm Overview
 
-The `FeedbackCalculator` updates city factors after migration based on population changes. This creates a feedback loop where migration affects city conditions, which in turn affects future attraction.
+The `FeedbackCalculator` updates city factors after migration based on population changes. This creates a feedback loop
+where migration affects city conditions, which in turn affects future attraction.
 
 ### Design Principles
 
@@ -161,17 +169,23 @@ The `FeedbackCalculator` updates city factors after migration based on populatio
 ### Feedback Categories
 
 #### 1. Per-Capita Resources
+
 Factors like public services, healthcare, and education that are distributed among population:
+
 - **Effect**: Inversely proportional to population
 - **Example**: If population doubles, per-capita service quality decreases
 
 #### 2. Housing and Congestion
+
 Factors like housing costs, traffic congestion, and pollution:
+
 - **Effect**: Increases with population density
 - **Example**: More people → higher housing demand → higher costs
 
 #### 3. Economic Factors
+
 Factors like economic output, innovation, and job opportunities:
+
 - **Effect**: Complex relationship with population
 - **Positive**: Larger workforce, more innovation
 - **Negative**: Potential infrastructure strain
@@ -185,29 +199,35 @@ newValue = currentValue + smoothingFactor × (targetValue - currentValue)
 ```
 
 Where:
+
 - `smoothingFactor` ∈ [0, 1] (default: 0.3)
 - Higher smoothingFactor = more gradual changes
 
 ### Implementation Note
 
-The current `FeedbackCalculator` provides the framework and smoothing mechanism. The actual factor updates depend on the specific factors defined in each simulation. Users can extend this class or implement custom feedback logic based on their specific factor definitions.
+The current `FeedbackCalculator` provides the framework and smoothing mechanism. The actual factor updates depend on the
+specific factors defined in each simulation. Users can extend this class or implement custom feedback logic based on
+their specific factor definitions.
 
 ### Example Feedback Rules (Illustrative)
 
 For a city experiencing 20% population growth:
 
 **Per-Capita Resources:**
+
 ```
 newPublicServices = smooth(current, current × 0.83)  // ~17% decrease
 ```
 
 **Housing/Congestion:**
+
 ```
 newHousingCost = smooth(current, current × 1.15)  // ~15% increase
 newPollution = smooth(current, current × 1.10)    // ~10% increase
 ```
 
 **Economic:**
+
 ```
 newEconomicOutput = smooth(current, current × 1.18)  // ~18% increase
 ```
@@ -235,4 +255,5 @@ The three components work together in each simulation step:
 5. Repeat for next step
 ```
 
-This creates a dynamic feedback system where city characteristics drive migration, and migration reshapes city characteristics over time.
+This creates a dynamic feedback system where city characteristics drive migration, and migration reshapes city
+characteristics over time.
