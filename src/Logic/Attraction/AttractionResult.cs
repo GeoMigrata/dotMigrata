@@ -29,4 +29,16 @@ public sealed record AttractionResult
     /// Only valid after normalization across all cities.
     /// </summary>
     public double? NormalizedScore { get; init; }
+
+    /// <summary>
+    /// The pull component of the attraction score (positive factors).
+    /// Sum of weighted contributions from pull factors.
+    /// </summary>
+    public double PullComponent { get; init; }
+
+    /// <summary>
+    /// The push component of the attraction score (negative factors).
+    /// Sum of weighted contributions from push factors.
+    /// </summary>
+    public double PushComponent { get; init; }
 }

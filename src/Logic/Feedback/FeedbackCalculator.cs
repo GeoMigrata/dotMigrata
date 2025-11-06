@@ -1,11 +1,20 @@
 ﻿using dotGeoMigrata.Core.Entities;
+using dotGeoMigrata.Logic.Interfaces;
 
 namespace dotGeoMigrata.Logic.Feedback;
 
 /// <summary>
 /// Updates city factors based on migration feedback mechanisms.
 /// </summary>
-public sealed class FeedbackCalculator
+/// This is the original implementation maintained for backward compatibility.
+/// <remarks>
+/// This implementation is deprecated. Use <see cref="EnhancedFeedbackCalculator"/> for new projects.
+/// The enhanced version implements multiple feedback mechanisms including per-capita resources,
+/// price elasticity, and externalities per LogicModel.md specification.
+/// </remarks>
+[Obsolete("Use EnhancedFeedbackCalculator for new projects. " +
+          "This version is maintained for backward compatibility only.")]
+public sealed class FeedbackCalculator : IFeedbackCalculator
 {
     private double _smoothingFactor;
 
@@ -16,7 +25,7 @@ public sealed class FeedbackCalculator
     public double SmoothingFactor
     {
         get => _smoothingFactor;
-        init => _smoothingFactor = value is >= 0 and <= 1
+        set => _smoothingFactor = value is >= 0 and <= 1
             ? value
             : throw new ArgumentException("SmoothingFactor must be between 0 and 1.", nameof(value));
     }

@@ -1,13 +1,21 @@
 ﻿using dotGeoMigrata.Core.Entities;
 using dotGeoMigrata.Core.Values;
 using dotGeoMigrata.Logic.Attraction;
+using dotGeoMigrata.Logic.Interfaces;
 
 namespace dotGeoMigrata.Logic.Migration;
 
 /// <summary>
 /// Calculates migration flows between cities based on attraction differences.
 /// </summary>
-public sealed class MigrationCalculator
+/// This is the original implementation maintained for backward compatibility.
+/// <remarks>
+/// This implementation is deprecated. Use <see cref="EnhancedMigrationCalculator"/> for new projects.
+/// The enhanced version implements sigmoid probability, cost decay, and capacity constraints per LogicModel.md.
+/// </remarks>
+[Obsolete("Use EnhancedMigrationCalculator for new projects. " +
+          "This version is maintained for backward compatibility only.")]
+public sealed class MigrationCalculator : IMigrationCalculator
 {
     /// <summary>
     /// Base migration cost per unit distance.

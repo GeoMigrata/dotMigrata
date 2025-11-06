@@ -50,6 +50,25 @@ public sealed record PopulationGroupDefinition
     }
 
     /// <summary>
+    /// Gets or initializes the sensitivity scaling coefficient (A_G).
+    /// Scales the final attraction score. Default is 1.0.
+    /// </summary>
+    public double SensitivityScaling { get; init; } = 1.0;
+
+    /// <summary>
+    /// Gets or initializes the attraction threshold (τ).
+    /// Minimum attraction difference required to trigger migration consideration.
+    /// Default is 0.0.
+    /// </summary>
+    public double AttractionThreshold { get; init; } = 0.0;
+
+    /// <summary>
+    /// Gets or initializes the minimum acceptable attraction score (α_min).
+    /// Destinations below this score are not considered. Default is 0.0.
+    /// </summary>
+    public double MinimumAcceptableAttraction { get; init; } = 0.0;
+
+    /// <summary>
     /// Gets the factor sensitivities defining how this group responds to different city factors.
     /// </summary>
     public IReadOnlyList<FactorSensitivity> Sensitivities => _sensitivities;

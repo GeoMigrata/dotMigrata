@@ -54,6 +54,13 @@ public class City
     public required Coordinate Location { get; init; }
 
     /// <summary>
+    /// Gets or initializes the maximum population capacity of the city.
+    /// Represents the upper limit of residents the city can accommodate.
+    /// A value of null or 0 indicates no explicit capacity limit.
+    /// </summary>
+    public int? Capacity { get; init; }
+
+    /// <summary>
     /// Gets the read-only list of factor values for this city.
     /// </summary>
     public IReadOnlyList<FactorValue> FactorValues => _factorValues;

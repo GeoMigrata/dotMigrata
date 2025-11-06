@@ -9,7 +9,14 @@ namespace dotGeoMigrata.Simulation.Engine;
 
 /// <summary>
 /// Main simulation engine that orchestrates the step-by-step population migration simulation.
+/// This is the original implementation maintained for backward compatibility.
 /// </summary>
+/// <remarks>
+/// This implementation is deprecated. Use <see cref="PipelineSimulationEngine"/> for new projects.
+/// The pipeline version provides better modularity, extensibility, and supports enhanced calculators.
+/// See <see cref="Builders.SimulationEngineBuilder"/> for easy configuration.
+/// </remarks>
+[Obsolete("Use PipelineSimulationEngine for new projects. This version is maintained for backward compatibility only.")]
 public sealed class SimulationEngine
 {
     private readonly World _world;
@@ -115,7 +122,7 @@ public sealed class SimulationEngine
             foreach (var groupDefinition in _world.PopulationGroupDefinitions)
             {
                 // 1. Calculate attraction for all cities
-                var attractions = AttractionCalculator.CalculateAttractionForAllCities(_world, groupDefinition);
+                var attractions = _attractionCalculator.CalculateAttractionForAllCities(_world, groupDefinition);
 
                 // 2. Calculate migration flows from this city
                 var flows = _migrationCalculator.CalculateMigrationFlows(
