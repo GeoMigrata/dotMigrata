@@ -9,7 +9,7 @@ public class World
 {
     private readonly List<City> _cities;
     private readonly List<FactorDefinition> _factorDefinitions;
-    private readonly List<PopulationGroupDefinition> _populationGroupDefinitions;
+    private readonly List<GroupDefinition> _populationGroupDefinitions;
 
     /// <summary>
     /// Initializes a new instance of the World class.
@@ -22,7 +22,7 @@ public class World
     public World(
         IEnumerable<City> cities,
         IEnumerable<FactorDefinition> factorDefinitions,
-        IEnumerable<PopulationGroupDefinition> populationGroupDefinitions)
+        IEnumerable<GroupDefinition> populationGroupDefinitions)
     {
         ArgumentNullException.ThrowIfNull(cities);
         ArgumentNullException.ThrowIfNull(factorDefinitions);
@@ -62,7 +62,7 @@ public class World
     /// <summary>
     /// Gets the read-only list of population group definitions used in the world.
     /// </summary>
-    public IReadOnlyList<PopulationGroupDefinition> PopulationGroupDefinitions => _populationGroupDefinitions;
+    public IReadOnlyList<GroupDefinition> PopulationGroupDefinitions => _populationGroupDefinitions;
 
     /// <summary>
     /// Gets the total population across all cities in the world.

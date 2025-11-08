@@ -3,7 +3,7 @@
 /// <summary>
 /// Defines a population group's characteristics including migration behavior and factor sensitivities.
 /// </summary>
-public sealed record PopulationGroupDefinition
+public sealed record GroupDefinition
 {
     private readonly double _movingWillingness;
     private readonly double _retentionRate;
@@ -14,7 +14,7 @@ public sealed record PopulationGroupDefinition
     /// </summary>
     /// <param name="sensitivities">The factor sensitivities for this group.</param>
     /// <exception cref="ArgumentNullException">Thrown when sensitivities is null.</exception>
-    public PopulationGroupDefinition(IEnumerable<FactorSensitivity> sensitivities)
+    public GroupDefinition(IEnumerable<FactorSensitivity> sensitivities)
     {
         ArgumentNullException.ThrowIfNull(sensitivities, nameof(sensitivities));
         _sensitivities = sensitivities.ToList();

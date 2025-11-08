@@ -3,14 +3,14 @@
 /// <summary>
 /// Represents the population count for a specific population group in a city.
 /// </summary>
-public sealed class PopulationGroupValue
+public sealed class GroupValue
 {
     private int _population;
 
     /// <summary>
     /// Gets or initializes the population group definition this value is for.
     /// </summary>
-    public required PopulationGroupDefinition Definition { get; init; }
+    public required GroupDefinition Definition { get; init; }
 
     /// <summary>
     /// Gets or sets the population count.

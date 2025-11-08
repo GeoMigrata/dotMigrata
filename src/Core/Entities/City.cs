@@ -13,9 +13,9 @@ public class City
 
     private readonly List<FactorValue> _factorValues;
 
-    private readonly Dictionary<PopulationGroupDefinition, PopulationGroupValue> _populationGroupLookup;
+    private readonly Dictionary<GroupDefinition, GroupValue> _populationGroupLookup;
 
-    private readonly List<PopulationGroupValue> _populationGroupValues;
+    private readonly List<GroupValue> _populationGroupValues;
 
     /// <summary>
     /// Initializes a new instance of the City class.
@@ -24,7 +24,7 @@ public class City
     /// <param name="populationGroupValues">Optional initial population group values.</param>
     public City(
         IEnumerable<FactorValue>? factorValues = null,
-        IEnumerable<PopulationGroupValue>? populationGroupValues = null)
+        IEnumerable<GroupValue>? populationGroupValues = null)
     {
         _factorValues = factorValues?.ToList() ?? [];
         _populationGroupValues = populationGroupValues?.ToList() ?? [];
@@ -68,7 +68,7 @@ public class City
     /// <summary>
     /// Gets the read-only list of population group values in this city.
     /// </summary>
-    public IReadOnlyList<PopulationGroupValue> PopulationGroupValues => _populationGroupValues;
+    public IReadOnlyList<GroupValue> PopulationGroupValues => _populationGroupValues;
 
     /// <summary>
     /// Gets the total population of all groups in this city.
@@ -109,7 +109,7 @@ public class City
     /// <param name="definition">The population group definition to look up.</param>
     /// <param name="groupValue">The population group value if found.</param>
     /// <returns>True if the population group value exists, false otherwise.</returns>
-    public bool TryGetPopulationGroupValue(PopulationGroupDefinition definition, out PopulationGroupValue? groupValue)
+    public bool TryGetPopulationGroupValue(GroupDefinition definition, out GroupValue? groupValue)
     {
         ArgumentNullException.ThrowIfNull(definition);
         return _populationGroupLookup.TryGetValue(definition, out groupValue);
@@ -125,7 +125,7 @@ public class City
     /// Thrown when the definition has no matched value in this city or when newCount is
     /// negative.
     /// </exception>
-    public void UpdatePopulationCount(PopulationGroupDefinition definition, int newCount)
+    public void UpdatePopulationCount(GroupDefinition definition, int newCount)
     {
         ArgumentNullException.ThrowIfNull(definition);
 
