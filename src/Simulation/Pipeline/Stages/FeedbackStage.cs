@@ -11,13 +11,14 @@ public sealed class FeedbackStage : ISimulationStage
     private readonly IFeedbackCalculator _calculator;
 
     /// <summary>
-    /// Initializes a new instance of the FeedbackStage class.
+    /// Initializes a new instance of the <see cref="FeedbackStage"/> class.
     /// </summary>
     /// <param name="calculator">The feedback calculator to use.</param>
     /// <exception cref="ArgumentNullException">Thrown when calculator is null.</exception>
     public FeedbackStage(IFeedbackCalculator calculator)
     {
-        _calculator = calculator ?? throw new ArgumentNullException(nameof(calculator));
+        ArgumentNullException.ThrowIfNull(calculator);
+        _calculator = calculator;
     }
 
     /// <inheritdoc />
@@ -44,10 +45,7 @@ public sealed class FeedbackStage : ISimulationStage
             {
                 if (!previousPopulations.TryGetValue(city, out var previousPopulation))
                     continue;
-
-                var currentPopulation = city.Population;
-
-                _calculator.ApplyFeedback(city, previousPopulation, currentPopulation);
+                _calculator.ApplyFeedback(city, previousPopulation, city.Population);
                 updatedCities++;
             }
 

@@ -11,13 +11,14 @@ public sealed class AttractionStage : ISimulationStage
     private readonly IAttractionCalculator _calculator;
 
     /// <summary>
-    /// Initializes a new instance of the AttractionStage class.
+    /// Initializes a new instance of the <see cref="AttractionStage"/> class.
     /// </summary>
     /// <param name="calculator">The attraction calculator to use.</param>
     /// <exception cref="ArgumentNullException">Thrown when calculator is null.</exception>
     public AttractionStage(IAttractionCalculator calculator)
     {
-        _calculator = calculator ?? throw new ArgumentNullException(nameof(calculator));
+        ArgumentNullException.ThrowIfNull(calculator);
+        _calculator = calculator;
     }
 
     /// <inheritdoc />
@@ -34,16 +35,10 @@ public sealed class AttractionStage : ISimulationStage
         try
         {
             // Calculate attractions for all population group definitions
-            var allAttractions = new Dictionary<string, IReadOnlyList<AttractionResult>>();
-
-            foreach (var groupDefinition in context.World.PopulationGroupDefinitions)
-            {
-                var attractions = _calculator.CalculateAttractionForAllCities(
-                    context.World,
-                    groupDefinition);
-
-                allAttractions[groupDefinition.DisplayName] = attractions;
-            }
+            var allAttractions = context.World.PopulationGroupDefinitions
+                .ToDictionary(
+                    group => group.DisplayName,
+                    group => _calculator.CalculateAttractionForAllCities(context.World, group));
 
             // Store results in shared data for next stages
             context.SharedData["Attractions"] = allAttractions;

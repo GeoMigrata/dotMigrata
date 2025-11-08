@@ -91,9 +91,9 @@ public sealed class EnhancedFeedbackCalculator : IFeedbackCalculator
     /// <param name="feedbackRules">Optional factor-specific feedback rules.</param>
     public EnhancedFeedbackCalculator(IEnumerable<FactorFeedbackRule>? feedbackRules = null)
     {
-        if (feedbackRules != null)
-            foreach (var rule in feedbackRules)
-                _feedbackRules[rule.Factor] = rule;
+        if (feedbackRules == null) return;
+        foreach (var rule in feedbackRules)
+            _feedbackRules[rule.Factor] = rule;
     }
 
     /// <inheritdoc />

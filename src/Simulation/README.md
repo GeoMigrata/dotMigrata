@@ -1,17 +1,18 @@
 ﻿# Simulation Engine Documentation
 
-This directory contains the simulation engine that orchestrates the population migration simulation.
+This directory contains the simulation engine that orchestrates the population migration simulation using a modern
+pipeline architecture.
 
 ## Overview
 
 The Simulation layer provides the orchestration framework that runs the step-by-step simulation, managing state,
-configuration, and observation of the simulation process.
+configuration, and observation of the simulation process through a flexible pipeline architecture.
 
 ## Components
 
 ### 1. SimulationEngine
 
-The main orchestrator that coordinates all simulation activities.
+The main orchestrator that coordinates all simulation activities using a configurable pipeline of stages.
 
 ### 2. SimulationConfiguration
 
@@ -25,21 +26,27 @@ Tracks the current state and statistics of a running simulation.
 
 Observer interface for monitoring simulation progress.
 
+### 5. Pipeline Architecture
+
+A flexible system of stages that allows customization and extension of simulation workflow.
+
 ---
 
 ## SimulationEngine Design
 
 ### Architecture
 
-The `SimulationEngine` follows the **Observer Pattern** and coordinates three main calculators:
+The `SimulationEngine` follows the **Pipeline Pattern** and **Observer Pattern**, executing a series of configurable
+stages:
 
-- `AttractionCalculator` - Computes city attractiveness
-- `MigrationCalculator` - Determines migration flows
-- `FeedbackCalculator` - Updates city factors
+- `AttractionStage` - Computes city attractiveness using an `IAttractionCalculator`
+- `MigrationStage` - Determines migration flows using an `IMigrationCalculator`
+- `MigrationApplicationStage` - Applies migration flows to update city populations
+- `FeedbackStage` - Updates city factors using an `IFeedbackCalculator`
 
 ### Key Responsibilities
 
-1. **Orchestration**: Coordinates the execution of attraction, migration, and feedback calculations
+1. **Pipeline Orchestration**: Executes configurable simulation stages in sequence
 2. **State Management**: Maintains and updates simulation state
 3. **Observer Notification**: Notifies observers of simulation events
 4. **Stabilization Detection**: Monitors when the system reaches equilibrium
@@ -50,12 +57,25 @@ The `SimulationEngine` follows the **Observer Pattern** and coordinates three ma
 
 ### Initialization
 
-```
-1. Create World with cities, factors, and population groups
-2. Create SimulationConfiguration with parameters
-3. Create SimulationEngine(world, configuration)
-4. Add observers (optional)
-5. Call engine.Run() or engine.Step()
+```csharp
+// 1. Create World with cities, factors, and population groups
+var world = new World(cities, factorDefinitions);
+
+// 2. Create SimulationConfiguration with parameters
+var config = new SimulationConfiguration { MaxSteps = 100 };
+
+// 3. Build engine using SimulationEngineBuilder
+var engine = new SimulationEngineBuilder()
+    .WithWorld(world)
+    .WithConfiguration(config)
+    .UseEnhancedAttractionCalculator()
+    .UseEnhancedMigrationCalculator()
+    .UseEnhancedFeedbackCalculator()
+    .AddConsoleObserver()
+    .Build();
+
+// 4. Run simulation
+engine.Run();
 ```
 
 ### Main Loop (Run Method)
@@ -87,46 +107,52 @@ void Run()
 
 ### Single Step Execution
 
-Each call to `Step()` performs one complete simulation cycle:
+Each call to `Step()` executes the pipeline stages:
 
 ```
 ┌─────────────────────────────────────────────────┐
 │ Step N                                          │
 ├─────────────────────────────────────────────────┤
 │                                                 │
-│  1. For each city and population group:        │
-│     ┌─────────────────────────────────────┐    │
-│     │ Calculate Attractions               │    │
-│     │  - AttractionCalculator             │    │
-│     │  - Produces AttractionResults       │    │
-│     └─────────────────────────────────────┘    │
-│              ↓                                  │
-│     ┌─────────────────────────────────────┐    │
-│     │ Calculate Migration Flows           │    │
-│     │  - MigrationCalculator              │    │
-│     │  - Produces MigrationFlows          │    │
-│     └─────────────────────────────────────┘    │
+│  Pipeline.Execute(context)                      │
 │                                                 │
-│  2. Apply all migration flows:                 │
-│     ┌─────────────────────────────────────┐    │
-│     │ Update Population Counts            │    │
-│     │  - Move people between cities       │    │
-│     │  - Track migration statistics       │    │
-│     └─────────────────────────────────────┘    │
+│  1. AttractionStage                             │
+│     ┌─────────────────────────────────────┐     │
+│     │ Calculate Attractions               │     │
+│     │  - Uses IAttractionCalculator       │     │
+│     │  - Produces AttractionResults       │     │
+│     │  - Stores in context.SharedData     │     │
+│     └─────────────────────────────────────┘     │
 │              ↓                                  │
-│  3. Apply feedback effects:                    │
-│     ┌─────────────────────────────────────┐    │
-│     │ Update City Factors                 │    │
-│     │  - FeedbackCalculator               │    │
-│     │  - Adjust factors based on pop.     │    │
-│     └─────────────────────────────────────┘    │
+|  2. MigrationStage                              |  
+│     ┌─────────────────────────────────────┐     │
+│     │ Calculate Migration Flows           │     │
+│     │  - Uses IMigrationCalculator        │     │
+│     │  - Retrieves attractions from       │     │
+│     │    context.SharedData               │     │
+│     │  - Produces MigrationFlows          │     │
+│     └─────────────────────────────────────┘     │
 │              ↓                                  │
-│  4. Update state and notify:                   │
-│     ┌─────────────────────────────────────┐    │
-│     │ Advance Step Counter                │    │
-│     │ Record Statistics                   │    │
-│     │ Notify Observers                    │    │
-│     └─────────────────────────────────────┘    │
+│  3. MigrationApplicationStage                   │
+│     ┌─────────────────────────────────────┐     │
+│     │ Apply Migration Flows               │     │
+│     │  - Update Population Counts         │     │
+│     │  - Track migration statistics       │     │
+│     └─────────────────────────────────────┘     │
+│              ↓                                  │
+│  4. FeedbackStage                               │
+│     ┌─────────────────────────────────────┐     │
+│     │ Update City Factors                 │     │
+│     │  - Uses IFeedbackCalculator         │     │
+│     │  - Adjust factors based on pop.     │     │
+│     └─────────────────────────────────────┘     │
+│              ↓                                  │
+│  5. Update state and notify                     │
+│     ┌─────────────────────────────────────┐     │
+│     │ Advance Step Counter                │     │
+│     │ Record Statistics                   │     │
+│     │ Notify Observers                    │     │
+│     └─────────────────────────────────────┘     │
 │                                                 │
 └─────────────────────────────────────────────────┘
 ```
@@ -142,32 +168,23 @@ void Step()
     allMigrationFlows = new List<MigrationFlow>()
     
     // Phase 1: Calculate all migrations
-    foreach (city in world.Cities)
+    // Create simulation context for pipeline
+    var context = new SimulationContext
     {
-        foreach (group in city.PopulationGroups)
-        {
-            // Calculate how attractive each city is to this group
-            attractions = attractionCalculator
-                .CalculateAttractionForAllCities(world, group)
-            
-            // Determine where this group wants to migrate
-            flows = migrationCalculator
-                .CalculateMigrationFlows(city, group, attractions, world, random)
-            
-            allMigrationFlows.AddRange(flows)
-        }
+        World = world,
+        State = state,
+        Random = random,
+        SharedData = new Dictionary<string, object>()
     }
     
-    // Phase 2: Apply migrations
-    totalMigrants = ApplyMigrations(allMigrationFlows)
+    // Execute pipeline stages in order
+    Pipeline.Execute(context)
     
-    // Phase 3: Apply feedback
-    foreach (city in world.Cities)
-    {
-        feedbackCalculator.ApplyFeedback(city, previousPop, currentPop)
-    }
+    // Extract results from context
+    var migrationFlows = context.SharedData["MigrationFlows"]
+    var totalMigrants = context.SharedData["TotalMigrants"]
     
-    // Phase 4: Update state
+    // Update state
     state.AdvanceStep(totalMigrants)
     RaiseStepCompletedEvent()
     NotifyObservers_StepCompleted()
@@ -427,29 +444,57 @@ event EventHandler<SimulationCompletedEventArgs> SimulationCompleted
 
 ## Usage Examples
 
-### Basic Simulation
+### Basic Simulation with Builder
 
 ```csharp
 // 1. Create world
 var world = new World(cities, factorDefinitions);
 
-// 2. Configure
-var config = new SimulationConfiguration { MaxSteps = 100 };
+// 2. Configure and build engine
+var engine = new SimulationEngineBuilder()
+    .WithWorld(world)
+    .WithConfiguration(new SimulationConfiguration { MaxSteps = 100 })
+    .UseEnhancedAttractionCalculator()
+    .UseEnhancedMigrationCalculator()
+    .UseEnhancedFeedbackCalculator()
+    .AddConsoleObserver()
+    .Build();
 
-// 3. Create engine
-var engine = new SimulationEngine(world, config);
-
-// 4. Add observer
-engine.AddObserver(new ConsoleSimulationObserver(verbose: true));
-
-// 5. Run
+// 3. Run
 engine.Run();
+```
+
+### Advanced Configuration
+
+```csharp
+var engine = new SimulationEngineBuilder()
+    .WithWorld(world)
+    .WithConfiguration(config)
+    .UseEnhancedMigrationCalculator(
+        sigmoidSteepness: 1.5,
+        costSensitivity: 0.02,
+        baseMigrationCost: 2.0)
+    .UseEnhancedFeedbackCalculator([
+        new FactorFeedbackRule 
+        { 
+            Factor = housingFactor, 
+            FeedbackType = FeedbackType.PriceCost,
+            Elasticity = 0.5
+        }
+    ])
+    .Build();
 ```
 
 ### Step-by-Step Simulation
 
 ```csharp
-var engine = new SimulationEngine(world, config);
+var engine = new SimulationEngineBuilder()
+    .WithWorld(world)
+    .WithConfiguration(config)
+    .UseEnhancedAttractionCalculator()
+    .UseEnhancedMigrationCalculator()
+    .UseEnhancedFeedbackCalculator()
+    .Build();
 
 while (!engine.State.IsCompleted && engine.State.CurrentStep < 100)
 {
@@ -463,10 +508,34 @@ while (!engine.State.IsCompleted && engine.State.CurrentStep < 100)
 }
 ```
 
+### Custom Pipeline
+
+```csharp
+// Create custom pipeline
+var pipeline = new SimulationPipeline();
+pipeline.AddStage(new AttractionStage(attractionCalc));
+pipeline.AddStage(new CustomAnalysisStage()); // Your custom stage
+pipeline.AddStage(new MigrationStage(migrationCalc));
+pipeline.AddStage(new MigrationApplicationStage());
+pipeline.AddStage(new FeedbackStage(feedbackCalc));
+
+var engine = new SimulationEngineBuilder()
+    .WithWorld(world)
+    .WithConfiguration(config)
+    .WithCustomPipeline(pipeline)
+    .Build();
+```
+
 ### With Event Handlers
 
 ```csharp
-var engine = new SimulationEngine(world, config);
+var engine = new SimulationEngineBuilder()
+    .WithWorld(world)
+    .WithConfiguration(config)
+    .UseEnhancedAttractionCalculator()
+    .UseEnhancedMigrationCalculator()
+    .UseEnhancedFeedbackCalculator()
+    .Build();
 
 engine.StepCompleted += (sender, args) =>
 {
@@ -506,10 +575,11 @@ Per step, for N cities and P population groups:
 
 ## Design Patterns Used
 
-1. **Observer Pattern**: For simulation monitoring
-2. **Strategy Pattern**: Calculators can be swapped (though currently concrete)
-3. **Template Method**: `Run()` defines the simulation skeleton
-4. **Dependency Injection**: World and configuration injected via constructor
+1. **Pipeline Pattern**: Modular, configurable sequence of processing stages
+2. **Observer Pattern**: For simulation monitoring
+3. **Strategy Pattern**: Calculators can be swapped via interfaces
+4. **Builder Pattern**: Fluent API for engine configuration
+5. **Dependency Injection**: World, configuration, and calculators injected via constructor
 
 ---
 
@@ -517,9 +587,29 @@ Per step, for N cities and P population groups:
 
 The simulation engine can be extended through:
 
-1. **Custom Observers**: Implement `ISimulationObserver`
-2. **Custom Configuration**: Extend `SimulationConfiguration`
-3. **Event Handlers**: Subscribe to `StepCompleted` and `SimulationCompleted` events
-4. **Custom State Tracking**: Extend `SimulationState` (though internal methods limit this)
+1. **Custom Pipeline Stages**: Implement `ISimulationStage`
+2. **Custom Calculators**: Implement `IAttractionCalculator`, `IMigrationCalculator`, or `IFeedbackCalculator`
+3. **Custom Observers**: Implement `ISimulationObserver`
+4. **Custom Configuration**: Extend `SimulationConfiguration`
+5. **Event Handlers**: Subscribe to `StepCompleted` and `SimulationCompleted` events
 
-For algorithm customization, extend or replace the calculators in the Logic layer.
+### Creating Custom Pipeline Stages
+
+```csharp
+public class CustomAnalysisStage : ISimulationStage
+{
+    public string Name => "Custom Analysis";
+    public int Order => 150; // Between Migration and Application stages
+    
+    public SimulationStageResult Execute(SimulationContext context)
+    {
+        // Your custom logic here
+        var attractions = context.SharedData["Attractions"] as List<AttractionResult>;
+
+        // Analyze and potentially modify data
+        PerformAnalysis(attractions);
+
+        return SimulationStageResult.Successful("Analysis completed");
+    }
+}
+```

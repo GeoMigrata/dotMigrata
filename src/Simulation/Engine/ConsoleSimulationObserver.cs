@@ -6,15 +6,20 @@ namespace dotGeoMigrata.Simulation.Engine;
 /// <summary>
 /// A simple console observer that logs simulation progress to the console.
 /// </summary>
-public class ConsoleSimulationObserver : ISimulationObserver
+public sealed class ConsoleSimulationObserver : ISimulationObserver
 {
     private readonly bool _verbose;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConsoleSimulationObserver"/> class.
+    /// </summary>
+    /// <param name="verbose">Whether to display detailed migration information.</param>
     public ConsoleSimulationObserver(bool verbose = false)
     {
         _verbose = verbose;
     }
 
+    /// <inheritdoc />
     public void OnSimulationStarted(SimulationState state)
     {
         Console.WriteLine("=== Simulation Started ===");
@@ -22,6 +27,7 @@ public class ConsoleSimulationObserver : ISimulationObserver
         Console.WriteLine();
     }
 
+    /// <inheritdoc />
     public void OnStepCompleted(SimulationState state, IReadOnlyList<MigrationFlow> migrationFlows)
     {
         Console.WriteLine($"Step {state.CurrentStep} completed:");
@@ -39,6 +45,7 @@ public class ConsoleSimulationObserver : ISimulationObserver
         Console.WriteLine();
     }
 
+    /// <inheritdoc />
     public void OnSimulationCompleted(SimulationState state)
     {
         Console.WriteLine("=== Simulation Completed ===");

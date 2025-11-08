@@ -12,13 +12,14 @@ public sealed class MigrationStage : ISimulationStage
     private readonly IMigrationCalculator _calculator;
 
     /// <summary>
-    /// Initializes a new instance of the MigrationStage class.
+    /// Initializes a new instance of the <see cref="MigrationStage"/> class.
     /// </summary>
     /// <param name="calculator">The migration calculator to use.</param>
     /// <exception cref="ArgumentNullException">Thrown when calculator is null.</exception>
     public MigrationStage(IMigrationCalculator calculator)
     {
-        _calculator = calculator ?? throw new ArgumentNullException(nameof(calculator));
+        ArgumentNullException.ThrowIfNull(calculator);
+        _calculator = calculator;
     }
 
     /// <inheritdoc />
@@ -39,22 +40,15 @@ public sealed class MigrationStage : ISimulationStage
                 attractionsObj is not Dictionary<string, IReadOnlyList<AttractionResult>> attractionsDict)
                 return SimulationStageResult.Failed("Attractions data not found from previous stage");
 
+            // For each city and each population group definition, calculate migrations
             var allMigrationFlows = new List<MigrationFlow>();
 
-            // For each city and each population group definition, calculate migrations
             foreach (var city in context.World.Cities)
             foreach (var groupDefinition in context.World.PopulationGroupDefinitions)
             {
-                if (!attractionsDict.TryGetValue(groupDefinition.DisplayName, out var attractions))
-                    continue;
-
+                if (!attractionsDict.TryGetValue(groupDefinition.DisplayName, out var attractions)) continue;
                 var flows = _calculator.CalculateMigrationFlows(
-                    city,
-                    groupDefinition,
-                    attractions,
-                    context.World,
-                    context.Random);
-
+                    city, groupDefinition, attractions, context.World, context.Random);
                 allMigrationFlows.AddRange(flows);
             }
 

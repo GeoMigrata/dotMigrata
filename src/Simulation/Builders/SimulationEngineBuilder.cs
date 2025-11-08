@@ -10,7 +10,7 @@ using dotGeoMigrata.Simulation.Pipeline;
 namespace dotGeoMigrata.Simulation.Builders;
 
 /// <summary>
-/// Builder for creating and configuring simulation engines with fluent API.
+/// Builder for creating and configuring pipeline-based simulation engines with fluent API.
 /// </summary>
 public sealed class SimulationEngineBuilder
 {
@@ -20,7 +20,6 @@ public sealed class SimulationEngineBuilder
     private ISimulationPipeline? _customPipeline;
     private IFeedbackCalculator? _feedbackCalculator;
     private IMigrationCalculator? _migrationCalculator;
-    private bool _usePipelineEngine = true;
     private World? _world;
 
     /// <summary>
@@ -31,7 +30,8 @@ public sealed class SimulationEngineBuilder
     /// <exception cref="ArgumentNullException">Thrown when world is null.</exception>
     public SimulationEngineBuilder WithWorld(World world)
     {
-        _world = world ?? throw new ArgumentNullException(nameof(world));
+        ArgumentNullException.ThrowIfNull(world);
+        _world = world;
         return this;
     }
 
@@ -43,33 +43,8 @@ public sealed class SimulationEngineBuilder
     /// <exception cref="ArgumentNullException">Thrown when configuration is null.</exception>
     public SimulationEngineBuilder WithConfiguration(SimulationConfiguration configuration)
     {
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        return this;
-    }
-
-    /// <summary>
-    /// Uses the original (non-pipeline) simulation engine.
-    /// </summary>
-    /// <returns>This builder instance for chaining.</returns>
-    /// <remarks>
-    /// This method is deprecated. Use <see cref="UsePipelineEngine" /> and enhanced calculators instead.
-    /// The original engine lacks the modularity and enhanced algorithms of the pipeline version.
-    /// </remarks>
-    [Obsolete(
-        "Use UsePipelineEngine() with enhanced calculators for new projects. This method is maintained for backward compatibility only.")]
-    public SimulationEngineBuilder UseOriginalEngine()
-    {
-        _usePipelineEngine = false;
-        return this;
-    }
-
-    /// <summary>
-    /// Uses the pipeline-based simulation engine.
-    /// </summary>
-    /// <returns>This builder instance for chaining.</returns>
-    public SimulationEngineBuilder UsePipelineEngine()
-    {
-        _usePipelineEngine = true;
+        ArgumentNullException.ThrowIfNull(configuration);
+        _configuration = configuration;
         return this;
     }
 
@@ -81,23 +56,8 @@ public sealed class SimulationEngineBuilder
     /// <exception cref="ArgumentNullException">Thrown when calculator is null.</exception>
     public SimulationEngineBuilder WithAttractionCalculator(IAttractionCalculator calculator)
     {
-        _attractionCalculator = calculator ?? throw new ArgumentNullException(nameof(calculator));
-        return this;
-    }
-
-    /// <summary>
-    /// Uses the original attraction calculator.
-    /// </summary>
-    /// <returns>This builder instance for chaining.</returns>
-    /// <remarks>
-    /// This method is deprecated. Use <see cref="UseEnhancedAttractionCalculator" /> instead.
-    /// The enhanced version implements the pull-push factor model per LogicModel.md specification.
-    /// </remarks>
-    [Obsolete(
-        "Use UseEnhancedAttractionCalculator() for new projects. This method is maintained for backward compatibility only.")]
-    public SimulationEngineBuilder UseOriginalAttractionCalculator()
-    {
-        _attractionCalculator = new AttractionCalculator();
+        ArgumentNullException.ThrowIfNull(calculator);
+        _attractionCalculator = calculator;
         return this;
     }
 
@@ -119,23 +79,8 @@ public sealed class SimulationEngineBuilder
     /// <exception cref="ArgumentNullException">Thrown when calculator is null.</exception>
     public SimulationEngineBuilder WithMigrationCalculator(IMigrationCalculator calculator)
     {
-        _migrationCalculator = calculator ?? throw new ArgumentNullException(nameof(calculator));
-        return this;
-    }
-
-    /// <summary>
-    /// Uses the original migration calculator.
-    /// </summary>
-    /// <returns>This builder instance for chaining.</returns>
-    /// <remarks>
-    /// This method is deprecated. Use <see cref="UseEnhancedMigrationCalculator" /> instead.
-    /// The enhanced version implements sigmoid probability, cost decay, and capacity constraints per LogicModel.md.
-    /// </remarks>
-    [Obsolete(
-        "Use UseEnhancedMigrationCalculator() for new projects. This method is maintained for backward compatibility only.")]
-    public SimulationEngineBuilder UseOriginalMigrationCalculator()
-    {
-        _migrationCalculator = new MigrationCalculator();
+        ArgumentNullException.ThrowIfNull(calculator);
+        _migrationCalculator = calculator;
         return this;
     }
 
@@ -168,24 +113,8 @@ public sealed class SimulationEngineBuilder
     /// <exception cref="ArgumentNullException">Thrown when calculator is null.</exception>
     public SimulationEngineBuilder WithFeedbackCalculator(IFeedbackCalculator calculator)
     {
-        _feedbackCalculator = calculator ?? throw new ArgumentNullException(nameof(calculator));
-        return this;
-    }
-
-    /// <summary>
-    /// Uses the original feedback calculator.
-    /// </summary>
-    /// <returns>This builder instance for chaining.</returns>
-    /// <remarks>
-    /// This method is deprecated. Use <see cref="UseEnhancedFeedbackCalculator" /> instead.
-    /// The enhanced version implements multiple feedback mechanisms including per-capita resources,
-    /// price elasticity, and externalities per LogicModel.md specification.
-    /// </remarks>
-    [Obsolete(
-        "Use UseEnhancedFeedbackCalculator() for new projects. This method is maintained for backward compatibility only.")]
-    public SimulationEngineBuilder UseOriginalFeedbackCalculator()
-    {
-        _feedbackCalculator = new FeedbackCalculator();
+        ArgumentNullException.ThrowIfNull(calculator);
+        _feedbackCalculator = calculator;
         return this;
     }
 
@@ -209,8 +138,8 @@ public sealed class SimulationEngineBuilder
     /// <exception cref="ArgumentNullException">Thrown when pipeline is null.</exception>
     public SimulationEngineBuilder WithCustomPipeline(ISimulationPipeline pipeline)
     {
-        _customPipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
-        _usePipelineEngine = true;
+        ArgumentNullException.ThrowIfNull(pipeline);
+        _customPipeline = pipeline;
         return this;
     }
 
@@ -238,11 +167,11 @@ public sealed class SimulationEngineBuilder
     }
 
     /// <summary>
-    /// Builds the simulation engine with the configured settings.
+    /// Builds the pipeline simulation engine with the configured settings.
     /// </summary>
-    /// <returns>The configured simulation engine (either original or pipeline-based).</returns>
+    /// <returns>The configured pipeline simulation engine.</returns>
     /// <exception cref="InvalidOperationException">Thrown when required components are not configured.</exception>
-    public object Build()
+    public SimulationEngine Build()
     {
         if (_world is null)
             throw new InvalidOperationException("World must be configured before building the simulation engine.");
@@ -251,62 +180,34 @@ public sealed class SimulationEngineBuilder
             throw new InvalidOperationException(
                 "Configuration must be configured before building the simulation engine.");
 
-        object engine;
+        SimulationEngine engine;
 
-        if (_usePipelineEngine)
-            engine = BuildPipelineEngine();
-        else
-            engine = BuildOriginalEngine();
-
-
-        // Add observers
-        switch (engine)
+        if (_customPipeline is not null)
         {
-#pragma warning disable CS0618 // Type is obsolete - intentional for backward compatibility
-            case SimulationEngine originalEngine:
-            {
-                foreach (var observer in _observers)
-                    originalEngine.AddObserver(observer);
-                break;
-            }
-#pragma warning restore CS0618
-            case PipelineSimulationEngine pipelineEngine:
-            {
-                foreach (var observer in _observers)
-                    pipelineEngine.AddObserver(observer);
-                break;
-            }
+            engine = new SimulationEngine(_world, _configuration, _customPipeline);
+        }
+        else
+        {
+            // Use default calculators if not specified
+            var attractionCalc = _attractionCalculator ?? new EnhancedAttractionCalculator();
+            var migrationCalc = _migrationCalculator ?? new EnhancedMigrationCalculator();
+            var feedbackCalc = _feedbackCalculator ?? new EnhancedFeedbackCalculator();
+
+            // Set feedback smoothing factor from configuration
+            feedbackCalc.SmoothingFactor = _configuration.FeedbackSmoothingFactor;
+
+            engine = new SimulationEngine(
+                _world,
+                _configuration,
+                attractionCalc,
+                migrationCalc,
+                feedbackCalc);
         }
 
+        // Add observers
+        foreach (var observer in _observers)
+            engine.AddObserver(observer);
+
         return engine;
-    }
-
-    private PipelineSimulationEngine BuildPipelineEngine()
-    {
-        if (_customPipeline != null) return new PipelineSimulationEngine(_world!, _configuration!, _customPipeline);
-
-        // Use default calculators if not specified
-        var attractionCalc = _attractionCalculator ?? new EnhancedAttractionCalculator();
-        var migrationCalc = _migrationCalculator ?? new EnhancedMigrationCalculator();
-        var feedbackCalc = _feedbackCalculator ?? new EnhancedFeedbackCalculator();
-
-        // Set feedback smoothing factor from configuration
-        feedbackCalc.SmoothingFactor = _configuration!.FeedbackSmoothingFactor;
-
-        return new PipelineSimulationEngine(
-            _world!,
-            _configuration!,
-            attractionCalc,
-            migrationCalc,
-            feedbackCalc);
-    }
-
-#pragma warning disable CS0618 // Type is obsolete - intentional for backward compatibility
-    private SimulationEngine BuildOriginalEngine()
-    {
-        // Original engine doesn't use the interface-based calculators directly
-        // It creates its own instances internally
-        return new SimulationEngine(_world!, _configuration!);
-#pragma warning restore CS0618
     }
 }

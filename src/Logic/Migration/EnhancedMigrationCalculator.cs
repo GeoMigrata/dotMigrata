@@ -47,11 +47,11 @@ public sealed class EnhancedMigrationCalculator : IMigrationCalculator
         World world,
         Random random)
     {
-        ArgumentNullException.ThrowIfNull(sourceCity, nameof(sourceCity));
-        ArgumentNullException.ThrowIfNull(groupDefinition, nameof(groupDefinition));
-        ArgumentNullException.ThrowIfNull(attractions, nameof(attractions));
-        ArgumentNullException.ThrowIfNull(world, nameof(world));
-        ArgumentNullException.ThrowIfNull(random, nameof(random));
+        ArgumentNullException.ThrowIfNull(sourceCity);
+        ArgumentNullException.ThrowIfNull(groupDefinition);
+        ArgumentNullException.ThrowIfNull(attractions);
+        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(random);
 
         // Get the population count for this group in the source city
         if (!sourceCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) || groupValue is null)

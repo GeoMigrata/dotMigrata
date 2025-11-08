@@ -25,9 +25,9 @@ public sealed class EnhancedAttractionCalculator : IAttractionCalculator
     /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
     public AttractionResult CalculateAttraction(City city, PopulationGroupDefinition groupDefinition, World world)
     {
-        ArgumentNullException.ThrowIfNull(city, nameof(city));
-        ArgumentNullException.ThrowIfNull(groupDefinition, nameof(groupDefinition));
-        ArgumentNullException.ThrowIfNull(world, nameof(world));
+        ArgumentNullException.ThrowIfNull(city);
+        ArgumentNullException.ThrowIfNull(groupDefinition);
+        ArgumentNullException.ThrowIfNull(world);
 
         var pullSum = 0.0;
         var pushSum = 0.0;
@@ -83,8 +83,8 @@ public sealed class EnhancedAttractionCalculator : IAttractionCalculator
         World world,
         PopulationGroupDefinition groupDefinition)
     {
-        ArgumentNullException.ThrowIfNull(world, nameof(world));
-        ArgumentNullException.ThrowIfNull(groupDefinition, nameof(groupDefinition));
+        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(groupDefinition);
 
         return world.Cities
             .Select(city => CalculateAttraction(city, groupDefinition, world))

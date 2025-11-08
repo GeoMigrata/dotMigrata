@@ -1,44 +1,82 @@
 ﻿using dotGeoMigrata.Core.Entities;
 using dotGeoMigrata.Logic.Attraction;
-using dotGeoMigrata.Logic.Feedback;
+using dotGeoMigrata.Logic.Interfaces;
 using dotGeoMigrata.Logic.Migration;
 using dotGeoMigrata.Simulation.Configuration;
 using dotGeoMigrata.Simulation.State;
+using dotGeoMigrata.Simulation.Pipeline;
+using dotGeoMigrata.Simulation.Pipeline.Stages;
 
 namespace dotGeoMigrata.Simulation.Engine;
 
 /// <summary>
 /// Main simulation engine that orchestrates the step-by-step population migration simulation.
 /// This is the original implementation maintained for backward compatibility.
+/// Simulation engine using a modern pipeline architecture for extensibility and modularity.
+/// This implementation provides better separation of concerns and allows for easy customization
+/// of the simulation workflow through configurable pipeline stages.
 /// </summary>
-/// <remarks>
-/// This implementation is deprecated. Use <see cref="PipelineSimulationEngine" /> for new projects.
-/// The pipeline version provides better modularity, extensibility, and supports enhanced calculators.
-/// See <see cref="Builders.SimulationEngineBuilder" /> for easy configuration.
-/// </remarks>
-[Obsolete("Use PipelineSimulationEngine for new projects. This version is maintained for backward compatibility only.")]
 public sealed class SimulationEngine
 {
-    private readonly AttractionCalculator _attractionCalculator;
     private readonly SimulationConfiguration _configuration;
-    private readonly FeedbackCalculator _feedbackCalculator;
-    private readonly MigrationCalculator _migrationCalculator;
     private readonly List<ISimulationObserver> _observers;
     private readonly World _world;
 
-    public SimulationEngine(World world, SimulationConfiguration configuration)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SimulationEngine"/> class with default pipeline stages.
+    /// </summary>
+    /// <param name="world">The world to simulate.</param>
+    /// <param name="configuration">The simulation configuration.</param>
+    /// <param name="attractionCalculator">The attraction calculator to use.</param>
+    /// <param name="migrationCalculator">The migration calculator to use.</param>
+    /// <param name="feedbackCalculator">The feedback calculator to use.</param>
+    /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
+    public SimulationEngine(
+        World world,
+        SimulationConfiguration configuration,
+        IAttractionCalculator attractionCalculator,
+        IMigrationCalculator migrationCalculator,
+        IFeedbackCalculator feedbackCalculator)
     {
-        _world = world ?? throw new ArgumentNullException(nameof(world));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(attractionCalculator);
+        ArgumentNullException.ThrowIfNull(migrationCalculator);
+        ArgumentNullException.ThrowIfNull(feedbackCalculator);
 
+        _world = world;
+        _configuration = configuration;
         State = new SimulationState(_configuration.RandomSeed);
+        _observers = [];
 
-        _attractionCalculator = new AttractionCalculator();
-        _migrationCalculator = new MigrationCalculator();
-        _feedbackCalculator = new FeedbackCalculator
-        {
-            SmoothingFactor = _configuration.FeedbackSmoothingFactor
-        };
+        // Initialize pipeline with default stages
+        Pipeline = new SimulationPipeline();
+        Pipeline.AddStage(new AttractionStage(attractionCalculator));
+        Pipeline.AddStage(new MigrationStage(migrationCalculator));
+        Pipeline.AddStage(new MigrationApplicationStage());
+        Pipeline.AddStage(new FeedbackStage(feedbackCalculator));
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SimulationEngine"/> class with a custom pipeline.
+    /// </summary>
+    /// <param name="world">The world to simulate.</param>
+    /// <param name="configuration">The simulation configuration.</param>
+    /// <param name="pipeline">The custom simulation pipeline.</param>
+    /// <exception cref="ArgumentNullException">Thrown when any parameter is null.</exception>
+    public SimulationEngine(
+        World world,
+        SimulationConfiguration configuration,
+        ISimulationPipeline pipeline)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(configuration);
+        ArgumentNullException.ThrowIfNull(pipeline);
+
+        _world = world;
+        _configuration = configuration;
+        Pipeline = pipeline;
+        State = new SimulationState(_configuration.RandomSeed);
         _observers = [];
     }
 
@@ -46,6 +84,11 @@ public sealed class SimulationEngine
     /// Gets the current simulation state.
     /// </summary>
     public SimulationState State { get; }
+
+    /// <summary>
+    /// Gets the simulation pipeline for inspection or customization.
+    /// </summary>
+    public ISimulationPipeline Pipeline { get; }
 
     /// <summary>
     /// Event raised when a simulation step is completed.
@@ -104,7 +147,7 @@ public sealed class SimulationEngine
     }
 
     /// <summary>
-    /// Executes a single simulation step/tick.
+    /// Executes a single simulation step/tick using the pipeline.
     /// </summary>
     /// <exception cref="InvalidOperationException">Thrown when simulation has already completed.</exception>
     public void Step()
@@ -112,84 +155,40 @@ public sealed class SimulationEngine
         if (State.IsCompleted)
             throw new InvalidOperationException("Simulation has already completed.");
 
-        var allMigrationFlows = new List<MigrationFlow>();
-
-
-        // For each city and each population group definition, calculate migrations
-        foreach (var city in _world.Cities)
-        foreach (var groupDefinition in _world.PopulationGroupDefinitions)
+        // Create simulation context
+        var context = new SimulationContext
         {
-            // 1. Calculate attraction for all cities
-            var attractions = _attractionCalculator.CalculateAttractionForAllCities(_world, groupDefinition);
+            World = _world,
+            State = State,
+            Random = State.Random
+        };
 
-            // 2. Calculate migration flows from this city
-            var flows = _migrationCalculator.CalculateMigrationFlows(
-                city, groupDefinition, attractions, _world, State.Random);
+        // Execute the pipeline
+        var success = Pipeline.Execute(context);
+        if (!success)
+            throw new InvalidOperationException("Pipeline execution failed during simulation step.");
 
-            allMigrationFlows.AddRange(flows);
-        }
+        // Retrieve migration flows and total migrants from context
+        var migrationFlows = context.SharedData.TryGetValue("MigrationFlows", out var flowsObj)
+                             && flowsObj is List<MigrationFlow> flows
+            ? flows
+            : [];
 
-        // 3. Apply all migration flows
-        var stepMigrations = ApplyMigrations(allMigrationFlows);
 
-        // 4. Apply feedback to city factors
-        foreach (var city in _world.Cities)
-        {
-            var currentPopulation = city.Population;
-            // Note: We would need to track previous population per city
-            // For now, feedback is applied based on current state
-            _feedbackCalculator.ApplyFeedback(city, currentPopulation, currentPopulation);
-        }
+        var totalMigrants = context.SharedData.TryGetValue("TotalMigrants", out var migrantsObj)
+                            && migrantsObj is int migrants
+            ? migrants
+            : 0;
 
-        // 5. Advance simulation state
-        State.AdvanceStep(stepMigrations);
+        // Advance simulation state
+        State.AdvanceStep(totalMigrants);
 
-        // 6. Raise step completed event
-        StepCompleted?.Invoke(this, new SimulationStepEventArgs(State, allMigrationFlows));
+        // Raise step completed event
+        StepCompleted?.Invoke(this, new SimulationStepEventArgs(State, migrationFlows));
 
-        // 7. Notify observers
+        // Notify observers
         foreach (var observer in _observers)
-            observer.OnStepCompleted(State, allMigrationFlows);
-    }
-
-    /// <summary>
-    /// Applies migration flows to update city populations.
-    /// </summary>
-    /// <param name="flows">List of migration flows to apply.</param>
-    /// <returns>Total number of migrants.</returns>
-    private static int ApplyMigrations(List<MigrationFlow> flows)
-    {
-        // Group flows by source city and population group definition
-        var flowsBySource = flows
-            .GroupBy(f => (f.SourceCity, f.PopulationGroupDefinition))
-            .ToList();
-
-        // Apply outflows (reduce population in source cities)
-        foreach (var sourceGroup in flowsBySource)
-        {
-            var (sourceCity, groupDefinition) = sourceGroup.Key;
-            var totalOutflow = sourceGroup.Sum(f => f.MigrantCount);
-
-            if (sourceCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) && groupValue is not null)
-                groupValue.Population = Math.Max(0, groupValue.Population - totalOutflow);
-        }
-
-        // Group flows by destination city and population group definition
-        var flowsByDestination = flows
-            .GroupBy(f => (f.DestinationCity, f.PopulationGroupDefinition))
-            .ToList();
-
-        // Apply inflows (increase population in destination cities)
-        foreach (var destGroup in flowsByDestination)
-        {
-            var (destCity, groupDefinition) = destGroup.Key;
-            var totalInflow = destGroup.Sum(f => f.MigrantCount);
-
-            if (destCity.TryGetPopulationGroupValue(groupDefinition, out var groupValue) && groupValue is not null)
-                groupValue.Population += totalInflow;
-        }
-
-        return flows.Sum(f => f.MigrantCount);
+            observer.OnStepCompleted(State, migrationFlows);
     }
 
     /// <summary>
