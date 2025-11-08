@@ -1,19 +1,7 @@
 ﻿# dotGeoMigrata
 
-**README 版本:** Nov 6, 2024
-
-dotGeoMigrata 是一个基于 .NET 9.0 的模拟框架，用于研究各因素对**多城市—人口群体系统**中的人口迁移与城市演化的影响。
-
-## ⚡ 最新更新
-
-**v2.0 - 现代化重构** 🎉
-
-- ✅ **管线架构** - 模块化、可扩展的管线设计
-- ✅ **增强算法** - 实现 LogicModel.md 规范的完整算法
-- ✅ **Builder 模式** - 流畅的 API 简化配置
-- ✅ **向后兼容** - 原有代码无需修改仍可运行
-
-查看 [迁移指南](/docs/MigrationGuide.zh.md) 了解如何升级。
+dotGeoMigrata 是一个基于 C# .NET 9.0 的模拟框架，用于研究各因素对**多城市—人口群体系统**中的人口迁移与城市演化的影响。
+该框架捕捉城市特征如何影响人口流动，以及迁移反馈如何随时间影响城市因素。
 
 ## 核心思想
 
@@ -29,110 +17,81 @@ dotGeoMigrata 是一个基于 .NET 9.0 的模拟框架，用于研究各因素�
 
 - **世界（World）**：顶层实体，包含城市、因素定义及人口群体定义，维护全局因素定义、人口群体定义和城市当前状态。
 - **城市（City）**：拥有因素值（如收入、污染、公共设施）及每个定义的人口群体对应的人口群体值。
-  *每个城市都必须具有在世界中定义的所有因素和所有人口群体对应的值。*
-- **因素定义与因素值（FactorDefinition & FactorValue）**：定义因素元数据，包括方向（拉力或推力）、标准化方式及取值范围，
+  每个城市都必须具有在世界中定义的所有因素和所有人口群体对应的值。
+- **因素定义与因素值（FactorDefinition & FactorValue）**：定义因素元数据，包括方向（拉力或推力）、标准化方式及取值范围。
   因素值内部会被标准化用于计算。每个城市都必须具有世界中所有因素定义对应的因素值。
-- **人口群体定义与人口群体值（PopulationGroupDefinition & PopulationGroupValue）**：定义具有相似迁移行为的人口群体。
-  人口群体定义指定迁移意愿、保留率以及对各因素的敏感度。人口群体值代表该群体在特定城市中的实际人口数量。
-  每个城市都必须具有世界中所有人口群体定义对应的人口群体值。这种设计允许在多个城市中重用相同的人口群体特征，无需重复创建。
+- **群体定义与群体值（GroupDefinition & GroupValue）**：定义具有相似迁移行为的人口群体。
+  群体定义指定迁移意愿、保留率以及对各因素的敏感度。群体值代表该群体在特定城市中的实际人口数量。
+  每个城市都必须具有世界中所有群体定义对应的群体值（数量可以为 0）。这种设计允许在多个城市中重用相同的人口群体特征，无需重复创建。
 - **吸引力（Attraction）**：计算某城市对某人口群体的净吸引力，考虑标准化因素值、群体敏感度和因素方向。
 - **迁移（Migration）**：迁移判断基于吸引差、阈值及迁移成本，采用概率抽样实现迁移，同时考虑群体规模和城市容量。迁移不再是添加/删除人口群体，
-  而是更新人口群体值中的人口数量。
+  而是更新群体值中的人口数量。
 - **城市反馈（City Feedback）**：迁移后城市因素根据反馈机制更新（人均资源、房价、拥挤/污染、产业/经济效应），通常通过平滑避免剧烈波动。
 
 ## 模拟流程
 
-1. 初始化世界：设置城市、因素定义、人口群体定义和敏感度。
-    - 每个人口群体定义必须包含对所有因素定义的敏感度
+1. 初始化世界：设置城市、因素定义、群体定义和敏感度。
+    - 每个群体定义必须包含对所有因素定义的敏感度
     - 每个城市必须具有所有因素定义对应的因素值
-    - 每个城市必须具有所有人口群体定义对应的人口群体值
+    - 每个城市必须具有所有群体定义对应的群体值
 2. 每步模拟：
-    - 标准化城市因子；
-    - 对每个人口群体定义，计算所有城市的吸引力；
-    - 计算迁移概率；
-    - 按概率抽样得到实际迁移人数（考虑容量和保留率）；
-    - 通过修改人口群体值的数量来更新城市人口构成；
-    - 根据迁移反馈更新城市因子；
+    - 标准化城市因子。
+    - 对每个群体定义，计算所有城市的吸引力。
+    - 计算迁移概率。
+    - 按概率抽样得到实际迁移人数（考虑容量和保留率）。
+    - 通过修改群体值的数量来更新城市人口构成。
+    - 根据迁移反馈更新城市因子。
 3. 重复至模拟结束（达到最大步数或系统稳定）。
 
 ## 安装与使用
 
-克隆仓库后使用 .NET 9.0 SDK 运行 `dotnet build` 构建项目。
+克隆仓库并使用 Visual Studio 2022+ 打开，或使用 .NET 9.0 SDK。使用 `dotnet build` 构建项目。
 
-这是一个库框架。要使用它，请在你的项目中引用 `dotGeoMigrata` 库并创建模拟。
-
-### 快速开始（推荐新架构）
-
-```csharp
-using dotGeoMigrata.Simulation.Builders;
-
-// 使用 Builder 模式创建模拟引擎
-var engine = new SimulationEngineBuilder()
-    .WithWorld(world)
-    .WithConfiguration(config)
-    .UseEnhancedAttractionCalculator()      // 使用增强版吸引力计算
-    .UseEnhancedMigrationCalculator()       // 使用增强版迁移计算
-    .UseEnhancedFeedbackCalculator(rules)   // 使用增强版反馈计算
-    .AddConsoleObserver()
-    .Build() as PipelineSimulationEngine;
-
-engine?.Run();
-```
-
-### 传统方式（向后兼容）
-
-```csharp
-// 原有代码仍然可以正常工作
-var engine = new SimulationEngine(world, config);
-engine.AddObserver(new ConsoleSimulationObserver());
-engine.Run();
-```
-
-### 基本步骤
+这是一个库框架。要使用它，请在你的项目中引用 `dotGeoMigrata` 库并创建模拟：
 
 1. 定义因素定义
-2. 定义人口群体定义，包含对所有因素的敏感度
+2. 定义群体定义，包含对所有因素的敏感度
 3. 创建城市，包含所有因素定义对应的因素值
-4. 为每个城市创建所有人口群体定义对应的人口群体值
-5. 配置模拟引擎（使用 Builder 或直接创建）
-6. 运行模拟
 
-## 文档
+4. 为每个城市创建所有群体定义对应的群体值
+5. 创建计算器（或使用内置的 StandardModel）
+6. 设置模拟阶段和配置
+7. 创建模拟引擎并运行
 
-### 核心文档
+## 架构
 
-- [迁移指南](/docs/MigrationGuide.zh.md) - 从旧版升级到新架构
-- [管线架构](/src/Simulation/Pipeline/README.zh.md) - 管线设计和使用
-- [增强算法](/src/Logic/EnhancedAlgorithms.zh.md) - 新算法详细说明
-- [算法规范](/src/Logic/LogicModel.md) - 算法设计文档
+### 核心层（`/src/Core`）
 
-### 层级文档
+包含基础领域模型：
 
-- [逻辑层算法](/src/Logic/README.zh.md) - 吸引力、迁移、反馈算法
-- [模拟引擎设计](/src/Simulation/README.zh.md) - 引擎架构说明
-- [源代码组织](/src/README.zh.md) - 代码结构概览
+- `World`, `City` - 实体模型
+- `FactorDefinition`, `GroupDefinition` - 定义模型
+- `FactorValue`, `GroupValue` - 值模型
 
-## ✨ 新特性
+### 逻辑层（`/src/Logic`）
 
-### 管线架构
+提供计算接口和实现：
 
-- **模块化设计**：每个阶段职责单一，易于理解和维护
-- **高度可扩展**：轻松添加自定义阶段
-- **灵活配置**：通过 Builder 模式简化设置
+- `IAttractionCalculator` - 计算城市对群体的吸引力
+- `IMigrationCalculator` - 确定迁移流
+- `StandardAttractionCalculator` / `StandardMigrationCalculator` - 基于科学模型的默认实现
 
-### 增强算法
+### 模拟层（`/src/Simulation`）
 
-- **拉力-推力模型**：更精确的吸引力计算
-- **Sigmoid 概率**：基于吸引力差异的迁移概率
-- **成本衰减**：考虑距离和迁移成本
-- **容量约束**：城市承载能力限制
-- **多种反馈机制**：人均资源、价格弹性、外部性等
+实现基于管线的模拟引擎：
 
-### 灵活配置
+- `ISimulationStage` - 可扩展阶段接口
+- `SimulationEngine` - 基于时间步的协调器
+- 内置阶段：`AttractionCalculationStage`, `MigrationDecisionStage`, `MigrationExecutionStage`
+- `ISimulationObserver` - 用于监控的观察者模式（包含 `ConsoleObserver`）
 
-- **多种计算器**：原始版和增强版可混用
-- **Builder 模式**：流畅的 API 简化配置
-- **自定义管线**：完全控制模拟流程
+### 快照层（`/src/Snapshot`）
+
+类似 Git 的增量快照系统：
+
+- 存储初始世界状态 + 模拟步骤（增量）
+- 支持 JSON 和 XML 序列化
+- 通过迁移事件记录实现高效存储
 
 ## 贡献
 
