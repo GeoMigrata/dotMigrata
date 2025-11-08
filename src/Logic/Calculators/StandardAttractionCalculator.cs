@@ -91,7 +91,7 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
 
         // Normalize to [0, 1] range - we'll use a sigmoid to keep it bounded
         // but allow both positive and negative total scores to be meaningful
-        return MathUtils.Sigmoid(totalScore, 1.0, .0);
+        return MathUtils.Sigmoid(totalScore, 1.0);
     }
 
     /// <summary>

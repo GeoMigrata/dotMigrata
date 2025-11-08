@@ -32,7 +32,7 @@ public static class SnapshotService
             DisplayName = world.DisplayName,
             Status = status,
             InitialState = CreateInitialState(world),
-            Steps = (steps?.ToList() as IReadOnlyList<SimulationStep>) ?? []
+            Steps = steps?.ToList() as IReadOnlyList<SimulationStep> ?? []
         };
     }
 
@@ -42,13 +42,15 @@ public static class SnapshotService
     /// <param name="flow">The migration flow.</param>
     /// <returns>A migration record.</returns>
     public static MigrationRecord CreateMigrationRecord(MigrationFlow flow)
-        => new MigrationRecord
+    {
+        return new MigrationRecord
         {
             OriginCityRef = flow.OriginCity.DisplayName,
             DestinationCityRef = flow.DestinationCity.DisplayName,
             GroupRef = flow.Group.DisplayName,
             Count = (int)Math.Round(flow.MigrationCount)
         };
+    }
 
 
     /// <summary>
@@ -71,17 +73,20 @@ public static class SnapshotService
     }
 
     private static InitialWorldState CreateInitialState(World world)
-        => new InitialWorldState
+    {
+        return new InitialWorldState
         {
             DisplayName = world.DisplayName,
             FactorDefinitions = world.FactorDefinitions.Select(CreateFactorDefinitionSnapshot).ToList(),
             GroupDefinitions = world.GroupDefinitions.Select(CreateGroupDefinitionSnapshot).ToList(),
             Cities = world.Cities.Select(CreateCitySnapshot).ToList()
         };
+    }
 
 
     private static FactorDefinitionSnapshot CreateFactorDefinitionSnapshot(FactorDefinition fd)
-        => new FactorDefinitionSnapshot
+    {
+        return new FactorDefinitionSnapshot
         {
             DisplayName = fd.DisplayName,
             Type = fd.Type.ToString(),
@@ -89,10 +94,12 @@ public static class SnapshotService
             MaxValue = fd.MaxValue,
             Transform = fd.Transform?.ToString()
         };
+    }
 
 
     private static GroupDefinitionSnapshot CreateGroupDefinitionSnapshot(GroupDefinition gd)
-        => new GroupDefinitionSnapshot
+    {
+        return new GroupDefinitionSnapshot
         {
             DisplayName = gd.DisplayName,
             MovingWillingness = gd.MovingWillingness,
@@ -107,10 +114,12 @@ public static class SnapshotService
                 OverriddenFactorType = s.OverriddenFactorType?.ToString()
             }).ToList()
         };
+    }
 
 
     private static CitySnapshot CreateCitySnapshot(City city)
-        => new CitySnapshot
+    {
+        return new CitySnapshot
         {
             DisplayName = city.DisplayName,
             Area = city.Area,
@@ -131,6 +140,7 @@ public static class SnapshotService
                 Population = gv.Population
             }).ToList()
         };
+    }
 
 
     private static World CreateWorldFromInitialState(InitialWorldState initialState)
@@ -167,12 +177,12 @@ public static class SnapshotService
 
         // Build cities
         var cities = initialState.Cities.Select(cs => new City(
-            factorValues: cs.FactorValues.Select(fv => new FactorValue
+            cs.FactorValues.Select(fv => new FactorValue
             {
                 Definition = factorDefs.First(fd => fd.DisplayName == fv.FactorRef),
                 Intensity = fv.Intensity
             }),
-            populationGroupValues: cs.GroupValues.Select(gv => new GroupValue
+            cs.GroupValues.Select(gv => new GroupValue
             {
                 Definition = groupDefs.First(gd => gd.DisplayName == gv.GroupRef),
                 Population = gv.Population

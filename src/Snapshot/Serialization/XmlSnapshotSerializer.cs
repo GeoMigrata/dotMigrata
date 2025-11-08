@@ -1,4 +1,5 @@
-﻿using System.Xml;
+﻿using System.Text;
+using System.Xml;
 using System.Xml.Serialization;
 using dotGeoMigrata.Snapshot.Models;
 
@@ -17,7 +18,7 @@ public static class XmlSnapshotSerializer
         Indent = true,
         IndentChars = "  ",
         OmitXmlDeclaration = false,
-        Encoding = System.Text.Encoding.UTF8
+        Encoding = Encoding.UTF8
     };
 
     private static readonly XmlReaderSettings DefaultReaderSettings = new()
