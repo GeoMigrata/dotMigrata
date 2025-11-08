@@ -1,80 +1,10 @@
 ﻿using dotGeoMigrata.Core.Entities;
 using dotGeoMigrata.Core.Values;
+using dotGeoMigrata.Logic.Enums;
 using dotGeoMigrata.Logic.Interfaces;
+using dotGeoMigrata.Logic.Models;
 
 namespace dotGeoMigrata.Logic.Feedback;
-
-/// <summary>
-/// Represents the type of feedback mechanism for a factor.
-/// </summary>
-public enum FeedbackType
-{
-    /// <summary>
-    /// No feedback - factor value does not change with population.
-    /// </summary>
-    None,
-
-    /// <summary>
-    /// Per-capita resource - inversely proportional to population.
-    /// Examples: doctors per capita, public services per capita.
-    /// </summary>
-    PerCapitaResource,
-
-    /// <summary>
-    /// Price/cost factor - increases with population demand.
-    /// Examples: housing price, rent.
-    /// </summary>
-    PriceCost,
-
-    /// <summary>
-    /// Negative externality - increases with population density.
-    /// Examples: pollution, congestion.
-    /// </summary>
-    NegativeExternality,
-
-    /// <summary>
-    /// Positive externality - increases with population (with diminishing returns).
-    /// Examples: economic output, innovation.
-    /// </summary>
-    PositiveExternality
-}
-
-/// <summary>
-/// Configuration for factor-specific feedback rules.
-/// </summary>
-public sealed record FactorFeedbackRule
-{
-    /// <summary>
-    /// Gets the factor definition this rule applies to.
-    /// </summary>
-    public required FactorDefinition Factor { get; init; }
-
-    /// <summary>
-    /// Gets the type of feedback mechanism.
-    /// </summary>
-    public required FeedbackType FeedbackType { get; init; }
-
-    /// <summary>
-    /// Gets the elasticity coefficient (ε) for price/cost factors.
-    /// Represents how sensitive the factor is to population changes.
-    /// Default is 0.3.
-    /// </summary>
-    public double Elasticity { get; init; } = 0.3;
-
-    /// <summary>
-    /// Gets the coefficient (β) for negative externality factors.
-    /// Represents the rate of increase per population unit.
-    /// Default is 0.0001.
-    /// </summary>
-    public double ExternalityCoefficient { get; init; } = 0.0001;
-
-    /// <summary>
-    /// Gets the saturation point for positive externality factors.
-    /// Beyond this population, growth slows down (diminishing returns).
-    /// Default is 1,000,000.
-    /// </summary>
-    public int SaturationPoint { get; init; } = 1_000_000;
-}
 
 /// <summary>
 /// Enhanced feedback calculator implementing comprehensive factor update mechanisms

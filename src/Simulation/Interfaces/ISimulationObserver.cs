@@ -1,7 +1,7 @@
 ﻿using dotGeoMigrata.Logic.Migration;
 using dotGeoMigrata.Simulation.State;
 
-namespace dotGeoMigrata.Simulation.Engine;
+namespace dotGeoMigrata.Simulation.Interfaces;
 
 /// <summary>
 /// Observer interface for monitoring simulation progress and events.

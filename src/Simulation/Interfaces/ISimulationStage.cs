@@ -1,7 +1,7 @@
 ﻿using dotGeoMigrata.Core.Entities;
 using dotGeoMigrata.Simulation.State;
 
-namespace dotGeoMigrata.Simulation.Pipeline;
+namespace dotGeoMigrata.Simulation.Interfaces;
 
 /// <summary>
 /// Represents a single stage in the simulation pipeline.

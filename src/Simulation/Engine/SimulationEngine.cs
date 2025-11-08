@@ -1,11 +1,11 @@
 ﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Logic.Attraction;
 using dotGeoMigrata.Logic.Interfaces;
 using dotGeoMigrata.Logic.Migration;
 using dotGeoMigrata.Simulation.Configuration;
-using dotGeoMigrata.Simulation.State;
+using dotGeoMigrata.Simulation.Interfaces;
 using dotGeoMigrata.Simulation.Pipeline;
 using dotGeoMigrata.Simulation.Pipeline.Stages;
+using dotGeoMigrata.Simulation.State;
 
 namespace dotGeoMigrata.Simulation.Engine;
 
@@ -23,7 +23,7 @@ public sealed class SimulationEngine
     private readonly World _world;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SimulationEngine"/> class with default pipeline stages.
+    /// Initializes a new instance of the <see cref="SimulationEngine" /> class with default pipeline stages.
     /// </summary>
     /// <param name="world">The world to simulate.</param>
     /// <param name="configuration">The simulation configuration.</param>
@@ -58,7 +58,7 @@ public sealed class SimulationEngine
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SimulationEngine"/> class with a custom pipeline.
+    /// Initializes a new instance of the <see cref="SimulationEngine" /> class with a custom pipeline.
     /// </summary>
     /// <param name="world">The world to simulate.</param>
     /// <param name="configuration">The simulation configuration.</param>

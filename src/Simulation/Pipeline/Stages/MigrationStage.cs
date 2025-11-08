@@ -1,6 +1,7 @@
 ﻿using dotGeoMigrata.Logic.Attraction;
 using dotGeoMigrata.Logic.Interfaces;
 using dotGeoMigrata.Logic.Migration;
+using dotGeoMigrata.Simulation.Interfaces;
 
 namespace dotGeoMigrata.Simulation.Pipeline.Stages;
 
@@ -12,7 +13,7 @@ public sealed class MigrationStage : ISimulationStage
     private readonly IMigrationCalculator _calculator;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MigrationStage"/> class.
+    /// Initializes a new instance of the <see cref="MigrationStage" /> class.
     /// </summary>
     /// <param name="calculator">The migration calculator to use.</param>
     /// <exception cref="ArgumentNullException">Thrown when calculator is null.</exception>

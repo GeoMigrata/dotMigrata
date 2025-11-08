@@ -1,5 +1,6 @@
 ﻿using dotGeoMigrata.Core.Entities;
 using dotGeoMigrata.Logic.Interfaces;
+using dotGeoMigrata.Simulation.Interfaces;
 
 namespace dotGeoMigrata.Simulation.Pipeline.Stages;
 
@@ -11,7 +12,7 @@ public sealed class FeedbackStage : ISimulationStage
     private readonly IFeedbackCalculator _calculator;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FeedbackStage"/> class.
+    /// Initializes a new instance of the <see cref="FeedbackStage" /> class.
     /// </summary>
     /// <param name="calculator">The feedback calculator to use.</param>
     /// <exception cref="ArgumentNullException">Thrown when calculator is null.</exception>

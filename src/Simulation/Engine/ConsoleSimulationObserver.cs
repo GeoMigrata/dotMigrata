@@ -1,4 +1,5 @@
 ﻿using dotGeoMigrata.Logic.Migration;
+using dotGeoMigrata.Simulation.Interfaces;
 using dotGeoMigrata.Simulation.State;
 
 namespace dotGeoMigrata.Simulation.Engine;
@@ -11,7 +12,7 @@ public sealed class ConsoleSimulationObserver : ISimulationObserver
     private readonly bool _verbose;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ConsoleSimulationObserver"/> class.
+    /// Initializes a new instance of the <see cref="ConsoleSimulationObserver" /> class.
     /// </summary>
     /// <param name="verbose">Whether to display detailed migration information.</param>
     public ConsoleSimulationObserver(bool verbose = false)

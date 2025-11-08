@@ -1,5 +1,5 @@
-﻿using dotGeoMigrata.Logic.Attraction;
-using dotGeoMigrata.Logic.Interfaces;
+﻿using dotGeoMigrata.Logic.Interfaces;
+using dotGeoMigrata.Simulation.Interfaces;
 
 namespace dotGeoMigrata.Simulation.Pipeline.Stages;
 
@@ -11,7 +11,7 @@ public sealed class AttractionStage : ISimulationStage
     private readonly IAttractionCalculator _calculator;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AttractionStage"/> class.
+    /// Initializes a new instance of the <see cref="AttractionStage" /> class.
     /// </summary>
     /// <param name="calculator">The attraction calculator to use.</param>
     /// <exception cref="ArgumentNullException">Thrown when calculator is null.</exception>

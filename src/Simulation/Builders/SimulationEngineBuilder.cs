@@ -3,9 +3,10 @@ using dotGeoMigrata.Logic.Attraction;
 using dotGeoMigrata.Logic.Feedback;
 using dotGeoMigrata.Logic.Interfaces;
 using dotGeoMigrata.Logic.Migration;
+using dotGeoMigrata.Logic.Models;
 using dotGeoMigrata.Simulation.Configuration;
 using dotGeoMigrata.Simulation.Engine;
-using dotGeoMigrata.Simulation.Pipeline;
+using dotGeoMigrata.Simulation.Interfaces;
 
 namespace dotGeoMigrata.Simulation.Builders;
 
