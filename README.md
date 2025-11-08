@@ -1,7 +1,5 @@
 ﻿# dotGeoMigrata
 
-**README Version:** Oct 25, 2025
-
 dotGeoMigrata is a C# .NET 9.0 simulation framework designed to model population migration and city evolution in a
 multi-city, multi-population system. The framework captures how city characteristics influence population movement and
 how migration feedback affects city factors over time.
@@ -66,13 +64,44 @@ by:
 2. Defining your population group definitions with sensitivities for all factors
 3. Creating cities with factor values for all factor definitions
 4. Creating population group values for each city for all population group definitions
-5. Configuring the simulation engine
-6. Running the simulation
+5. Creating calculators (or using the built-in StandardModel)
+6. Setting up simulation stages and configuration
+7. Creating a simulation engine and running it
 
-For detailed algorithm documentation, see:
+## Architecture
 
-- `/src/Logic/README.md` - Logic layer algorithms
-- `/src/Simulation/README.md` - Simulation engine design
+### Core Layer (`/src/Core`)
+
+Contains fundamental domain models:
+
+- `World`, `City` - Entity models
+- `FactorDefinition`, `GroupDefinition` - Definition models
+- `FactorValue`, `GroupValue` - Value models
+
+### Logic Layer (`/src/Logic`)
+
+Provides calculation interfaces and implementations:
+
+- `IAttractionCalculator` - Calculates city attraction for groups
+- `IMigrationCalculator` - Determines migration flows
+- `StandardAttractionCalculator` / `StandardMigrationCalculator` - Default implementation based on scientific models
+
+### Simulation Layer (`/src/Simulation`)
+
+Implements a pipeline-based simulation engine:
+
+- `ISimulationStage` - Extensible stage interface
+- `SimulationEngine` - Tick-based orchestrator
+- Built-in stages: `AttractionCalculationStage`, `MigrationDecisionStage`, `MigrationExecutionStage`
+- `ISimulationObserver` - Observer pattern for monitoring (includes `ConsoleObserver`)
+
+### Snapshot Layer (`/src/Snapshot`)
+
+Git-like incremental snapshot system:
+
+- Stores initial world state + simulation steps (deltas)
+- Supports JSON and XML serialization
+- Efficient storage with migration event records
 
 ## Contributing
 
