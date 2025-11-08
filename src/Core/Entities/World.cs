@@ -9,7 +9,7 @@ public class World
 {
     private readonly List<City> _cities;
     private readonly List<FactorDefinition> _factorDefinitions;
-    private readonly List<GroupDefinition> _populationGroupDefinitions;
+    private readonly List<GroupDefinition> _groupDefinitions;
 
     /// <summary>
     /// Initializes a new instance of the World class.
@@ -30,14 +30,14 @@ public class World
 
         _cities = cities.ToList();
         _factorDefinitions = factorDefinitions.ToList();
-        _populationGroupDefinitions = populationGroupDefinitions.ToList();
+        _groupDefinitions = populationGroupDefinitions.ToList();
 
         if (_cities.Count == 0)
             throw new ArgumentException("World must contain at least one city.", nameof(cities));
         if (_factorDefinitions.Count == 0)
             throw new ArgumentException("World must contain at least one factor definition.",
                 nameof(factorDefinitions));
-        if (_populationGroupDefinitions.Count == 0)
+        if (_groupDefinitions.Count == 0)
             throw new ArgumentException("World must contain at least one population group definition.",
                 nameof(populationGroupDefinitions));
 
@@ -62,7 +62,7 @@ public class World
     /// <summary>
     /// Gets the read-only list of population group definitions used in the world.
     /// </summary>
-    public IReadOnlyList<GroupDefinition> PopulationGroupDefinitions => _populationGroupDefinitions;
+    public IReadOnlyList<GroupDefinition> GroupDefinitions => _groupDefinitions;
 
     /// <summary>
     /// Gets the total population across all cities in the world.
@@ -77,7 +77,7 @@ public class World
     private void ValidateWorldStructure()
     {
         // Validate that each population group definition has sensitivities for all factor definitions
-        foreach (var populationGroupDef in _populationGroupDefinitions)
+        foreach (var populationGroupDef in _groupDefinitions)
         {
             var sensitivityFactors = populationGroupDef.Sensitivities
                 .Select(s => s.Factor)
@@ -110,7 +110,7 @@ public class World
 
             // Validate that each city has values for all population group definitions
             var cityPopulationGroups = city.PopulationGroupValues.Select(pgv => pgv.Definition).ToHashSet();
-            var missingGroups = _populationGroupDefinitions
+            var missingGroups = _groupDefinitions
                 .Where(pgd => !cityPopulationGroups.Contains(pgd))
                 .ToList();
 
