@@ -5,5 +5,51 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
+
+        <!-- Package Information -->
+        <PackageId>GeoMigrata.Framework</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>GeoMigrata</Authors>
+        <Company>GeoMigrata</Company>
+        <Product>dotGeoMigrata</Product>
+        <PackageIcon>logo.png</PackageIcon>
+        <Description>A .NET 9.0 simulation framework for modeling population migration and city evolution in multi-city, multi-population systems. Captures how city characteristics influence population movement and how migration feedback affects city factors over time.</Description>
+        <Copyright>Copyright © 2025 GeoMigrata</Copyright>
+        <PackageProjectUrl>https://github.com/GeoMigrata/dotGeoMigrata</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/GeoMigrata/dotGeoMigrata</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>gis;simulation;migration;population;geospatial;urban-planning;agent-based-model;city-evolution;geomigrata</PackageTags>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+
+        <!-- Documentation -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+        <NoWarn>$(NoWarn);1591</NoWarn><!-- Disable warning for missing XML comments on internal members -->
+
+        <!-- Assembly Information -->
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <FileVersion>1.0.0.0</FileVersion>
+        <InformationalVersion>1.0.0</InformationalVersion>
+
+        <!-- Build Settings -->
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+        <None Include="README.zh.md" Pack="true" PackagePath="\"/>
+        <None Include="API.md" Pack="true" PackagePath="\"/>
+        <None Include=".\assets\logo.png" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
+    </ItemGroup>
 </Project>
