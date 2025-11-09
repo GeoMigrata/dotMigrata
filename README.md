@@ -1,5 +1,11 @@
 ﻿# dotGeoMigrata
 
+# dotGeoMigrata
+
+[![.NET](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
+[![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
+[![NuGet](https://img.shields.io/badge/NuGet-1.0.0-blue)](https://www.nuget.org/)
+
 dotGeoMigrata is a C# .NET 9.0 simulation framework designed to model population migration and city evolution in a
 multi-city, multi-population system. The framework captures how city characteristics influence population movement and
 how migration feedback affects city factors over time.
@@ -55,18 +61,125 @@ process.
 
 ## Installation & Usage
 
-Clone the repository and open in Visual Studio 2022+ or use the .NET 9.0 SDK. Build the project with `dotnet build`.
+### Adding to Your Project
 
-This is a library framework. To use it, reference the `dotGeoMigrata` library in your project and create a simulation
-by:
+Add the library to your .NET 9.0 project:
 
-1. Defining your factor definitions
-2. Defining your population group definitions with sensitivities for all factors
-3. Creating cities with factor values for all factor definitions
-4. Creating population group values for each city for all population group definitions
-5. Creating calculators (or using the built-in StandardModel)
-6. Setting up simulation stages and configuration
-7. Creating a simulation engine and running it
+```bash
+dotnet add reference /path/to/dotGeoMigrata.csproj
+# Or, once published to NuGet:
+# dotnet add package dotGeoMigrata
+```
+
+### Quick Start Example
+
+Here's a simple example using the fluent builder API:
+
+```csharp
+using dotGeoMigrata;
+using dotGeoMigrata.Core.Enums;
+
+// Create a world with factors, population groups, and cities
+var world = new WorldBuilder()
+    .WithName("Example World")
+    // Define factors that influence migration
+    .AddFactor("Income", FactorType.Positive, 20000, 100000)
+    .AddFactor("Pollution", FactorType.Negative, 0, 100)
+    .AddFactor("Housing Cost", FactorType.Negative, 500, 3000)
+    // Define population groups with migration behaviors
+    .AddPopulationGroup("Young Professionals", 
+        movingWillingness: 0.7, 
+        retentionRate: 0.3,
+        group => group
+            .WithSensitivity("Income", 5)
+            .WithSensitivity("Pollution", -2)
+            .WithSensitivity("Housing Cost", -3))
+    // Add cities with initial conditions
+    .AddCity("City A", 
+        latitude: 26.0, longitude: 119.3, area: 100.0, capacity: 1000000,
+        city => city
+            .WithFactorValue("Income", 50000)
+            .WithFactorValue("Pollution", 30)
+            .WithFactorValue("Housing Cost", 1500)
+            .WithPopulation("Young Professionals", 100000))
+    .AddCity("City B",
+        latitude: 24.5, longitude: 118.1, area: 80.0, capacity: 800000,
+        city => city
+            .WithFactorValue("Income", 40000)
+            .WithFactorValue("Pollution", 20)
+            .WithFactorValue("Housing Cost", 1000)
+            .WithPopulation("Young Professionals", 80000))
+    .Build();
+
+// Create and run simulation
+var result = await new SimulationBuilder()
+    .WithWorld(world)
+    .UseStandardPipeline()
+    .AddConsoleObserver(colored: true)
+    .BuildAndRunAsync();
+
+Console.WriteLine($"Simulation completed after {result.CurrentTick} ticks");
+```
+
+### Advanced Usage
+
+For more control, you can configure individual components:
+
+```csharp
+using dotGeoMigrata.Logic.Models;
+using dotGeoMigrata.Simulation.Models;
+
+// Configure model parameters
+var modelConfig = new StandardModelConfig
+{
+    CapacitySteepness = 5.0,
+    DistanceDecayLambda = 0.001,
+    MigrationProbabilitySteepness = 10.0,
+    MigrationProbabilityThreshold = 0.0,
+    FactorSmoothingAlpha = 0.2
+};
+
+// Configure simulation parameters
+var simConfig = new SimulationConfig
+{
+    MaxTicks = 500,
+    CheckStability = true,
+    StabilityThreshold = 10,
+    StabilityCheckInterval = 1,
+    MinTicksBeforeStabilityCheck = 10
+};
+
+// Build with custom configuration
+var engine = new SimulationBuilder()
+    .WithWorld(world)
+    .WithModelConfig(modelConfig)
+    .WithSimulationConfig(simConfig)
+    .UseStandardPipeline()
+    .AddConsoleObserver()
+    .Build();
+
+var context = await engine.RunAsync(world);
+```
+
+### Using Snapshots
+
+Save and restore simulation states:
+
+```csharp
+using dotGeoMigrata.Snapshot.Services;
+using dotGeoMigrata.Snapshot.Serialization;
+
+// Create snapshot after simulation
+var snapshot = SnapshotService.CreateSnapshot(world);
+
+// Save to JSON
+var jsonSerializer = new JsonSnapshotSerializer();
+await jsonSerializer.SerializeAsync(snapshot, "simulation-output.json");
+
+// Restore from snapshot
+var loadedSnapshot = await jsonSerializer.DeserializeAsync("simulation-output.json");
+var restoredWorld = SnapshotService.RestoreWorld(loadedSnapshot);
+```
 
 ## Architecture
 
@@ -102,6 +215,92 @@ Git-like incremental snapshot system:
 - Stores initial world state + simulation steps (deltas)
 - Supports JSON and XML serialization
 - Efficient storage with migration event records
+
+## Public API
+
+### Main Entry Points
+
+The library provides fluent builders for ease of use:
+
+- **`WorldBuilder`** - Construct worlds with cities, factors, and population groups
+- **`SimulationBuilder`** - Configure and create simulation engines
+
+### Core Abstractions
+
+Extend the framework by implementing these interfaces:
+
+- **`IAttractionCalculator`** - Custom logic for calculating city attractiveness
+- **`IMigrationCalculator`** - Custom logic for determining migration flows
+- **`ISimulationStage`** - Custom stages to add to the simulation pipeline
+- **`ISimulationObserver`** - Monitor and react to simulation events
+
+### Key Models
+
+Domain models available for use and extension:
+
+- **`World`**, **`City`** - Core simulation entities
+- **`FactorDefinition`**, **`FactorValue`** - City characteristic system
+- **`GroupDefinition`**, **`GroupValue`** - Population group system
+- **`SimulationContext`** - Runtime simulation state
+- **`AttractionResult`**, **`MigrationFlow`** - Calculation results
+
+## Extensibility for REST API / Middleware
+
+The library is designed to be consumed by middleware layers (console apps, web APIs, etc.). Key considerations:
+
+### Recommended Architecture
+
+```
+┌─────────────────────────────────┐
+│   Visualization / Client App    │
+│   (React, Vue, Desktop, etc.)   │
+└────────────┬────────────────────┘
+             │ HTTP/WebSocket
+┌────────────▼────────────────────┐
+│   Console/Web Middleware API    │
+│   (ASP.NET Core, REST, gRPC)    │
+│   - Exposes simulation controls │
+│   - Streams simulation updates  │
+│   - Manages state persistence   │
+└────────────┬────────────────────┘
+             │ Direct Reference
+┌────────────▼────────────────────┐
+│    dotGeoMigrata Library        │
+│    (This Package)               │
+└─────────────────────────────────┘
+```
+
+### Integration Points
+
+1. **Real-time Updates**: Use `ISimulationObserver` to stream events via SignalR/WebSocket
+2. **State Management**: Use `SnapshotService` to save/restore simulation state
+3. **Custom Stages**: Inject logging, metrics, or custom logic via `ISimulationStage`
+4. **Serialization**: JSON/XML snapshots are ready for API responses
+
+### Example Observer for API Integration
+
+```csharp
+public class ApiStreamingObserver : ISimulationObserver
+{
+    private readonly IHubContext<SimulationHub> _hubContext;
+
+    public void OnTickComplete(SimulationContext context)
+    {
+        // Stream tick updates to connected clients
+        _hubContext.Clients.All.SendAsync("TickUpdate", new
+        {
+            Tick = context.CurrentTick,
+            PopulationChange = context.TotalPopulationChange,
+            Cities = context.World.Cities.Select(c => new
+            {
+                c.DisplayName,
+                c.Population
+            })
+        });
+    }
+    // ... other methods
+}
+```
 
 ## Contributing
 

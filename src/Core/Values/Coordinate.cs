@@ -1,10 +1,18 @@
 ﻿namespace dotGeoMigrata.Core.Values;
 
+/// <summary>
+/// Represents a geographic coordinate using WGS84 datum (latitude and longitude).
+/// </summary>
 public readonly record struct Coordinate
 {
     private readonly double _latitude;
     private readonly double _longitude;
 
+    /// <summary>
+    /// Gets or initializes the longitude in degrees.
+    /// Valid range: -180 to 180.
+    /// </summary>
+    /// <exception cref="ArgumentException">Thrown when longitude is outside the valid range.</exception>
     public required double Longitude
     {
         get => _longitude;
@@ -13,6 +21,11 @@ public readonly record struct Coordinate
             : throw new ArgumentException("Longitude must be between -180 and 180 degrees.", nameof(value));
     }
 
+    /// <summary>
+    /// Gets or initializes the latitude in degrees.
+    /// Valid range: -90 to 90.
+    /// </summary>
+    /// <exception cref="ArgumentException">Thrown when latitude is outside the valid range.</exception>
     public required double Latitude
     {
         get => _latitude;
