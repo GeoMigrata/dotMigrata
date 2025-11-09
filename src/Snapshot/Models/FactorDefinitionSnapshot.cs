@@ -1,32 +1,47 @@
-﻿namespace dotGeoMigrata.Snapshot.Models;
+﻿using System.Xml.Serialization;
+
+namespace dotGeoMigrata.Snapshot.Models;
 
 /// <summary>
 /// Snapshot representation of a factor definition.
 /// </summary>
-public sealed record FactorDefinitionSnapshot
+[XmlType("FactorDefinition")]
+public sealed class FactorDefinitionSnapshot
 {
     /// <summary>
-    /// Gets or initializes the display name.
+    /// Gets or sets the unique identifier for this factor.
+    /// Used for references within the snapshot.
     /// </summary>
-    public required string DisplayName { get; init; }
+    [XmlAttribute("Id")]
+    public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or initializes the factor type ("Positive" or "Negative").
+    /// Gets or sets the display name.
     /// </summary>
-    public required string Type { get; init; }
+    [XmlAttribute("Name")]
+    public string DisplayName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or initializes the minimum value for normalization.
+    /// Gets or sets the factor type ("Positive" or "Negative").
     /// </summary>
-    public required double MinValue { get; init; }
+    [XmlAttribute("Type")]
+    public string Type { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or initializes the maximum value for normalization.
+    /// Gets or sets the minimum value for normalization.
     /// </summary>
-    public required double MaxValue { get; init; }
+    [XmlAttribute("Min")]
+    public double MinValue { get; set; }
 
     /// <summary>
-    /// Gets or initializes the transform type (e.g., "Linear", "Log", "Sigmoid").
+    /// Gets or sets the maximum value for normalization.
     /// </summary>
-    public string? Transform { get; init; }
+    [XmlAttribute("Max")]
+    public double MaxValue { get; set; }
+
+    /// <summary>
+    /// Gets or sets the transform type (e.g., "Linear", "Log", "Sigmoid").
+    /// </summary>
+    [XmlAttribute("Transform")]
+    public string? Transform { get; set; }
 }

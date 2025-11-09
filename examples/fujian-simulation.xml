@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WorldSnapshot xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <Id>fujian-test-2024</Id>
+    <DisplayName>Fujian Province Migration Simulation</DisplayName>
+    <Status>Seed</Status>
+    <CreatedAt>2024-11-08T00:00:00Z</CreatedAt>
+    <LastModifiedAt>2024-11-08T00:00:00Z</LastModifiedAt>
+    <InitialState>
+        <DisplayName>Fujian Province Migration Simulation</DisplayName>
+        <FactorDefinitions>
+            <FactorDefinition Id="average-income" Name="Average Income" Type="Positive" Min="30000" Max="150000"
+                              Transform="Linear"/>
+            <FactorDefinition Id="housing-cost" Name="Housing Cost" Type="Negative" Min="5000" Max="40000"
+                              Transform="Linear"/>
+            <FactorDefinition Id="employment-rate" Name="Employment Rate" Type="Positive" Min="0.7" Max="0.98"
+                              Transform="Linear"/>
+            <FactorDefinition Id="air-quality-index" Name="Air Quality Index" Type="Negative" Min="30" Max="150"
+                              Transform="Linear"/>
+            <FactorDefinition Id="education-quality" Name="Education Quality" Type="Positive" Min="5" Max="10"
+                              Transform="Linear"/>
+            <FactorDefinition Id="healthcare-access" Name="Healthcare Access" Type="Positive" Min="4" Max="10"
+                              Transform="Linear"/>
+            <FactorDefinition Id="public-transport" Name="Public Transport" Type="Positive" Min="3" Max="10"
+                              Transform="Linear"/>
+            <FactorDefinition Id="cultural-amenities" Name="Cultural Amenities" Type="Positive" Min="2" Max="10"
+                              Transform="Linear"/>
+            <FactorDefinition Id="crime-rate" Name="Crime Rate" Type="Negative" Min="1" Max="8" Transform="Linear"/>
+            <FactorDefinition Id="living-space" Name="Living Space" Type="Positive" Min="20" Max="80"
+                              Transform="Linear"/>
+        </FactorDefinitions>
+        <GroupDefinitions>
+            <GroupDefinition Id="young-professionals" Name="Young Professionals" MovingWillingness="0.75"
+                             RetentionRate="0.3" SensitivityScaling="1.2" AttractionThreshold="0.15"
+                             MinAcceptableAttraction="0.1">
+                <Sensitivities>
+                    <Sensitivity FactorId="average-income" Value="90"/>
+                    <Sensitivity FactorId="housing-cost" Value="80"/>
+                    <Sensitivity FactorId="employment-rate" Value="95"/>
+                    <Sensitivity FactorId="air-quality-index" Value="60"/>
+                    <Sensitivity FactorId="education-quality" Value="50"/>
+                    <Sensitivity FactorId="healthcare-access" Value="40"/>
+                    <Sensitivity FactorId="public-transport" Value="70"/>
+                    <Sensitivity FactorId="cultural-amenities" Value="80"/>
+                    <Sensitivity FactorId="crime-rate" Value="50"/>
+                    <Sensitivity FactorId="living-space" Value="40"/>
+                </Sensitivities>
+            </GroupDefinition>
+            <GroupDefinition Id="families-with-children" Name="Families with Children" MovingWillingness="0.4"
+                             RetentionRate="0.65" SensitivityScaling="1" AttractionThreshold="0.25"
+                             MinAcceptableAttraction="0.2">
+                <Sensitivities>
+                    <Sensitivity FactorId="average-income" Value="75"/>
+                    <Sensitivity FactorId="housing-cost" Value="85"/>
+                    <Sensitivity FactorId="employment-rate" Value="70"/>
+                    <Sensitivity FactorId="air-quality-index" Value="90"/>
+                    <Sensitivity FactorId="education-quality" Value="95"/>
+                    <Sensitivity FactorId="healthcare-access" Value="85"/>
+                    <Sensitivity FactorId="public-transport" Value="60"/>
+                    <Sensitivity FactorId="cultural-amenities" Value="50"/>
+                    <Sensitivity FactorId="crime-rate" Value="90"/>
+                    <Sensitivity FactorId="living-space" Value="90"/>
+                </Sensitivities>
+            </GroupDefinition>
+            <GroupDefinition Id="retirees" Name="Retirees" MovingWillingness="0.2" RetentionRate="0.8"
+                             SensitivityScaling="0.8" AttractionThreshold="0.35" MinAcceptableAttraction="0.3">
+                <Sensitivities>
+                    <Sensitivity FactorId="average-income" Value="40"/>
+                    <Sensitivity FactorId="housing-cost" Value="90"/>
+                    <Sensitivity FactorId="employment-rate" Value="10"/>
+                    <Sensitivity FactorId="air-quality-index" Value="95"/>
+                    <Sensitivity FactorId="education-quality" Value="20"/>
+                    <Sensitivity FactorId="healthcare-access" Value="95"/>
+                    <Sensitivity FactorId="public-transport" Value="70"/>
+                    <Sensitivity FactorId="cultural-amenities" Value="60"/>
+                    <Sensitivity FactorId="crime-rate" Value="85"/>
+                    <Sensitivity FactorId="living-space" Value="75"/>
+                </Sensitivities>
+            </GroupDefinition>
+            <GroupDefinition Id="students" Name="Students" MovingWillingness="0.85" RetentionRate="0.2"
+                             SensitivityScaling="1.1" AttractionThreshold="0.1" MinAcceptableAttraction="0.05">
+                <Sensitivities>
+                    <Sensitivity FactorId="average-income" Value="50"/>
+                    <Sensitivity FactorId="housing-cost" Value="95"/>
+                    <Sensitivity FactorId="employment-rate" Value="60"/>
+                    <Sensitivity FactorId="air-quality-index" Value="50"/>
+                    <Sensitivity FactorId="education-quality" Value="98"/>
+                    <Sensitivity FactorId="healthcare-access" Value="30"/>
+                    <Sensitivity FactorId="public-transport" Value="80"/>
+                    <Sensitivity FactorId="cultural-amenities" Value="90"/>
+                    <Sensitivity FactorId="crime-rate" Value="60"/>
+                    <Sensitivity FactorId="living-space" Value="50"/>
+                </Sensitivities>
+            </GroupDefinition>
+            <GroupDefinition Id="rural-migrants" Name="Rural Migrants" MovingWillingness="0.6" RetentionRate="0.45"
+                             SensitivityScaling="0.9" AttractionThreshold="0.2" MinAcceptableAttraction="0.15">
+                <Sensitivities>
+                    <Sensitivity FactorId="average-income" Value="95"/>
+                    <Sensitivity FactorId="housing-cost" Value="90"/>
+                    <Sensitivity FactorId="employment-rate" Value="90"/>
+                    <Sensitivity FactorId="air-quality-index" Value="40"/>
+                    <Sensitivity FactorId="education-quality" Value="60"/>
+                    <Sensitivity FactorId="healthcare-access" Value="70"/>
+                    <Sensitivity FactorId="public-transport" Value="50"/>
+                    <Sensitivity FactorId="cultural-amenities" Value="30"/>
+                    <Sensitivity FactorId="crime-rate" Value="70"/>
+                    <Sensitivity FactorId="living-space" Value="60"/>
+                </Sensitivities>
+            </GroupDefinition>
+            <GroupDefinition Id="tech-workers" Name="Tech Workers" MovingWillingness="0.7" RetentionRate="0.35"
+                             SensitivityScaling="1.15" AttractionThreshold="0.18" MinAcceptableAttraction="0.12">
+                <Sensitivities>
+                    <Sensitivity FactorId="average-income" Value="95"/>
+                    <Sensitivity FactorId="housing-cost" Value="75"/>
+                    <Sensitivity FactorId="employment-rate" Value="85"/>
+                    <Sensitivity FactorId="air-quality-index" Value="70"/>
+                    <Sensitivity FactorId="education-quality" Value="60"/>
+                    <Sensitivity FactorId="healthcare-access" Value="50"/>
+                    <Sensitivity FactorId="public-transport" Value="75"/>
+                    <Sensitivity FactorId="cultural-amenities" Value="85"/>
+                    <Sensitivity FactorId="crime-rate" Value="60"/>
+                    <Sensitivity FactorId="living-space" Value="55"/>
+                </Sensitivities>
+            </GroupDefinition>
+        </GroupDefinitions>
+        <Cities>
+            <City Name="Fuzhou" Area="11968">
+                <Location Lon="119.3" Lat="26.08"/>
+                <Capacity>8000000</Capacity>
+                <Factors>
+                    <Factor FactorId="average-income" Value="85000"/>
+                    <Factor FactorId="housing-cost" Value="28000"/>
+                    <Factor FactorId="employment-rate" Value="0.92"/>
+                    <Factor FactorId="air-quality-index" Value="65"/>
+                    <Factor FactorId="education-quality" Value="8.2"/>
+                    <Factor FactorId="healthcare-access" Value="8.5"/>
+                    <Factor FactorId="public-transport" Value="7.8"/>
+                    <Factor FactorId="cultural-amenities" Value="8"/>
+                    <Factor FactorId="crime-rate" Value="3.2"/>
+                    <Factor FactorId="living-space" Value="42"/>
+                </Factors>
+                <Groups>
+                    <Group GroupId="young-professionals" Population="950000"/>
+                    <Group GroupId="families-with-children" Population="1200000"/>
+                    <Group GroupId="retirees" Population="650000"/>
+                    <Group GroupId="students" Population="380000"/>
+                    <Group GroupId="rural-migrants" Population="520000"/>
+                    <Group GroupId="tech-workers" Population="420000"/>
+                </Groups>
+            </City>
+            <City Name="Xiamen" Area="1699">
+                <Location Lon="118.1" Lat="24.48"/>
+                <Capacity>5000000</Capacity>
+                <Factors>
+                    <Factor FactorId="average-income" Value="95000"/>
+                    <Factor FactorId="housing-cost" Value="35000"/>
+                    <Factor FactorId="employment-rate" Value="0.94"/>
+                    <Factor FactorId="air-quality-index" Value="50"/>
+                    <Factor FactorId="education-quality" Value="8.8"/>
+                    <Factor FactorId="healthcare-access" Value="8.8"/>
+                    <Factor FactorId="public-transport" Value="8.5"/>
+                    <Factor FactorId="cultural-amenities" Value="9"/>
+                    <Factor FactorId="crime-rate" Value="2.5"/>
+                    <Factor FactorId="living-space" Value="38"/>
+                </Factors>
+                <Groups>
+                    <Group GroupId="young-professionals" Population="680000"/>
+                    <Group GroupId="families-with-children" Population="750000"/>
+                    <Group GroupId="retirees" Population="420000"/>
+                    <Group GroupId="students" Population="280000"/>
+                    <Group GroupId="rural-migrants" Population="320000"/>
+                    <Group GroupId="tech-workers" Population="380000"/>
+                </Groups>
+            </City>
+            <City Name="Quanzhou" Area="11015">
+                <Location Lon="118.58" Lat="24.93"/>
+                <Capacity>9000000</Capacity>
+                <Factors>
+                    <Factor FactorId="average-income" Value="72000"/>
+                    <Factor FactorId="housing-cost" Value="18000"/>
+                    <Factor FactorId="employment-rate" Value="0.89"/>
+                    <Factor FactorId="air-quality-index" Value="75"/>
+                    <Factor FactorId="education-quality" Value="7.5"/>
+                    <Factor FactorId="healthcare-access" Value="7.2"/>
+                    <Factor FactorId="public-transport" Value="6.5"/>
+                    <Factor FactorId="cultural-amenities" Value="7.2"/>
+                    <Factor FactorId="crime-rate" Value="3.8"/>
+                    <Factor FactorId="living-space" Value="48"/>
+                </Factors>
+                <Groups>
+                    <Group GroupId="young-professionals" Population="820000"/>
+                    <Group GroupId="families-with-children" Population="1450000"/>
+                    <Group GroupId="retirees" Population="720000"/>
+                    <Group GroupId="students" Population="320000"/>
+                    <Group GroupId="rural-migrants" Population="780000"/>
+                    <Group GroupId="tech-workers" Population="280000"/>
+                </Groups>
+            </City>
+            <City Name="Zhangzhou" Area="12607">
+                <Location Lon="117.62" Lat="24.51"/>
+                <Capacity>5500000</Capacity>
+                <Factors>
+                    <Factor FactorId="average-income" Value="58000"/>
+                    <Factor FactorId="housing-cost" Value="12000"/>
+                    <Factor FactorId="employment-rate" Value="0.85"/>
+                    <Factor FactorId="air-quality-index" Value="68"/>
+                    <Factor FactorId="education-quality" Value="6.8"/>
+                    <Factor FactorId="healthcare-access" Value="6.5"/>
+                    <Factor FactorId="public-transport" Value="5.5"/>
+                    <Factor FactorId="cultural-amenities" Value="6"/>
+                    <Factor FactorId="crime-rate" Value="4.2"/>
+                    <Factor FactorId="living-space" Value="55"/>
+                </Factors>
+                <Groups>
+                    <Group GroupId="young-professionals" Population="420000"/>
+                    <Group GroupId="families-with-children" Population="980000"/>
+                    <Group GroupId="retirees" Population="580000"/>
+                    <Group GroupId="students" Population="180000"/>
+                    <Group GroupId="rural-migrants" Population="620000"/>
+                    <Group GroupId="tech-workers" Population="150000"/>
+                </Groups>
+            </City>
+        </Cities>
+    </InitialState>
+    <Steps/>
+</WorldSnapshot>

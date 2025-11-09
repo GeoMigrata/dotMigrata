@@ -1,39 +1,48 @@
-﻿namespace dotGeoMigrata.Snapshot.Models;
+﻿using System.Xml.Serialization;
+
+namespace dotGeoMigrata.Snapshot.Models;
 
 /// <summary>
 /// Snapshot representation of a city.
 /// </summary>
-public record CitySnapshot
+[XmlType("City")]
+public class CitySnapshot
 {
     /// <summary>
-    /// Gets or initializes the display name.
+    /// Gets or sets the display name.
     /// </summary>
-    public required string DisplayName { get; init; }
+    [XmlAttribute("Name")]
+    public string DisplayName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or initializes the city area in square kilometers.
+    /// Gets or sets the city area in square kilometers.
     /// </summary>
-    public required double Area { get; init; }
+    [XmlAttribute("Area")]
+    public double Area { get; set; }
 
     /// <summary>
-    /// Gets or initializes the location coordinates.
+    /// Gets or sets the location coordinates.
     /// </summary>
-    public required LocationSnapshot Location { get; init; }
+    [XmlElement("Location")]
+    public LocationSnapshot Location { get; set; } = new();
 
     /// <summary>
-    /// Gets or initializes the capacity (optional).
+    /// Gets or sets the capacity (optional).
     /// </summary>
-    public int? Capacity { get; init; }
+    [XmlElement("Capacity")]
+    public int? Capacity { get; set; }
 
     /// <summary>
-    /// Gets or initializes the factor values.
-    /// Maps factor display name to intensity value.
+    /// Gets or sets the factor values.
+    /// References factors by ID.
     /// </summary>
-    public required IReadOnlyList<FactorValueSnapshot> FactorValues { get; init; }
+    [XmlArray("Factors")]
+    public List<FactorValueSnapshot> FactorValues { get; set; } = new();
 
     /// <summary>
-    /// Gets or initializes the population group values.
-    /// Maps group display name to population count.
+    /// Gets or sets the population group values.
+    /// References groups by ID.
     /// </summary>
-    public required IReadOnlyList<GroupValueSnapshot> GroupValues { get; init; }
+    [XmlArray("Groups")]
+    public List<GroupValueSnapshot> GroupValues { get; set; } = new();
 }

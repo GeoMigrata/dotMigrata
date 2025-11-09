@@ -1,4 +1,5 @@
-﻿using dotGeoMigrata.Snapshot.Enums;
+﻿using System.Xml.Serialization;
+using dotGeoMigrata.Snapshot.Enums;
 
 namespace dotGeoMigrata.Snapshot.Models;
 
@@ -6,46 +7,48 @@ namespace dotGeoMigrata.Snapshot.Models;
 /// Represents a complete simulation snapshot with incremental history.
 /// Follows a Git-like model: stores initial state plus deltas (steps).
 /// </summary>
-public sealed record WorldSnapshot
+public sealed class WorldSnapshot
 {
     /// <summary>
-    /// Gets or initializes the snapshot identifier.
+    /// Gets or sets the snapshot identifier.
     /// </summary>
-    public string Id { get; init; } = Guid.NewGuid().ToString();
+    public string Id { get; set; } = Guid.NewGuid().ToString();
 
     /// <summary>
-    /// Gets or initializes the display name for this snapshot.
+    /// Gets or sets the display name for this snapshot.
     /// </summary>
-    public required string DisplayName { get; init; }
+    public string DisplayName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or initializes the snapshot status.
+    /// Gets or sets the snapshot status.
     /// </summary>
-    public SnapshotStatus Status { get; init; } = SnapshotStatus.Seed;
+    public SnapshotStatus Status { get; set; } = SnapshotStatus.Seed;
 
     /// <summary>
-    /// Gets or initializes the creation timestamp.
+    /// Gets or sets the creation timestamp.
     /// </summary>
-    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
-    /// Gets or initializes the last modified timestamp.
+    /// Gets or sets the last modified timestamp.
     /// </summary>
-    public DateTime LastModifiedAt { get; init; } = DateTime.UtcNow;
+    public DateTime LastModifiedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
-    /// Gets or initializes the initial world state data.
+    /// Gets or sets the initial world state data.
     /// </summary>
-    public required InitialWorldState InitialState { get; init; }
+    public InitialWorldState InitialState { get; set; } = new();
 
     /// <summary>
-    /// Gets or initializes the simulation steps (incremental deltas).
+    /// Gets or sets the simulation steps (incremental deltas).
     /// Each step records the migrations that occurred.
     /// </summary>
-    public IReadOnlyList<SimulationStep> Steps { get; init; } = Array.Empty<SimulationStep>();
+    [XmlArray("Steps")]
+    public List<SimulationStep> Steps { get; set; } = new();
 
     /// <summary>
-    /// Gets or initializes optional metadata for this snapshot.
+    /// Gets or sets optional metadata for this snapshot.
     /// </summary>
-    public Dictionary<string, string>? Metadata { get; init; }
+    [XmlIgnore]
+    public Dictionary<string, string>? Metadata { get; set; }
 }

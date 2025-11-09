@@ -32,7 +32,7 @@ public static class SnapshotService
             DisplayName = world.DisplayName,
             Status = status,
             InitialState = CreateInitialState(world),
-            Steps = steps?.ToList() as IReadOnlyList<SimulationStep> ?? []
+            Steps = steps?.ToList() ?? new List<SimulationStep>()
         };
     }
 
@@ -88,6 +88,7 @@ public static class SnapshotService
     {
         return new FactorDefinitionSnapshot
         {
+            Id = GenerateId(fd.DisplayName),
             DisplayName = fd.DisplayName,
             Type = fd.Type.ToString(),
             MinValue = fd.MinValue,
@@ -101,6 +102,7 @@ public static class SnapshotService
     {
         return new GroupDefinitionSnapshot
         {
+            Id = GenerateId(gd.DisplayName),
             DisplayName = gd.DisplayName,
             MovingWillingness = gd.MovingWillingness,
             RetentionRate = gd.RetentionRate,
@@ -109,7 +111,7 @@ public static class SnapshotService
             MinimumAcceptableAttraction = gd.MinimumAcceptableAttraction,
             Sensitivities = gd.Sensitivities.Select(s => new FactorSensitivitySnapshot
             {
-                FactorRef = s.Factor.DisplayName,
+                FactorRef = GenerateId(s.Factor.DisplayName),
                 Sensitivity = s.Sensitivity,
                 OverriddenFactorType = s.OverriddenFactorType?.ToString()
             }).ToList()
@@ -131,21 +133,29 @@ public static class SnapshotService
             Capacity = city.Capacity,
             FactorValues = city.FactorValues.Select(fv => new FactorValueSnapshot
             {
-                FactorRef = fv.Definition.DisplayName,
+                FactorRef = GenerateId(fv.Definition.DisplayName),
                 Intensity = fv.Intensity
             }).ToList(),
             GroupValues = city.PopulationGroupValues.Select(gv => new GroupValueSnapshot
             {
-                GroupRef = gv.Definition.DisplayName,
+                GroupRef = GenerateId(gv.Definition.DisplayName),
                 Population = gv.Population
             }).ToList()
         };
     }
 
+    /// <summary>
+    /// Generates a stable ID from a display name by converting to lowercase and replacing spaces with hyphens.
+    /// </summary>
+    private static string GenerateId(string displayName)
+    {
+        return displayName.ToLowerInvariant().Replace(" ", "-");
+    }
+
 
     private static World CreateWorldFromInitialState(InitialWorldState initialState)
     {
-        // Build factor definitions
+        // Build factor definitions and create ID lookup
         var factorDefs = initialState.FactorDefinitions.Select(fd => new FactorDefinition
         {
             DisplayName = fd.DisplayName,
@@ -155,11 +165,17 @@ public static class SnapshotService
             Transform = fd.Transform != null ? Enum.Parse<TransformType>(fd.Transform) : null
         }).ToList();
 
-        // Build group definitions
+        // Create factor lookup by ID
+        var factorById = factorDefs.ToDictionary(
+            fd => GenerateId(fd.DisplayName),
+            fd => fd
+        );
+
+        // Build group definitions and create ID lookup
         var groupDefs = initialState.GroupDefinitions.Select(gd => new GroupDefinition(
             gd.Sensitivities.Select(s => new FactorSensitivity
             {
-                Factor = factorDefs.First(fd => fd.DisplayName == s.FactorRef),
+                Factor = factorById[s.FactorRef],
                 Sensitivity = s.Sensitivity,
                 OverriddenFactorType = s.OverriddenFactorType != null
                     ? Enum.Parse<FactorType>(s.OverriddenFactorType)
@@ -175,16 +191,22 @@ public static class SnapshotService
             MinimumAcceptableAttraction = gd.MinimumAcceptableAttraction
         }).ToList();
 
-        // Build cities
+        // Create group lookup by ID
+        var groupById = groupDefs.ToDictionary(
+            gd => GenerateId(gd.DisplayName),
+            gd => gd
+        );
+
+        // Build cities using ID lookups
         var cities = initialState.Cities.Select(cs => new City(
             cs.FactorValues.Select(fv => new FactorValue
             {
-                Definition = factorDefs.First(fd => fd.DisplayName == fv.FactorRef),
+                Definition = factorById[fv.FactorRef],
                 Intensity = fv.Intensity
             }),
             cs.GroupValues.Select(gv => new GroupValue
             {
-                Definition = groupDefs.First(gd => gd.DisplayName == gv.GroupRef),
+                Definition = groupById[gv.GroupRef],
                 Population = gv.Population
             })
         )

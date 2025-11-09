@@ -1,28 +1,33 @@
-﻿namespace dotGeoMigrata.Snapshot.Models;
+﻿using System.Xml.Serialization;
+
+namespace dotGeoMigrata.Snapshot.Models;
 
 /// <summary>
 /// Represents the initial state of the world before any simulation steps.
 /// This is the "seed" data from which all deltas are calculated.
 /// </summary>
-public sealed record InitialWorldState
+public sealed class InitialWorldState
 {
     /// <summary>
-    /// Gets or initializes the world display name.
+    /// Gets or sets the world display name.
     /// </summary>
-    public required string DisplayName { get; init; }
+    public string DisplayName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or initializes the factor definitions.
+    /// Gets or sets the factor definitions.
     /// </summary>
-    public required IReadOnlyList<FactorDefinitionSnapshot> FactorDefinitions { get; init; }
+    [XmlArray("FactorDefinitions")]
+    public List<FactorDefinitionSnapshot> FactorDefinitions { get; set; } = new();
 
     /// <summary>
-    /// Gets or initializes the population group definitions.
+    /// Gets or sets the population group definitions.
     /// </summary>
-    public required IReadOnlyList<GroupDefinitionSnapshot> GroupDefinitions { get; init; }
+    [XmlArray("GroupDefinitions")]
+    public List<GroupDefinitionSnapshot> GroupDefinitions { get; set; } = new();
 
     /// <summary>
-    /// Gets or initializes the cities with their initial states.
+    /// Gets or sets the cities with their initial states.
     /// </summary>
-    public required IReadOnlyList<CitySnapshot> Cities { get; init; }
+    [XmlArray("Cities")]
+    public List<CitySnapshot> Cities { get; set; } = new();
 }

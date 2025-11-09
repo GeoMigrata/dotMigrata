@@ -1,34 +1,38 @@
-﻿namespace dotGeoMigrata.Snapshot.Models;
+﻿using System.Xml.Serialization;
+
+namespace dotGeoMigrata.Snapshot.Models;
 
 /// <summary>
 /// Represents a single simulation step with migration events.
 /// Used for incremental (delta-based) snapshot storage.
 /// </summary>
-public sealed record SimulationStep
+public sealed class SimulationStep
 {
     /// <summary>
-    /// Gets or initializes the step number (0-based).
+    /// Gets or sets the step number (0-based).
     /// </summary>
-    public required int StepNumber { get; init; }
+    public int StepNumber { get; set; }
 
     /// <summary>
-    /// Gets or initializes the timestamp when this step was executed.
+    /// Gets or sets the timestamp when this step was executed.
     /// </summary>
-    public DateTime Timestamp { get; init; } = DateTime.UtcNow;
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
     /// <summary>
-    /// Gets or initializes the total population change in this step.
+    /// Gets or sets the total population change in this step.
     /// </summary>
-    public int TotalPopulationChange { get; init; }
+    public int TotalPopulationChange { get; set; }
 
     /// <summary>
-    /// Gets or initializes the migration records for this step.
+    /// Gets or sets the migration records for this step.
     /// Only migrations that actually occurred are recorded.
     /// </summary>
-    public IReadOnlyList<MigrationRecord> Migrations { get; init; } = Array.Empty<MigrationRecord>();
+    [XmlArray("Migrations")]
+    public List<MigrationRecord> Migrations { get; set; } = new();
 
     /// <summary>
-    /// Gets or initializes optional metadata about this step.
+    /// Gets or sets optional metadata about this step.
     /// </summary>
-    public Dictionary<string, string>? Metadata { get; init; }
+    [XmlIgnore]
+    public Dictionary<string, string>? Metadata { get; set; }
 }

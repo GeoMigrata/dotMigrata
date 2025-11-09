@@ -1,17 +1,22 @@
-﻿namespace dotGeoMigrata.Snapshot.Models;
+﻿using System.Xml.Serialization;
+
+namespace dotGeoMigrata.Snapshot.Models;
 
 /// <summary>
 /// Snapshot representation of a population group value.
 /// </summary>
-public sealed record GroupValueSnapshot
+[XmlType("Group")]
+public sealed class GroupValueSnapshot
 {
     /// <summary>
-    /// Gets or initializes the group reference (display name).
+    /// Gets or sets the group reference (ID).
     /// </summary>
-    public required string GroupRef { get; init; }
+    [XmlAttribute("GroupId")]
+    public string GroupRef { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or initializes the population count.
+    /// Gets or sets the population count.
     /// </summary>
-    public required int Population { get; init; }
+    [XmlAttribute("Population")]
+    public int Population { get; set; }
 }

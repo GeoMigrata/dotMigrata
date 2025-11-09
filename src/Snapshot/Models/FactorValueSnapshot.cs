@@ -1,17 +1,22 @@
-﻿namespace dotGeoMigrata.Snapshot.Models;
+﻿using System.Xml.Serialization;
+
+namespace dotGeoMigrata.Snapshot.Models;
 
 /// <summary>
 /// Snapshot representation of a factor value.
 /// </summary>
-public sealed record FactorValueSnapshot
+[XmlType("Factor")]
+public sealed class FactorValueSnapshot
 {
     /// <summary>
-    /// Gets or initializes the factor reference (display name).
+    /// Gets or sets the factor reference (ID).
     /// </summary>
-    public required string FactorRef { get; init; }
+    [XmlAttribute("FactorId")]
+    public string FactorRef { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or initializes the intensity value.
+    /// Gets or sets the intensity value.
     /// </summary>
-    public required double Intensity { get; init; }
+    [XmlAttribute("Value")]
+    public double Intensity { get; set; }
 }

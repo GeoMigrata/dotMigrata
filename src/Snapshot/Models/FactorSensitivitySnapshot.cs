@@ -1,22 +1,28 @@
-﻿namespace dotGeoMigrata.Snapshot.Models;
+﻿using System.Xml.Serialization;
+
+namespace dotGeoMigrata.Snapshot.Models;
 
 /// <summary>
 /// Snapshot representation of a factor sensitivity.
 /// </summary>
-public sealed record FactorSensitivitySnapshot
+[XmlType("Sensitivity")]
+public sealed class FactorSensitivitySnapshot
 {
     /// <summary>
-    /// Gets or initializes the factor reference (display name).
+    /// Gets or sets the factor reference (ID).
     /// </summary>
-    public required string FactorRef { get; init; }
+    [XmlAttribute("FactorId")]
+    public string FactorRef { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or initializes the sensitivity value.
+    /// Gets or sets the sensitivity value.
     /// </summary>
-    public required int Sensitivity { get; init; }
+    [XmlAttribute("Value")]
+    public int Sensitivity { get; set; }
 
     /// <summary>
-    /// Gets or initializes an optional factor type override ("Positive" or "Negative").
+    /// Gets or sets an optional factor type override ("Positive" or "Negative").
     /// </summary>
-    public string? OverriddenFactorType { get; init; }
+    [XmlAttribute("OverrideType")]
+    public string? OverriddenFactorType { get; set; }
 }

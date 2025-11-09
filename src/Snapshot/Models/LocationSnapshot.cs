@@ -1,17 +1,21 @@
-﻿namespace dotGeoMigrata.Snapshot.Models;
+﻿using System.Xml.Serialization;
+
+namespace dotGeoMigrata.Snapshot.Models;
 
 /// <summary>
 /// Snapshot representation of geographic coordinates.
 /// </summary>
-public sealed record LocationSnapshot
+public sealed class LocationSnapshot
 {
     /// <summary>
-    /// Gets or initializes the longitude (-180 to 180).
+    /// Gets or sets the longitude (-180 to 180).
     /// </summary>
-    public required double Longitude { get; init; }
+    [XmlAttribute("Lon")]
+    public double Longitude { get; set; }
 
     /// <summary>
-    /// Gets or initializes the latitude (-90 to 90).
+    /// Gets or sets the latitude (-90 to 90).
     /// </summary>
-    public required double Latitude { get; init; }
+    [XmlAttribute("Lat")]
+    public double Latitude { get; set; }
 }
