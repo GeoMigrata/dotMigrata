@@ -12,6 +12,7 @@ jobs:
     environment: production   # 与 NuGet 配置的 Environment 名字一致
     permissions:
       contents: read          # 读取仓库内容
+      packages: write
       id-token: write         # OIDC 必须，用于 Trusted Publishing
       # 如果还需要上传 GitHub Packages，可加 packages: write
     steps:
@@ -21,7 +22,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '9.0.x'
 
       - name: Derive Version from Tag
         if: startsWith(github.ref, 'refs/tags/')
