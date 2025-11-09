@@ -1,14 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
 
         <!-- Package Information -->
         <PackageId>GeoMigrata.Framework</PackageId>
-        <Version>1.0.0</Version>
         <Authors>GeoMigrata</Authors>
         <Company>GeoMigrata</Company>
         <Product>dotGeoMigrata</Product>
@@ -21,11 +20,10 @@
         <PackageTags>gis;simulation;migration;population;geospatial;urban-planning;agent-based-model;city-evolution;geomigrata</PackageTags>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 
         <!-- Documentation -->
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
         <NoWarn>$(NoWarn);1591</NoWarn><!-- Disable warning for missing XML comments on internal members -->
 
         <!-- Assembly Information -->
@@ -39,21 +37,13 @@
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        <DebugType>portable</DebugType>
         <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
     </PropertyGroup>
 
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>
-        <None Include="README.zh.md" Pack="true" PackagePath="\"/>
-        <None Include="API.md" Pack="true" PackagePath="\"/>
-        <None Include=".\assets\logo.png" Pack="true" PackagePath="\"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Content Include=".github\workflows\publish-nuget.yml" />
     </ItemGroup>
 </Project>
