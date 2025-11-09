@@ -1,5 +1,8 @@
 ﻿# dotGeoMigrata
 
+[![.NET](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
+[![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
+
 dotGeoMigrata 是一个基于 C# .NET 9.0 的模拟框架，用于研究各因素对**多城市—人口群体系统**中的人口迁移与城市演化的影响。
 该框架捕捉城市特征如何影响人口流动，以及迁移反馈如何随时间影响城市因素。
 
@@ -45,18 +48,125 @@ dotGeoMigrata 是一个基于 C# .NET 9.0 的模拟框架，用于研究各因�
 
 ## 安装与使用
 
-克隆仓库并使用 Visual Studio 2022+ 打开，或使用 .NET 9.0 SDK。使用 `dotnet build` 构建项目。
+### 添加到项目
 
-这是一个库框架。要使用它，请在你的项目中引用 `dotGeoMigrata` 库并创建模拟：
+将库添加到您的 .NET 9.0 项目中：
 
-1. 定义因素定义
-2. 定义群体定义，包含对所有因素的敏感度
-3. 创建城市，包含所有因素定义对应的因素值
+```bash
+dotnet add reference /path/to/dotGeoMigrata.csproj
+# 或者，发布到 NuGet 后：
+# dotnet add package dotGeoMigrata
+```
 
-4. 为每个城市创建所有群体定义对应的群体值
-5. 创建计算器（或使用内置的 StandardModel）
-6. 设置模拟阶段和配置
-7. 创建模拟引擎并运行
+### 快速入门示例
+
+以下是使用流式构建器 API 的简单示例：
+
+```csharp
+using dotGeoMigrata;
+using dotGeoMigrata.Core.Enums;
+
+// 创建包含因素、人口群体和城市的世界
+var world = new WorldBuilder()
+    .WithName("示例世界")
+    // 定义影响迁移的因素
+    .AddFactor("收入", FactorType.Positive, 20000, 100000)
+    .AddFactor("污染", FactorType.Negative, 0, 100)
+    .AddFactor("房价", FactorType.Negative, 500, 3000)
+    // 定义具有迁移行为的人口群体
+    .AddPopulationGroup("年轻专业人士", 
+        movingWillingness: 0.7, 
+        retentionRate: 0.3,
+        group => group
+            .WithSensitivity("收入", 5)
+            .WithSensitivity("污染", -2)
+            .WithSensitivity("房价", -3))
+    // 添加具有初始条件的城市
+    .AddCity("城市 A", 
+        latitude: 26.0, longitude: 119.3, area: 100.0, capacity: 1000000,
+        city => city
+            .WithFactorValue("收入", 50000)
+            .WithFactorValue("污染", 30)
+            .WithFactorValue("房价", 1500)
+            .WithPopulation("年轻专业人士", 100000))
+    .AddCity("城市 B",
+        latitude: 24.5, longitude: 118.1, area: 80.0, capacity: 800000,
+        city => city
+            .WithFactorValue("收入", 40000)
+            .WithFactorValue("污染", 20)
+            .WithFactorValue("房价", 1000)
+            .WithPopulation("年轻专业人士", 80000))
+    .Build();
+
+// 创建并运行模拟
+var result = await new SimulationBuilder()
+    .WithWorld(world)
+    .UseStandardPipeline()
+    .AddConsoleObserver(colored: true)
+    .BuildAndRunAsync();
+
+Console.WriteLine($"模拟在 {result.CurrentTick} 步后完成");
+```
+
+### 高级用法
+
+如需更多控制，您可以配置各个组件：
+
+```csharp
+using dotGeoMigrata.Logic.Models;
+using dotGeoMigrata.Simulation.Models;
+
+// 配置模型参数
+var modelConfig = new StandardModelConfig
+{
+    CapacitySteepness = 5.0,
+    DistanceDecayLambda = 0.001,
+    MigrationProbabilitySteepness = 10.0,
+    MigrationProbabilityThreshold = 0.0,
+    FactorSmoothingAlpha = 0.2
+};
+
+// 配置模拟参数
+var simConfig = new SimulationConfig
+{
+    MaxTicks = 500,
+    CheckStability = true,
+    StabilityThreshold = 10,
+    StabilityCheckInterval = 1,
+    MinTicksBeforeStabilityCheck = 10
+};
+
+// 使用自定义配置构建
+var engine = new SimulationBuilder()
+    .WithWorld(world)
+    .WithModelConfig(modelConfig)
+    .WithSimulationConfig(simConfig)
+    .UseStandardPipeline()
+    .AddConsoleObserver()
+    .Build();
+
+var context = await engine.RunAsync(world);
+```
+
+### 使用快照
+
+保存和恢复模拟状态：
+
+```csharp
+using dotGeoMigrata.Snapshot.Services;
+using dotGeoMigrata.Snapshot.Serialization;
+
+// 模拟后创建快照
+var snapshot = SnapshotService.CreateSnapshot(world);
+
+// 保存为 JSON
+var jsonSerializer = new JsonSnapshotSerializer();
+await jsonSerializer.SerializeToFile(snapshot, "simulation-output.json");
+
+// 从快照恢复
+var loadedSnapshot = await jsonSerializer.DeserializeFromFile("simulation-output.json");
+var restoredWorld = SnapshotService.RestoreWorld(loadedSnapshot);
+```
 
 ## 架构
 
@@ -92,6 +202,92 @@ dotGeoMigrata 是一个基于 C# .NET 9.0 的模拟框架，用于研究各因�
 - 存储初始世界状态 + 模拟步骤（增量）
 - 支持 JSON 和 XML 序列化
 - 通过迁移事件记录实现高效存储
+
+## 公共 API
+
+### 主要入口点
+
+库提供流式构建器以简化使用：
+
+- **`WorldBuilder`** - 构建包含城市、因素和人口群体的世界
+- **`SimulationBuilder`** - 配置和创建模拟引擎
+
+### 核心抽象
+
+通过实现这些接口扩展框架：
+
+- **`IAttractionCalculator`** - 计算城市吸引力的自定义逻辑
+- **`IMigrationCalculator`** - 确定迁移流的自定义逻辑
+- **`ISimulationStage`** - 添加到模拟管线的自定义阶段
+- **`ISimulationObserver`** - 监控和响应模拟事件
+
+### 关键模型
+
+可用于使用和扩展的领域模型：
+
+- **`World`**, **`City`** - 核心模拟实体
+- **`FactorDefinition`**, **`FactorValue`** - 城市特征系统
+- **`GroupDefinition`**, **`GroupValue`** - 人口群体系统
+- **`SimulationContext`** - 运行时模拟状态
+- **`AttractionResult`**, **`MigrationFlow`** - 计算结果
+
+## REST API / 中间层的可扩展性
+
+该库专为中间层（控制台应用、Web API 等）使用而设计。关键考虑：
+
+### 推荐架构
+
+```
+┌─────────────────────────────────┐
+│   可视化 / 客户端应用              │
+│   (React, Vue, 桌面应用等)        │
+└────────────┬────────────────────┘
+             │ HTTP/WebSocket
+┌────────────▼────────────────────┐
+│   控制台/Web 中间层 API           │
+│   (ASP.NET Core, REST, gRPC)    │
+│   - 公开模拟控制接口               │
+│   - 流式传输模拟更新               │
+│   - 管理状态持久化                │
+└────────────┬────────────────────┘
+             │ 直接引用
+┌────────────▼────────────────────┐
+│    dotGeoMigrata 库             │
+│    (本包)                        │
+└─────────────────────────────────┘
+```
+
+### 集成点
+
+1. **实时更新**：使用 `ISimulationObserver` 通过 SignalR/WebSocket 流式传输事件
+2. **状态管理**：使用 `SnapshotService` 保存/恢复模拟状态
+3. **自定义阶段**：通过 `ISimulationStage` 注入日志、指标或自定义逻辑
+4. **序列化**：JSON/XML 快照可直接用于 API 响应
+
+### API 集成示例观察者
+
+```csharp
+public class ApiStreamingObserver : ISimulationObserver
+{
+    private readonly IHubContext<SimulationHub> _hubContext;
+
+    public void OnTickComplete(SimulationContext context)
+    {
+        // 将时间步更新流式传输到已连接的客户端
+        _hubContext.Clients.All.SendAsync("TickUpdate", new
+        {
+            Tick = context.CurrentTick,
+            PopulationChange = context.TotalPopulationChange,
+            Cities = context.World.Cities.Select(c => new
+            {
+                c.DisplayName,
+                c.Population
+            })
+        });
+    }
+    // ... 其他方法
+}
+```
 
 ## 贡献
 
