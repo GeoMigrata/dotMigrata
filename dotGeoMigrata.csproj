@@ -11,7 +11,6 @@
         <Authors>GeoMigrata</Authors>
         <Company>GeoMigrata</Company>
         <Product>dotGeoMigrata</Product>
-        <PackageIcon>logo.png</PackageIcon>
         <Description>A .NET 9.0 simulation framework for modeling population migration and city evolution in multi-city, multi-population systems. Captures how city characteristics influence population movement and how migration feedback affects city factors over time.</Description>
         <Copyright>Copyright © 2025 GeoMigrata</Copyright>
         <PackageProjectUrl>https://github.com/GeoMigrata/dotGeoMigrata</PackageProjectUrl>
