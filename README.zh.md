@@ -1,6 +1,7 @@
 ﻿# dotGeoMigrata
 
-[![.NET](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
+[![.NET8.0](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
+[![.NET9.0](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
 
 dotGeoMigrata 是一个基于 C# .NET 9.0 的模拟框架，用于研究各因素对**多城市—人口群体系统**中的人口迁移与城市演化的影响。
