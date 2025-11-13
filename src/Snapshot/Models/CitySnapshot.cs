@@ -11,5 +11,10 @@ public sealed record CitySnapshot
     public required double Area { get; init; }
     public required int? Capacity { get; init; }
     public required Dictionary<string, double> FactorValues { get; init; }
-    public required List<Guid> PersonIds { get; init; }
+
+    /// <summary>
+    /// List of person indices (not GUIDs) that reside in this city.
+    /// Corresponds to PersonSnapshot.Index values.
+    /// </summary>
+    public required List<int> PersonIndices { get; init; }
 }

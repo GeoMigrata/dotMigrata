@@ -14,8 +14,9 @@ public static class SnapshotService
 {
     /// <summary>
     /// Creates a complete snapshot of the current world state.
+    /// Assigns temporary index-based IDs to persons for serialization.
     /// </summary>
-    /// <param name="world">The world to snapshot.</param>
+    /// <param name="world">The world containing snapshot.</param>
     /// <param name="status">The status of the snapshot.</param>
     /// <param name="steps">Optional simulation steps.</param>
     /// <returns>A world snapshot.</returns>
@@ -34,10 +35,15 @@ public static class SnapshotService
             Transform = f.Transform?.ToString()
         }).ToList();
 
-        // Create person snapshots
-        var personSnapshots = world.AllPersons.Select(p => new PersonSnapshot
+        // Create person-to-index mapping
+        var allPersons = world.AllPersons.ToList();
+        var personToIndex = allPersons.Select((p, i) => new { Person = p, Index = i })
+            .ToDictionary(x => x.Person, x => x.Index);
+
+        // Create person snapshots with indices
+        var personSnapshots = allPersons.Select((p, index) => new PersonSnapshot
         {
-            Id = p.Id,
+            Index = index,
             CurrentCityName = p.CurrentCity?.DisplayName,
             MovingWillingness = p.MovingWillingness,
             RetentionRate = p.RetentionRate,
@@ -61,7 +67,7 @@ public static class SnapshotService
             FactorValues = c.FactorValues.ToDictionary(
                 fv => fv.Definition.DisplayName,
                 fv => fv.Intensity),
-            PersonIds = c.Persons.Select(p => p.Id).ToList()
+            PersonIndices = c.Persons.Select(p => personToIndex[p]).ToList()
         }).ToList();
 
         return new WorldSnapshot
@@ -84,6 +90,7 @@ public static class SnapshotService
 
     /// <summary>
     /// Restores a world from a snapshot.
+    /// Uses index-based person references for reconstruction.
     /// </summary>
     /// <param name="snapshot">The snapshot to restore from.</param>
     /// <returns>A restored world.</returns>
@@ -103,15 +110,15 @@ public static class SnapshotService
 
         var factorDict = factors.ToDictionary(f => f.DisplayName);
 
-        // Restore persons
-        var personDict = new Dictionary<Guid, Person>();
-        foreach (var ps in state.Persons)
+        // Restore persons using index-based approach
+        var persons = new List<Person>(state.Persons.Count);
+        foreach (var ps in state.Persons.OrderBy(p => p.Index))
         {
             var sensitivities = ps.FactorSensitivities.ToDictionary(
                 kvp => factorDict[kvp.Key],
                 kvp => kvp.Value);
 
-            var person = new Person(ps.Id, sensitivities)
+            var person = new Person(sensitivities)
             {
                 MovingWillingness = ps.MovingWillingness,
                 RetentionRate = ps.RetentionRate,
@@ -120,7 +127,7 @@ public static class SnapshotService
                 MinimumAcceptableAttraction = ps.MinimumAcceptableAttraction,
                 Tags = ps.Tags
             };
-            personDict[ps.Id] = person;
+            persons.Add(person);
         }
 
         // Restore cities
@@ -133,7 +140,7 @@ public static class SnapshotService
                 Intensity = kvp.Value
             }).ToList();
 
-            var cityPersons = cs.PersonIds.Select(id => personDict[id]).ToList();
+            var cityPersons = cs.PersonIndices.Select(index => persons[index]).ToList();
 
             var city = new City(factorValues, cityPersons)
             {
@@ -158,16 +165,18 @@ public static class SnapshotService
 
     /// <summary>
     /// Creates a migration record from a migration flow.
+    /// Requires a person-to-index mapping for serialization.
     /// </summary>
     /// <param name="flow">The migration flow.</param>
+    /// <param name="personToIndex">Mapping from persons to their indices.</param>
     /// <returns>A migration record.</returns>
-    public static MigrationRecord CreateMigrationRecord(MigrationFlow flow)
+    public static MigrationRecord CreateMigrationRecord(MigrationFlow flow, Dictionary<Person, int> personToIndex)
     {
         return new MigrationRecord
         {
             OriginCityName = flow.OriginCity.DisplayName,
             DestinationCityName = flow.DestinationCity.DisplayName,
-            PersonId = flow.Person.Id,
+            PersonIndex = personToIndex[flow.Person],
             MigrationProbability = flow.MigrationProbability
         };
     }

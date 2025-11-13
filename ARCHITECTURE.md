@@ -2,33 +2,39 @@
 
 ## Core Design Principles
 
-### 1. Reference-Based Architecture with Guid Identity
+### 1. Pure Reference-Based Architecture
 
-**Design Decision**: Use both object references AND Guid IDs strategically.
+**Design Decision**: Use direct object references throughout, with temporary index-based IDs only during serialization.
 
-**Object References** (for internal logic):
+**Object References** (everywhere):
 
 - `Person.CurrentCity: City?` - Direct reference for O(1) access
 - `FactorDefinition` - Used as dictionary keys throughout
 - `FactorValue.Definition: FactorDefinition` - Direct reference
+- `City.Persons: HashSet<Person>` - Direct reference collection with O(1) add/remove
 
-**Guid IDs** (for serialization and identity):
+**Temporary Index IDs** (serialization only):
 
-- `Person.Id: Guid` - Stable identity for snapshots, logging
-- `City` persons stored as `ConcurrentDictionary<Guid, Person>` - Thread-safe lookup
+- `PersonSnapshot.Index: int` - Temporary index assigned during snapshot creation
+- `CitySnapshot.PersonIndices: List<int>` - References persons by index in snapshot
+- `MigrationRecord.PersonIndex: int` - References person in migration records
+
+**NO Guid IDs in Runtime Objects**: Person and City do not have ID properties. Identity is based on object reference
+equality.
 
 **Performance Analysis**:
 
-- Object reference dereference: ~5 nanoseconds
-- Dictionary lookup by Guid: ~50-100 nanoseconds (O(1))
-- **Conclusion**: Both approaches are highly efficient, negligible performance difference
+- Object reference dereference: ~5 nanoseconds (optimal)
+- HashSet add/remove/contains: ~O(1) with reference equality
+- **Conclusion**: Pure reference approach is the fastest possible
 
-**Benefits of Hybrid Approach**:
+**Benefits of Pure Reference Approach**:
 
-- ✅ Direct references where possible for maximum performance
-- ✅ Guid IDs for serialization, debugging, distributed scenarios
+- ✅ Maximum performance - direct references, no dictionary lookups
+- ✅ Minimal memory overhead - no GUIDs stored (16 bytes saved per person)
 - ✅ Type safety with FactorDefinition references (no string typos)
-- ✅ Thread-safe concurrent operations via ConcurrentDictionary
+- ✅ Thread-safe concurrent operations via ReaderWriterLockSlim
+- ✅ Simpler serialization - indices generated only when needed
 
 ### 2. Circular Reference Resolution
 

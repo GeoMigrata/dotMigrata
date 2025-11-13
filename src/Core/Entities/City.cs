@@ -1,17 +1,18 @@
-﻿using System.Collections.Concurrent;
-using dotGeoMigrata.Core.Values;
+﻿using dotGeoMigrata.Core.Values;
 
 namespace dotGeoMigrata.Core.Entities;
 
 /// <summary>
 /// Represents a city with geographic location, factors, and individual persons.
+/// Uses reference-based person management with HashSet for O(1) operations.
 /// </summary>
 public class City
 {
     private readonly double _area;
     private readonly Dictionary<FactorDefinition, FactorValue> _factorLookup;
     private readonly List<FactorValue> _factorValues;
-    private readonly ConcurrentDictionary<Guid, Person> _persons;
+    private readonly HashSet<Person> _persons;
+    private readonly ReaderWriterLockSlim _personsLock = new();
 
     /// <summary>
     /// Initializes a new instance of the City class.
@@ -25,13 +26,13 @@ public class City
         _factorValues = factorValues?.ToList() ?? [];
         _factorLookup = _factorValues.ToDictionary(fv => fv.Definition, fv => fv);
 
-        _persons = new ConcurrentDictionary<Guid, Person>();
-        if (persons != null)
-            foreach (var person in persons)
-            {
-                _persons[person.Id] = person;
-                person.CurrentCity = this;
-            }
+        _persons = [];
+        if (persons == null) return;
+        foreach (var person in persons)
+        {
+            _persons.Add(person);
+            person.CurrentCity = this;
+        }
     }
 
     /// <summary>
@@ -68,13 +69,42 @@ public class City
 
     /// <summary>
     /// Gets the read-only collection of persons residing in this city.
+    /// Returns a snapshot to avoid holding locks during iteration.
     /// </summary>
-    public IReadOnlyCollection<Person> Persons => _persons.Values.ToList().AsReadOnly();
+    public IReadOnlyList<Person> Persons
+    {
+        get
+        {
+            _personsLock.EnterReadLock();
+            try
+            {
+                return _persons.ToList().AsReadOnly();
+            }
+            finally
+            {
+                _personsLock.ExitReadLock();
+            }
+        }
+    }
 
     /// <summary>
     /// Gets the total population count (number of persons) in this city.
     /// </summary>
-    public int Population => _persons.Count;
+    public int Population
+    {
+        get
+        {
+            _personsLock.EnterReadLock();
+            try
+            {
+                return _persons.Count;
+            }
+            finally
+            {
+                _personsLock.ExitReadLock();
+            }
+        }
+    }
 
     /// <summary>
     /// Updates the intensity of an existing FactorValue for the specified factor definition.
@@ -105,24 +135,31 @@ public class City
     }
 
     /// <summary>
-    /// Adds a person to this city.
+    /// Adds a person to this city. Thread-safe O(1) operation using HashSet.
     /// </summary>
     /// <param name="person">The person to add.</param>
     /// <exception cref="ArgumentNullException">Thrown when person is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when a person with the same ID already exists in this city.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the person already exists in this city.</exception>
     public void AddPerson(Person person)
     {
         ArgumentNullException.ThrowIfNull(person);
 
-        if (!_persons.TryAdd(person.Id, person))
-            throw new InvalidOperationException(
-                $"Person with ID '{person.Id}' already exists in city '{DisplayName}'.");
+        _personsLock.EnterWriteLock();
+        try
+        {
+            if (!_persons.Add(person))
+                throw new InvalidOperationException($"Person already exists in city '{DisplayName}'.");
+        }
+        finally
+        {
+            _personsLock.ExitWriteLock();
+        }
 
         person.CurrentCity = this;
     }
 
     /// <summary>
-    /// Removes a person from this city.
+    /// Removes a person from this city. Thread-safe O(1) operation using HashSet.
     /// </summary>
     /// <param name="person">The person to remove.</param>
     /// <exception cref="ArgumentNullException">Thrown when person is null.</exception>
@@ -131,24 +168,20 @@ public class City
     {
         ArgumentNullException.ThrowIfNull(person);
 
-        if (_persons.TryRemove(person.Id, out _))
+        bool removed;
+        _personsLock.EnterWriteLock();
+        try
         {
-            if (person.CurrentCity == this)
-                person.CurrentCity = null;
-            return true;
+            removed = _persons.Remove(person);
+        }
+        finally
+        {
+            _personsLock.ExitWriteLock();
         }
 
-        return false;
-    }
+        if (removed && person.CurrentCity == this)
+            person.CurrentCity = null;
 
-    /// <summary>
-    /// Tries to get a person by their ID.
-    /// </summary>
-    /// <param name="personId">The person's unique identifier.</param>
-    /// <param name="person">The person if found.</param>
-    /// <returns>True if the person was found, false otherwise.</returns>
-    public bool TryGetPerson(Guid personId, out Person? person)
-    {
-        return _persons.TryGetValue(personId, out person);
+        return removed;
     }
 }

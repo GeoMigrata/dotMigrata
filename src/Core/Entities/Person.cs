@@ -4,6 +4,7 @@ namespace dotGeoMigrata.Core.Entities;
 
 /// <summary>
 /// Represents an individual person in the simulation with unique attributes and factor sensitivities.
+/// Uses reference-based identity for optimal performance.
 /// </summary>
 public sealed class Person
 {
@@ -14,31 +15,13 @@ public sealed class Person
     /// <summary>
     /// Initializes a new instance of the Person class.
     /// </summary>
-    /// <param name="id">Unique identifier for the person.</param>
-    /// <param name="factorSensitivities">Dictionary mapping factor definitions to sensitivity values.</param>
-    /// <exception cref="ArgumentNullException">Thrown when factorSensitivities is null.</exception>
-    public Person(Guid id, IDictionary<FactorDefinition, double> factorSensitivities)
-    {
-        ArgumentNullException.ThrowIfNull(factorSensitivities);
-
-        Id = id;
-        _factorSensitivities = new Dictionary<FactorDefinition, double>(factorSensitivities);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the Person class with a new GUID.
-    /// </summary>
     /// <param name="factorSensitivities">Dictionary mapping factor definitions to sensitivity values.</param>
     /// <exception cref="ArgumentNullException">Thrown when factorSensitivities is null.</exception>
     public Person(IDictionary<FactorDefinition, double> factorSensitivities)
-        : this(Guid.NewGuid(), factorSensitivities)
     {
+        ArgumentNullException.ThrowIfNull(factorSensitivities);
+        _factorSensitivities = new Dictionary<FactorDefinition, double>(factorSensitivities);
     }
-
-    /// <summary>
-    /// Gets the unique identifier for this person.
-    /// </summary>
-    public Guid Id { get; }
 
     /// <summary>
     /// Gets or sets the current city where this person resides.

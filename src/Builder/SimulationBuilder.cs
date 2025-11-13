@@ -93,6 +93,40 @@ public sealed class SimulationBuilder
     }
 
     /// <summary>
+    /// Configures a completely custom pipeline by providing all stages.
+    /// This replaces any existing stages and disables the standard pipeline.
+    /// </summary>
+    /// <param name="stages">Collection of simulation stages to execute in order.</param>
+    /// <returns>The builder instance for method chaining.</returns>
+    public SimulationBuilder ConfigurePipeline(IEnumerable<ISimulationStage> stages)
+    {
+        ArgumentNullException.ThrowIfNull(stages);
+        _customStages.Clear();
+        _customStages.AddRange(stages);
+        _useStandardPipeline = false;
+        return this;
+    }
+
+    /// <summary>
+    /// Configures a custom pipeline using a factory function.
+    /// The factory receives the default calculators and can use them or replace them.
+    /// </summary>
+    /// <param name="pipelineFactory">Function that creates the pipeline stages.</param>
+    /// <returns>The builder instance for method chaining.</returns>
+    public SimulationBuilder ConfigurePipeline(
+        Func<IAttractionCalculator, IMigrationCalculator, IEnumerable<ISimulationStage>> pipelineFactory)
+    {
+        ArgumentNullException.ThrowIfNull(pipelineFactory);
+
+        var attractionCalc = _attractionCalculator ?? new StandardAttractionCalculator(_modelConfig);
+        var migrationCalc = _migrationCalculator ?? new StandardMigrationCalculator(_modelConfig);
+
+        var stages = pipelineFactory(attractionCalc, migrationCalc);
+        return ConfigurePipeline(stages);
+    }
+
+
+    /// <summary>
     /// Enables the use of the standard simulation pipeline (attraction, migration decision, migration execution).
     /// This is the default behavior unless custom stages are added.
     /// </summary>

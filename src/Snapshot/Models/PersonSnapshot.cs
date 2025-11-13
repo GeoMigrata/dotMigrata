@@ -2,10 +2,16 @@
 
 /// <summary>
 /// Snapshot of a person's state at a specific point in time.
+/// Uses temporary index-based ID for serialization only.
 /// </summary>
 public sealed record PersonSnapshot
 {
-    public required Guid Id { get; init; }
+    /// <summary>
+    /// Temporary index-based ID used only during serialization/deserialization.
+    /// Not stored in the actual Person object.
+    /// </summary>
+    public required int Index { get; init; }
+
     public required string? CurrentCityName { get; init; }
     public required double MovingWillingness { get; init; }
     public required double RetentionRate { get; init; }
