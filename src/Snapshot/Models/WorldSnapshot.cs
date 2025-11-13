@@ -1,54 +1,18 @@
-﻿using System.Xml.Serialization;
-using dotGeoMigrata.Snapshot.Enums;
+﻿using dotGeoMigrata.Snapshot.Enums;
 
 namespace dotGeoMigrata.Snapshot.Models;
 
 /// <summary>
-/// Represents a complete simulation snapshot with incremental history.
-/// Follows a Git-like model: stores initial state plus deltas (steps).
+/// Represents a snapshot of a world at a specific point in time.
+/// NOTE: This is a stub implementation. Full person-based snapshot support is pending.
 /// </summary>
-public sealed class WorldSnapshot
+public sealed record WorldSnapshot
 {
-    /// <summary>
-    /// Gets or sets the snapshot identifier.
-    /// </summary>
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-
-    /// <summary>
-    /// Gets or sets the display name for this snapshot.
-    /// </summary>
-    public string DisplayName { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the snapshot status.
-    /// </summary>
-    public SnapshotStatus Status { get; set; } = SnapshotStatus.Seed;
-
-    /// <summary>
-    /// Gets or sets the creation timestamp.
-    /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    /// <summary>
-    /// Gets or sets the last modified timestamp.
-    /// </summary>
-    public DateTime LastModifiedAt { get; set; } = DateTime.UtcNow;
-
-    /// <summary>
-    /// Gets or sets the initial world state data.
-    /// </summary>
-    public InitialWorldState InitialState { get; set; } = new();
-
-    /// <summary>
-    /// Gets or sets the simulation steps (incremental deltas).
-    /// Each step records the migrations that occurred.
-    /// </summary>
-    [XmlArray("Steps")]
-    public List<SimulationStep> Steps { get; set; } = new();
-
-    /// <summary>
-    /// Gets or sets optional metadata for this snapshot.
-    /// </summary>
-    [XmlIgnore]
-    public Dictionary<string, string>? Metadata { get; set; }
+    public required string Id { get; init; }
+    public required string DisplayName { get; init; }
+    public required SnapshotStatus Status { get; init; }
+    public required DateTime CreatedAt { get; init; }
+    public required DateTime LastModifiedAt { get; init; }
+    public required InitialWorldState InitialState { get; init; }
+    public required List<SimulationStep> Steps { get; init; }
 }

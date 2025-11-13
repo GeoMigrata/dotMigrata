@@ -1,46 +1,30 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using dotGeoMigrata.Snapshot.Models;
+﻿using dotGeoMigrata.Snapshot.Models;
 
 namespace dotGeoMigrata.Snapshot.Serialization;
 
 /// <summary>
-/// Provides JSON serialization and deserialization for world snapshots.
-/// Uses System.Text.Json with modern C# features.
+/// JSON serializer for world snapshots.
+/// NOTE: This is a stub implementation. Full person-based snapshot serialization is pending.
 /// </summary>
 public static class JsonSnapshotSerializer
 {
-    private static readonly JsonSerializerOptions DefaultOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = { new JsonStringEnumConverter() }
-    };
-
     /// <summary>
     /// Serializes a world snapshot to JSON.
     /// </summary>
     /// <param name="snapshot">The snapshot to serialize.</param>
-    /// <param name="options">Optional JSON serializer options. If null, uses default options.</param>
-    /// <returns>JSON string representation of the snapshot.</returns>
-    public static string Serialize(WorldSnapshot snapshot, JsonSerializerOptions? options = null)
+    /// <param name="options">Optional JSON serializer options.</param>
+    /// <returns>JSON string representation.</returns>
+    public static string Serialize(WorldSnapshot snapshot, System.Text.Json.JsonSerializerOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(snapshot);
-        return JsonSerializer.Serialize(snapshot, options ?? DefaultOptions);
+        return System.Text.Json.JsonSerializer.Serialize(snapshot, options);
     }
 
     /// <summary>
-    /// Serializes a world snapshot to a JSON file.
+    /// Serializes a snapshot to a file.
     /// </summary>
-    /// <param name="snapshot">The snapshot to serialize.</param>
-    /// <param name="filePath">The file path where the JSON will be saved.</param>
-    /// <param name="options">Optional JSON serializer options. If null, uses default options.</param>
-    public static void SerializeToFile(WorldSnapshot snapshot, string filePath, JsonSerializerOptions? options = null)
+    public static void SerializeToFile(WorldSnapshot snapshot, string filePath,
+        System.Text.Json.JsonSerializerOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(snapshot);
-        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
-
         var json = Serialize(snapshot, options);
         File.WriteAllText(filePath, json);
     }
@@ -48,28 +32,17 @@ public static class JsonSnapshotSerializer
     /// <summary>
     /// Deserializes a world snapshot from JSON.
     /// </summary>
-    /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="options">Optional JSON serializer options. If null, uses default options.</param>
-    /// <returns>The deserialized world snapshot.</returns>
-    public static WorldSnapshot? Deserialize(string json, JsonSerializerOptions? options = null)
+    public static WorldSnapshot? Deserialize(string json, System.Text.Json.JsonSerializerOptions? options = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
-        return JsonSerializer.Deserialize<WorldSnapshot>(json, options ?? DefaultOptions);
+        return System.Text.Json.JsonSerializer.Deserialize<WorldSnapshot>(json, options);
     }
 
     /// <summary>
-    /// Deserializes a world snapshot from a JSON file.
+    /// Deserializes a snapshot from a file.
     /// </summary>
-    /// <param name="filePath">The file path to read from.</param>
-    /// <param name="options">Optional JSON serializer options. If null, uses default options.</param>
-    /// <returns>The deserialized world snapshot.</returns>
-    public static WorldSnapshot? DeserializeFromFile(string filePath, JsonSerializerOptions? options = null)
+    public static WorldSnapshot? DeserializeFromFile(string filePath,
+        System.Text.Json.JsonSerializerOptions? options = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
-
-        if (!File.Exists(filePath))
-            throw new FileNotFoundException($"Snapshot file not found: {filePath}");
-
         var json = File.ReadAllText(filePath);
         return Deserialize(json, options);
     }

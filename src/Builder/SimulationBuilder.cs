@@ -178,8 +178,7 @@ public sealed class SimulationBuilder
     {
         return
         [
-            new AttractionCalculationStage(attractionCalculator),
-            new MigrationDecisionStage(migrationCalculator),
+            new MigrationDecisionStage(migrationCalculator, attractionCalculator),
             new MigrationExecutionStage()
         ];
     }

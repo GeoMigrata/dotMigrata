@@ -1,28 +1,31 @@
 ﻿namespace dotGeoMigrata.Snapshot.Models;
 
 /// <summary>
-/// Represents a migration event that occurred during a simulation step.
-/// Used for incremental snapshot storage.
+/// Represents a migration event record in a snapshot.
+/// NOTE: Updated for person-based migrations.
 /// </summary>
-public sealed class MigrationRecord
+public sealed record MigrationRecord
 {
-    /// <summary>
-    /// Gets or sets the reference to the origin city (by display name).
-    /// </summary>
-    public string OriginCityRef { get; set; } = string.Empty;
+    public required string OriginCityName { get; init; }
+    public required string DestinationCityName { get; init; }
+    public required string PersonId { get; init; }
+    public double MigrationProbability { get; init; }
+}
 
-    /// <summary>
-    /// Gets or sets the reference to the destination city (by display name).
-    /// </summary>
-    public string DestinationCityRef { get; set; } = string.Empty;
+/// <summary>
+/// Represents a simulation step with migration records.
+/// </summary>
+public sealed record SimulationStep
+{
+    public required int TickNumber { get; init; }
+    public required List<MigrationRecord> Migrations { get; init; }
+}
 
-    /// <summary>
-    /// Gets or sets the reference to the population group (by display name).
-    /// </summary>
-    public string GroupRef { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the number of people who migrated.
-    /// </summary>
-    public int Count { get; set; }
+/// <summary>
+/// Represents the initial state of a world.
+/// NOTE: This is a stub implementation.
+/// </summary>
+public sealed record InitialWorldState
+{
+    public required string DisplayName { get; init; }
 }
