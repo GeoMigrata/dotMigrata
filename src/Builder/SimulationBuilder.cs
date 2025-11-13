@@ -15,14 +15,14 @@ namespace dotGeoMigrata.Builder;
 /// </summary>
 public sealed class SimulationBuilder
 {
-    private World? _world;
-    private SimulationConfig? _simulationConfig;
-    private StandardModelConfig? _modelConfig;
-    private IAttractionCalculator? _attractionCalculator;
-    private IMigrationCalculator? _migrationCalculator;
     private readonly List<ISimulationStage> _customStages = [];
     private readonly List<ISimulationObserver> _observers = [];
+    private IAttractionCalculator? _attractionCalculator;
+    private IMigrationCalculator? _migrationCalculator;
+    private StandardModelConfig? _modelConfig;
+    private SimulationConfig? _simulationConfig;
     private bool _useStandardPipeline = true;
+    private World? _world;
 
     /// <summary>
     /// Sets the world to be simulated.

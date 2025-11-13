@@ -1,7 +1,4 @@
-﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Core.Values;
-using dotGeoMigrata.Logic.Interfaces;
-using dotGeoMigrata.Logic.Models;
+﻿using dotGeoMigrata.Logic.Interfaces;
 using dotGeoMigrata.Simulation.Interfaces;
 using dotGeoMigrata.Simulation.Models;
 
@@ -13,8 +10,8 @@ namespace dotGeoMigrata.Simulation.Pipeline;
 /// </summary>
 public sealed class MigrationDecisionStage : ISimulationStage
 {
-    private readonly IMigrationCalculator _migrationCalculator;
     private readonly IAttractionCalculator _attractionCalculator;
+    private readonly IMigrationCalculator _migrationCalculator;
 
     /// <summary>
     /// Initializes a new instance of the MigrationDecisionStage.

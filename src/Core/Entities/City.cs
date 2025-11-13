@@ -1,5 +1,5 @@
-﻿using dotGeoMigrata.Core.Values;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
+using dotGeoMigrata.Core.Values;
 
 namespace dotGeoMigrata.Core.Entities;
 
@@ -11,7 +11,7 @@ public class City
     private readonly double _area;
     private readonly Dictionary<FactorDefinition, FactorValue> _factorLookup;
     private readonly List<FactorValue> _factorValues;
-    private readonly ConcurrentDictionary<string, Person> _persons;
+    private readonly ConcurrentDictionary<Guid, Person> _persons;
 
     /// <summary>
     /// Initializes a new instance of the City class.
@@ -25,13 +25,13 @@ public class City
         _factorValues = factorValues?.ToList() ?? [];
         _factorLookup = _factorValues.ToDictionary(fv => fv.Definition, fv => fv);
 
-        _persons = new ConcurrentDictionary<string, Person>();
-        if (persons == null) return;
-        foreach (var person in persons)
-        {
-            _persons[person.Id] = person;
-            person.CurrentCity = this;
-        }
+        _persons = new ConcurrentDictionary<Guid, Person>();
+        if (persons != null)
+            foreach (var person in persons)
+            {
+                _persons[person.Id] = person;
+                person.CurrentCity = this;
+            }
     }
 
     /// <summary>
@@ -112,7 +112,7 @@ public class City
     /// <exception cref="InvalidOperationException">Thrown when a person with the same ID already exists in this city.</exception>
     public void AddPerson(Person person)
     {
-        ArgumentNullException.ThrowIfNull(person, nameof(person));
+        ArgumentNullException.ThrowIfNull(person);
 
         if (!_persons.TryAdd(person.Id, person))
             throw new InvalidOperationException(
@@ -129,12 +129,16 @@ public class City
     /// <returns>True if the person was removed, false if the person was not in this city.</returns>
     public bool RemovePerson(Person person)
     {
-        ArgumentNullException.ThrowIfNull(person, nameof(person));
+        ArgumentNullException.ThrowIfNull(person);
 
-        if (!_persons.TryRemove(person.Id, out _)) return false;
-        if (person.CurrentCity == this)
-            person.CurrentCity = null;
-        return true;
+        if (_persons.TryRemove(person.Id, out _))
+        {
+            if (person.CurrentCity == this)
+                person.CurrentCity = null;
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -143,9 +147,8 @@ public class City
     /// <param name="personId">The person's unique identifier.</param>
     /// <param name="person">The person if found.</param>
     /// <returns>True if the person was found, false otherwise.</returns>
-    public bool TryGetPerson(string personId, out Person? person)
+    public bool TryGetPerson(Guid personId, out Person? person)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(personId, nameof(personId));
         return _persons.TryGetValue(personId, out person);
     }
 }

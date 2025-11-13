@@ -8,8 +8,7 @@ namespace dotGeoMigrata.Core.Values;
 /// </summary>
 public record FactorDefinition
 {
-    private readonly double _maxValue;
-    private readonly double _minValue;
+    private readonly ValueRange _range;
 
     /// <summary>
     /// Gets or initializes the display name of the factor.
@@ -29,12 +28,12 @@ public record FactorDefinition
     /// <exception cref="ArgumentException">Thrown when the value is NaN or Infinity.</exception>
     public required double MinValue
     {
-        get => _minValue;
+        get => _range.Min;
         init
         {
             if (double.IsNaN(value) || double.IsInfinity(value))
                 throw new ArgumentException("MinValue must be a valid number.", nameof(MinValue));
-            _minValue = value;
+            _range = new ValueRange(value, _range.Max);
         }
     }
 
@@ -46,16 +45,21 @@ public record FactorDefinition
     /// <exception cref="ArgumentException">Thrown when the value is NaN, Infinity, or not greater than MinValue.</exception>
     public required double MaxValue
     {
-        get => _maxValue;
+        get => _range.Max;
         init
         {
             if (double.IsNaN(value) || double.IsInfinity(value))
                 throw new ArgumentException("MaxValue must be a valid number.", nameof(MaxValue));
             if (value <= MinValue)
                 throw new ArgumentException("MaxValue must be greater than MinValue.", nameof(MaxValue));
-            _maxValue = value;
+            _range = new ValueRange(_range.Min, value);
         }
     }
+
+    /// <summary>
+    /// Gets the value range for this factor.
+    /// </summary>
+    public ValueRange Range => _range;
 
     /// <summary>
     /// Gets or initializes the optional transformation type for normalization.
@@ -63,37 +67,13 @@ public record FactorDefinition
     /// </summary>
     public required TransformType? Transform { get; init; }
 
+    /// <summary>
+    /// Normalizes a raw value to the 0-1 range using this factor's transformation.
+    /// </summary>
+    /// <param name="rawValue">The raw value to normalize.</param>
+    /// <returns>A normalized value between 0 and 1.</returns>
     internal double Normalize(double rawValue)
     {
-        // Clamp raw value to valid range
-        var clamped = Math.Clamp(rawValue, MinValue, MaxValue);
-        var range = MaxValue - MinValue;
-
-        if (range == 0)
-            return 0;
-
-        return Transform switch
-        {
-            TransformType.Linear => (clamped - MinValue) / range,
-            TransformType.Log => NormalizeLogarithmic(clamped, range),
-            TransformType.Sigmoid => NormalizeSigmoid(clamped, range),
-            _ => (clamped - MinValue) / range
-        };
-    }
-
-    private double NormalizeLogarithmic(double clamped, double range)
-    {
-        const double delta = 1e-6; // small offset to avoid log(0)
-        var numerator = Math.Log(clamped - MinValue + delta);
-        var denominator = Math.Log(range + delta);
-        return denominator != 0 ? numerator / denominator : 0.0;
-    }
-
-    private double NormalizeSigmoid(double clamped, double range)
-    {
-        const double steepness = 10.0;
-        var linear = (clamped - MinValue) / range;
-        var centered = (linear - 0.5) * steepness;
-        return 1.0 / (1.0 + Math.Exp(-centered));
+        return _range.Normalize(rawValue, Transform);
     }
 }

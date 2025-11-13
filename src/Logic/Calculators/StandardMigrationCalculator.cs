@@ -41,7 +41,7 @@ public class StandardMigrationCalculator : IMigrationCalculator
 
         // Find best destination city
         City? bestDestination = null;
-        double bestProbability = 0.0;
+        var bestProbability = 0.0;
         var destinations = destinationCities.Where(c => c != originCity).ToList();
 
         foreach (var destCity in destinations)

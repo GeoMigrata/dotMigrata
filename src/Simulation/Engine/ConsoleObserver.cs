@@ -143,9 +143,13 @@ public sealed class ConsoleObserver : ISimulationObserver
     }
 
     private static void Write(string message)
-        => Console.Write(message);
+    {
+        Console.Write(message);
+    }
 
 
     private static void WriteLine(string message = "")
-        => Console.WriteLine(message);
+    {
+        Console.WriteLine(message);
+    }
 }

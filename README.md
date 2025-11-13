@@ -114,6 +114,91 @@ Console.WriteLine($"Simulation completed after {result.CurrentTick} ticks");
 Console.WriteLine($"Final population: {result.World.Population:N0} persons");
 ```
 
+### Advanced Usage - PersonCollection
+
+The **PersonCollection** system provides fine-grained control over population generation with support for Individual,
+Individuals (duplicates), and Generator specifications:
+
+```csharp
+using dotGeoMigrata.Generator;
+
+// Create a PersonCollection with mixed specifications
+var collection = new PersonCollection { IdPrefix = "CITY" };
+
+// 1. Add specific individuals with exact attributes
+collection.Add(new IndividualSpecification
+{
+    FactorSensitivities = new Dictionary<string, double>
+    {
+        ["Income"] = 8.5,
+        ["Pollution"] = -6.0,
+        ["Housing Cost"] = -7.0
+    },
+    MovingWillingness = 0.85,
+    RetentionRate = 0.15,
+    Tags = new[] { "high_mobility", "wealthy" }
+});
+
+// 2. Add 10,000 identical persons (duplicates)
+collection.Add(new IndividualsSpecification
+{
+    Count = 10_000,
+    FactorSensitivities = new Dictionary<string, double>
+    {
+        ["Income"] = 5.0,
+        ["Pollution"] = -3.0
+    },
+    MovingWillingness = 0.5,
+    RetentionRate = 0.5,
+    Tags = new[] { "middle_class" }
+});
+
+// 3. Generate 100,000 persons with varied attributes
+collection.Add(new GeneratorSpecification(seed: 42)
+{
+    Count = 100_000,
+    FactorSensitivities = new Dictionary<string, ValueSpecification>
+    {
+        // Custom range for Income sensitivity
+        ["Income"] = ValueSpecification.InRange(3, 15),
+        // Fixed value - all persons get -5.0
+        ["Pollution"] = ValueSpecification.Fixed(-5.0),
+        // Random with bias (scale 1.2 = 20% higher on average)
+        ["Housing Cost"] = ValueSpecification.Random().WithScale(1.2)
+    },
+    MovingWillingness = ValueSpecification.InRange(0.6, 0.9),
+    Tags = new[] { "young_professional", "tech_worker" }
+});
+
+// Use PersonCollection in city
+var world = new WorldBuilder()
+    .WithName("Multi-Cohort World")
+    .AddFactor("Income", FactorType.Positive, 30000, 150000)
+    .AddFactor("Pollution", FactorType.Negative, 0, 100)
+    .AddFactor("Housing Cost", FactorType.Negative, 500, 3000)
+    .AddCity("City A", 26.0, 119.3, 100.0, capacity: 500000,
+        city => city
+            .WithFactorValue("Income", 80000)
+            .WithFactorValue("Pollution", 30)
+            .WithFactorValue("Housing Cost", 25000)
+            .WithPersonCollection(collection)) // Use PersonCollection
+    .Build();
+
+// Analyze population by tags
+var tagStats = world.AllPersons
+    .SelectMany(p => p.Tags)
+    .GroupBy(tag => tag)
+    .Select(g => new { Tag = g.Key, Count = g.Count() });
+```
+
+**PersonCollection Benefits:**
+
+- Mix Individual, Individuals, and Generator specifications
+- Support for tags to categorize and analyze populations
+- Precise control with fixed values, custom ranges, or biased random
+- Reproducible generation with seeds
+- Efficient duplicate handling
+
 ### Advanced Usage - Custom Person Generation
 
 For more control over person attributes, you can configure the person generator:

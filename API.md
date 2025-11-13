@@ -35,7 +35,7 @@ Helper builder for configuring city properties and initial population.
 city => city
     .WithFactorValue("Income", 50000)
     .WithRandomPersons(100000)
-    .WithRandomPersons(50000, personConfig)
+    .WithPersonCollection(collection)
 ```
 
 **Methods:**
@@ -44,6 +44,7 @@ city => city
 - `WithPerson(Person)` - Adds a single person to the city
 - `WithPersons(IEnumerable<Person>)` - Adds multiple persons to the city
 - `WithRandomPersons(int, PersonGeneratorConfig?, string?)` - Generates and adds random persons
+- `WithPersonCollection(PersonCollection)` - Adds persons from a PersonCollection
 
 ### SimulationBuilder
 
@@ -132,6 +133,7 @@ Represents an individual person with unique attributes and migration preferences
 - `AttractionThreshold` (double) - Minimum attraction difference for migration
 - `MinimumAcceptableAttraction` (double) - Minimum destination attraction
 - `FactorSensitivities` (IReadOnlyDictionary<FactorDefinition, double>) - Factor sensitivities
+- `Tags` (IReadOnlyList<string>) - Tags for categorization and statistical analysis
 
 **Constructor:**
 
@@ -180,6 +182,141 @@ Geographic coordinate (WGS84).
 - `static DistanceBetween(Coordinate, Coordinate)` - Calculate distance between two coordinates
 
 ## Generator
+
+### PersonCollection
+
+A collection of person specifications that can be used to generate a population.
+
+**Properties:**
+
+- `IdPrefix` (string) - ID prefix for generated persons (default: "P")
+- `SpecificationCount` (int) - Number of specifications in the collection
+
+**Methods:**
+
+```csharp
+PersonCollection Add(IndividualSpecification specification)
+PersonCollection Add(IndividualsSpecification specification)
+PersonCollection Add(GeneratorSpecification specification)
+PersonCollection Add(IPersonSpecification specification)
+IEnumerable<Person> GenerateAllPersons(IEnumerable<FactorDefinition> factorDefinitions)
+int GetTotalCount()
+void Clear()
+```
+
+### IPersonSpecification
+
+Interface for person specifications (Individual, Individuals, Generator).
+
+**Methods:**
+
+```csharp
+IEnumerable<Person> GeneratePersons(
+    IEnumerable<FactorDefinition> factorDefinitions,
+    Func<string> idGenerator)
+```
+
+### IndividualSpecification
+
+Specifies a single manually-defined person.
+
+**Properties:**
+
+- `FactorSensitivities` (Dictionary<string, double>) - Factor sensitivities by factor name
+- `MovingWillingness` (double, 0-1) - Required
+- `RetentionRate` (double, 0-1) - Required
+- `SensitivityScaling` (double) - Default: 1.0
+- `AttractionThreshold` (double) - Default: 0.0
+- `MinimumAcceptableAttraction` (double) - Default: 0.0
+- `Tags` (IReadOnlyList<string>) - Tags for categorization
+
+### IndividualsSpecification
+
+Specifies multiple identical persons (duplicates).
+
+**Properties:**
+
+- `Count` (int) - Number of duplicate persons - Required
+- `FactorSensitivities` (Dictionary<string, double>) - Required
+- `MovingWillingness` (double, 0-1) - Required
+- `RetentionRate` (double, 0-1) - Required
+- `SensitivityScaling` (double) - Default: 1.0
+- `AttractionThreshold` (double) - Default: 0.0
+- `MinimumAcceptableAttraction` (double) - Default: 0.0
+- `Tags` (IReadOnlyList<string>) - Tags for categorization
+
+### GeneratorSpecification
+
+Generates persons with randomized or specified attributes.
+
+**Constructors:**
+
+```csharp
+new GeneratorSpecification() // True random
+new GeneratorSpecification(int seed) // Pseudo-random with seed
+```
+
+**Properties:**
+
+- `Count` (int) - Number of persons to generate - Required
+- `FactorSensitivities` (Dictionary<string, ValueSpecification>) - Factor sensitivity specifications
+- `MovingWillingness` (ValueSpecification?) - Willingness specification
+- `RetentionRate` (ValueSpecification?) - Retention specification
+- `SensitivityScaling` (ValueSpecification?) - Scaling specification
+- `AttractionThreshold` (ValueSpecification?) - Threshold specification
+- `MinimumAcceptableAttraction` (ValueSpecification?) - Min attraction specification
+- `Tags` (IReadOnlyList<string>) - Tags to assign to all generated persons
+- `DefaultMinSensitivity` (double) - Default: -10.0
+- `DefaultMaxSensitivity` (double) - Default: 10.0
+- `DefaultSensitivityStdDev` (double) - Default: 3.0
+
+### ValueSpecification
+
+Represents a value specification for attributes (fixed, ranged, or biased).
+
+**Static Factory Methods:**
+
+```csharp
+static ValueSpecification Fixed(double value)
+static ValueSpecification InRange(double min, double max)
+static ValueSpecification Random()
+static ValueSpecification RandomWithScale(double scale)
+```
+
+**Methods:**
+
+```csharp
+ValueSpecification WithScale(double scale)
+```
+
+**Properties:**
+
+- `IsFixed` (bool) - Whether this is a fixed value
+- `HasRange` (bool) - Whether this has a custom range
+- `FixedValue` (double?) - The fixed value if applicable
+- `Range` ((double Min, double Max)?) - The range if applicable
+- `Scale` (double) - The scale factor
+
+**Examples:**
+
+```csharp
+// Fixed value - all persons get 5.0
+ValueSpecification.Fixed(5.0)
+
+// Random in range 0.3 to 0.8
+ValueSpecification.InRange(0.3, 0.8)
+
+// Random with default range
+ValueSpecification.Random()
+
+// Random with default range, scaled by 1.5 (bias higher)
+ValueSpecification.Random().WithScale(1.5)
+
+// Random in range, scaled by 0.5 (bias lower)
+ValueSpecification.InRange(0.2, 0.8).WithScale(0.5)
+```
+
+## Generator (Legacy)
 
 ### PersonGenerator
 

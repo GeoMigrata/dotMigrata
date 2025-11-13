@@ -17,19 +17,28 @@ public sealed class Person
     /// <param name="id">Unique identifier for the person.</param>
     /// <param name="factorSensitivities">Dictionary mapping factor definitions to sensitivity values.</param>
     /// <exception cref="ArgumentNullException">Thrown when factorSensitivities is null.</exception>
-    public Person(string id, IDictionary<FactorDefinition, double> factorSensitivities)
+    public Person(Guid id, IDictionary<FactorDefinition, double> factorSensitivities)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(id, nameof(id));
-        ArgumentNullException.ThrowIfNull(factorSensitivities, nameof(factorSensitivities));
+        ArgumentNullException.ThrowIfNull(factorSensitivities);
 
         Id = id;
         _factorSensitivities = new Dictionary<FactorDefinition, double>(factorSensitivities);
     }
 
     /// <summary>
+    /// Initializes a new instance of the Person class with a new GUID.
+    /// </summary>
+    /// <param name="factorSensitivities">Dictionary mapping factor definitions to sensitivity values.</param>
+    /// <exception cref="ArgumentNullException">Thrown when factorSensitivities is null.</exception>
+    public Person(IDictionary<FactorDefinition, double> factorSensitivities)
+        : this(Guid.NewGuid(), factorSensitivities)
+    {
+    }
+
+    /// <summary>
     /// Gets the unique identifier for this person.
     /// </summary>
-    public string Id { get; }
+    public Guid Id { get; }
 
     /// <summary>
     /// Gets or sets the current city where this person resides.
@@ -73,13 +82,19 @@ public sealed class Person
     /// Minimum attraction difference required to trigger migration consideration.
     /// Default is 0.0.
     /// </summary>
-    public double AttractionThreshold { get; set; } = 0.0;
+    public double AttractionThreshold { get; set; }
 
     /// <summary>
     /// Gets or sets the minimum acceptable attraction score (α_min).
     /// Destinations below this score are not considered. Default is 0.0.
     /// </summary>
-    public double MinimumAcceptableAttraction { get; set; } = 0.0;
+    public double MinimumAcceptableAttraction { get; set; }
+
+    /// <summary>
+    /// Gets or sets the tags associated with this person for categorization and statistical analysis.
+    /// Tags can be used to group persons by characteristics such as demographics, generation source, etc.
+    /// </summary>
+    public IReadOnlyList<string> Tags { get; init; } = [];
 
     /// <summary>
     /// Gets the read-only dictionary of factor sensitivities.
@@ -93,8 +108,8 @@ public sealed class Person
     /// <returns>The sensitivity value, or 0 if not defined.</returns>
     public double GetSensitivity(FactorDefinition factor)
     {
-        ArgumentNullException.ThrowIfNull(factor, nameof(factor));
-        return _factorSensitivities.TryGetValue(factor, out var sensitivity) ? sensitivity : 0.0;
+        ArgumentNullException.ThrowIfNull(factor);
+        return _factorSensitivities.GetValueOrDefault(factor, 0.0);
     }
 
     /// <summary>
@@ -104,7 +119,7 @@ public sealed class Person
     /// <param name="sensitivity">The new sensitivity value.</param>
     public void UpdateSensitivity(FactorDefinition factor, double sensitivity)
     {
-        ArgumentNullException.ThrowIfNull(factor, nameof(factor));
+        ArgumentNullException.ThrowIfNull(factor);
         _factorSensitivities[factor] = sensitivity;
     }
 }

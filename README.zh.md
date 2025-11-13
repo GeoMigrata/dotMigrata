@@ -101,6 +101,90 @@ Console.WriteLine($"模拟在 {result.CurrentTick} 步后完成");
 Console.WriteLine($"最终人口: {result.World.Population:N0} 人");
 ```
 
+### 高级用法 - PersonCollection（人口集合）
+
+**PersonCollection** 系统提供对人口生成的精细控制，支持 Individual、Individuals（复制）和 Generator 规范：
+
+```csharp
+using dotGeoMigrata.Generator;
+
+// 创建包含混合规范的 PersonCollection
+var collection = new PersonCollection { IdPrefix = "CITY" };
+
+// 1. 添加具有精确属性的特定个体
+collection.Add(new IndividualSpecification
+{
+    FactorSensitivities = new Dictionary<string, double>
+    {
+        ["收入"] = 8.5,
+        ["污染"] = -6.0,
+        ["房价"] = -7.0
+    },
+    MovingWillingness = 0.85,
+    RetentionRate = 0.15,
+    Tags = new[] { "高流动性", "富裕" }
+});
+
+// 2. 添加 10,000 个相同的个体（复制）
+collection.Add(new IndividualsSpecification
+{
+    Count = 10_000,
+    FactorSensitivities = new Dictionary<string, double>
+    {
+        ["收入"] = 5.0,
+        ["污染"] = -3.0
+    },
+    MovingWillingness = 0.5,
+    RetentionRate = 0.5,
+    Tags = new[] { "中产阶级" }
+});
+
+// 3. 生成 100,000 个具有多样属性的个体
+collection.Add(new GeneratorSpecification(seed: 42)
+{
+    Count = 100_000,
+    FactorSensitivities = new Dictionary<string, ValueSpecification>
+    {
+        // 收入敏感度的自定义范围
+        ["收入"] = ValueSpecification.InRange(3, 15),
+        // 固定值 - 所有个体都是 -5.0
+        ["污染"] = ValueSpecification.Fixed(-5.0),
+        // 带偏移的随机（scale 1.2 = 平均高 20%）
+        ["房价"] = ValueSpecification.Random().WithScale(1.2)
+    },
+    MovingWillingness = ValueSpecification.InRange(0.6, 0.9),
+    Tags = new[] { "年轻专业人士", "技术工作者" }
+});
+
+// 在城市中使用 PersonCollection
+var world = new WorldBuilder()
+    .WithName("多群体世界")
+    .AddFactor("收入", FactorType.Positive, 30000, 150000)
+    .AddFactor("污染", FactorType.Negative, 0, 100)
+    .AddFactor("房价", FactorType.Negative, 500, 3000)
+    .AddCity("城市 A", 26.0, 119.3, 100.0, capacity: 500000,
+        city => city
+            .WithFactorValue("收入", 80000)
+            .WithFactorValue("污染", 30)
+            .WithFactorValue("房价", 25000)
+            .WithPersonCollection(collection)) // 使用 PersonCollection
+    .Build();
+
+// 按标签分析人口
+var tagStats = world.AllPersons
+    .SelectMany(p => p.Tags)
+    .GroupBy(tag => tag)
+    .Select(g => new { Tag = g.Key, Count = g.Count() });
+```
+
+**PersonCollection 优势：**
+
+- 混合 Individual、Individuals 和 Generator 规范
+- 支持标签以分类和分析人口
+- 通过固定值、自定义范围或偏移随机实现精确控制
+- 使用种子实现可重现的生成
+- 高效的重复处理
+
 ### 高级用法 - 自定义个体生成
 
 如需更多控制个体属性，您可以配置个体生成器：

@@ -1,4 +1,5 @@
-﻿using dotGeoMigrata.Snapshot.Models;
+﻿using System.Text.Json;
+using dotGeoMigrata.Snapshot.Models;
 
 namespace dotGeoMigrata.Snapshot.Serialization;
 
@@ -14,16 +15,16 @@ public static class JsonSnapshotSerializer
     /// <param name="snapshot">The snapshot to serialize.</param>
     /// <param name="options">Optional JSON serializer options.</param>
     /// <returns>JSON string representation.</returns>
-    public static string Serialize(WorldSnapshot snapshot, System.Text.Json.JsonSerializerOptions? options = null)
+    public static string Serialize(WorldSnapshot snapshot, JsonSerializerOptions? options = null)
     {
-        return System.Text.Json.JsonSerializer.Serialize(snapshot, options);
+        return JsonSerializer.Serialize(snapshot, options);
     }
 
     /// <summary>
     /// Serializes a snapshot to a file.
     /// </summary>
     public static void SerializeToFile(WorldSnapshot snapshot, string filePath,
-        System.Text.Json.JsonSerializerOptions? options = null)
+        JsonSerializerOptions? options = null)
     {
         var json = Serialize(snapshot, options);
         File.WriteAllText(filePath, json);
@@ -32,16 +33,16 @@ public static class JsonSnapshotSerializer
     /// <summary>
     /// Deserializes a world snapshot from JSON.
     /// </summary>
-    public static WorldSnapshot? Deserialize(string json, System.Text.Json.JsonSerializerOptions? options = null)
+    public static WorldSnapshot? Deserialize(string json, JsonSerializerOptions? options = null)
     {
-        return System.Text.Json.JsonSerializer.Deserialize<WorldSnapshot>(json, options);
+        return JsonSerializer.Deserialize<WorldSnapshot>(json, options);
     }
 
     /// <summary>
     /// Deserializes a snapshot from a file.
     /// </summary>
     public static WorldSnapshot? DeserializeFromFile(string filePath,
-        System.Text.Json.JsonSerializerOptions? options = null)
+        JsonSerializerOptions? options = null)
     {
         var json = File.ReadAllText(filePath);
         return Deserialize(json, options);
