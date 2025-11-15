@@ -69,46 +69,102 @@ dotnet add reference /path/to/dotGeoMigrata.csproj
 
 ### Quick Start Example
 
-Here's a simple example using the fluent builder API:
+Here's a simple example:
 
 ```csharp
-using dotGeoMigrata.Builder;
+using dotGeoMigrata.Core.Entities;
 using dotGeoMigrata.Core.Enums;
+using dotGeoMigrata.Core.Values;
+using dotGeoMigrata.Generator;
+using dotGeoMigrata.Logic.Calculators;
+using dotGeoMigrata.Simulation.Engine;
+using dotGeoMigrata.Simulation.Interfaces;
+using dotGeoMigrata.Simulation.Models;
+using dotGeoMigrata.Simulation.Pipeline;
+using static dotGeoMigrata.Generator.AttributeValueBuilder;
 
-// Create a world with factors and cities populated with individual persons
-var world = new WorldBuilder()
-    .WithName("Example World")
-    
-    // Define factors that influence individual migration decisions
-    .AddFactor("Income", FactorType.Positive, 20000, 100000)
-    .AddFactor("Pollution", FactorType.Negative, 0, 100)
-    .AddFactor("Housing Cost", FactorType.Negative, 500, 3000)
-    
-    // Add cities with initial populations of individuals
-    .AddCity("City A", 
-        latitude: 26.0, longitude: 119.3, area: 100.0, capacity: 1000000,
-        city => city
-            .WithFactorValue("Income", 50000)
-            .WithFactorValue("Pollution", 30)
-            .WithFactorValue("Housing Cost", 1500)
-            .WithRandomPersons(100000))  // Generate 100,000 individual persons
-    
-    .AddCity("City B",
-        latitude: 24.5, longitude: 118.1, area: 80.0, capacity: 800000,
-        city => city
-            .WithFactorValue("Income", 40000)
-            .WithFactorValue("Pollution", 20)
-            .WithFactorValue("Housing Cost", 1000)
-            .WithRandomPersons(80000))  // Generate 80,000 individual persons
-    
-    .Build();
+// Step 1: Define factors
+var incomeFactor = new FactorDefinition
+{
+    DisplayName = "Income",
+    Type = FactorType.Positive,
+    MinValue = 20000,
+    MaxValue = 100000
+};
 
-// Create and run simulation
-var result = await new SimulationBuilder()
-    .WithWorld(world)
-    .UseStandardPipeline()
-    .AddConsoleObserver(colored: true)
-    .BuildAndRunAsync();
+var pollutionFactor = new FactorDefinition
+{
+    DisplayName = "Pollution",
+    Type = FactorType.Negative,
+    MinValue = 0,
+    MaxValue = 100
+};
+
+var allFactors = new[] { incomeFactor, pollutionFactor };
+
+// Step 2: Generate persons using PersonCollection
+var collection = new PersonCollection();
+collection.Add(new GeneratorConfig
+{
+    Count = 100000,
+    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
+    {
+        [incomeFactor] = Value().InRange(3, 8),
+        [pollutionFactor] = Value().InRange(-7, -3)
+    },
+    MovingWillingness = Value().InRange(0.4, 0.7),
+    RetentionRate = Value().InRange(0.3, 0.6),
+    Tags = ["urban_resident"]
+});
+
+// Step 3: Create cities with factor values and persons
+var cityA = new City(
+    factorValues: [
+        new FactorValue { Definition = incomeFactor, Intensity = 50000 },
+        new FactorValue { Definition = pollutionFactor, Intensity = 30 }
+    ],
+    persons: collection.GenerateAllPersons(allFactors))
+{
+    DisplayName = "City A",
+    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
+    Area = 100.0,
+    Capacity = 1000000
+};
+
+var cityB = new City(
+    factorValues: [
+        new FactorValue { Definition = incomeFactor, Intensity = 40000 },
+        new FactorValue { Definition = pollutionFactor, Intensity = 20 }
+    ],
+    persons: []) // Empty initially
+{
+    DisplayName = "City B",
+    Location = new Coordinate { Latitude = 24.5, Longitude = 118.1 },
+    Area = 80.0,
+    Capacity = 800000
+};
+
+// Step 4: Create world
+var world = new World([cityA, cityB], allFactors)
+{
+    DisplayName = "Example World"
+};
+
+// Step 5: Create simulation engine
+var attractionCalc = new StandardAttractionCalculator();
+var migrationCalc = new StandardMigrationCalculator();
+
+var stages = new List<ISimulationStage>
+{
+    new MigrationDecisionStage(migrationCalc, attractionCalc),
+    new MigrationExecutionStage()
+};
+
+var engine = new SimulationEngine(stages, SimulationConfig.Default);
+engine.AddObserver(new ConsoleObserver(colored: true));
+
+// Step 6: Run simulation
+var result = await engine.RunAsync(world);
 
 Console.WriteLine($"Simulation completed after {result.CurrentTick} ticks");
 Console.WriteLine($"Final population: {result.World.Population:N0} persons");
@@ -171,18 +227,26 @@ collection.Add(new GeneratorSpecification(seed: 42)
 });
 
 // Use PersonCollection in city
-var world = new WorldBuilder()
-    .WithName("Multi-Cohort World")
-    .AddFactor("Income", FactorType.Positive, 30000, 150000)
-    .AddFactor("Pollution", FactorType.Negative, 0, 100)
-    .AddFactor("Housing Cost", FactorType.Negative, 500, 3000)
-    .AddCity("City A", 26.0, 119.3, 100.0, capacity: 500000,
-        city => city
-            .WithFactorValue("Income", 80000)
-            .WithFactorValue("Pollution", 30)
-            .WithFactorValue("Housing Cost", 25000)
-            .WithPersonCollection(collection)) // Use PersonCollection
-    .Build();
+var persons = collection.GenerateAllPersons(allFactors);
+
+var city = new City(
+    factorValues: [
+        new FactorValue { Definition = incomeFactor, Intensity = 80000 },
+        new FactorValue { Definition = pollutionFactor, Intensity = 30 },
+        new FactorValue { Definition = housingFactor, Intensity = 2500 }
+    ],
+    persons: persons)
+{
+    DisplayName = "City A",
+    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
+    Area = 100.0,
+    Capacity = 500000
+};
+
+var world = new World([city], allFactors)
+{
+    DisplayName = "Multi-Cohort World"
+};
 
 // Analyze population by tags
 var tagStats = world.AllPersons
@@ -219,15 +283,33 @@ var personConfig = new PersonGeneratorConfig
     RandomSeed = 42  // For reproducible results
 };
 
-// Use custom configuration when building cities
-var world = new WorldBuilder()
-    .WithName("Custom World")
-    .AddFactor("Income", FactorType.Positive, 30000, 150000)
-    .AddCity("City A", 26.0, 119.3, 100.0, capacity: 500000,
-        city => city
-            .WithFactorValue("Income", 80000)
-            .WithRandomPersons(50000, personConfig))  // Use custom config
-    .Build();
+// Create PersonCollection with custom configuration
+var collection = new PersonCollection();
+collection.Add(new GeneratorConfig
+{
+    Count = 50000,
+    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
+    {
+        [incomeFactor] = Value().InRange(5, 9)
+    },
+    MovingWillingness = Value().InRange(0.4, 0.7),
+    RetentionRate = Value().InRange(0.3, 0.6)
+});
+
+var persons = collection.GenerateAllPersons(allFactors, personConfig);
+
+// Add persons to city
+var city = new City(
+    factorValues: [
+        new FactorValue { Definition = incomeFactor, Intensity = 80000 }
+    ],
+    persons: persons)
+{
+    DisplayName = "City A",
+    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
+    Area = 100.0,
+    Capacity = 500000
+};
 ```
 
 ### Configuring Simulation Parameters
@@ -258,16 +340,22 @@ var simConfig = new SimulationConfig
     MinTicksBeforeStabilityCheck = 20
 };
 
-// Build with custom configuration
-var engine = new SimulationBuilder()
-    .WithWorld(world)
-    .WithModelConfig(modelConfig)
-    .WithSimulationConfig(simConfig)
-    .UseStandardPipeline()
-    .AddConsoleObserver(colored: true)
-    .Build();
+// Create calculators with custom configuration
+var attractionCalc = new StandardAttractionCalculator(modelConfig);
+var migrationCalc = new StandardMigrationCalculator(modelConfig);
 
-var context = await engine.RunAsync(world);
+// Create simulation engine with custom configuration
+var stages = new List<ISimulationStage>
+{
+    new MigrationDecisionStage(migrationCalc, attractionCalc),
+    new MigrationExecutionStage()
+};
+
+var engine = new SimulationEngine(stages, simConfig);
+engine.AddObserver(new ConsoleObserver(colored: true));
+
+// Run simulation
+var result = await engine.RunAsync(world);
 ```
 
 ## Architecture
@@ -307,11 +395,13 @@ Person generation module:
 
 ### Snapshot Layer (`/src/Snapshot`)
 
-Snapshot system for saving simulation states:
+Complete snapshot system for saving and restoring simulation states:
 
-- `SnapshotService` - Create and manage snapshots (stub implementation)
-- JSON serialization support
-- *Note: Full person-based snapshot restoration is pending implementation*
+- `SnapshotService` - Create and restore world snapshots with person-based architecture
+- `JsonSnapshotSerializer` - JSON serialization with formatting options and async support
+- `XmlSnapshotSerializer` - XML serialization with schema compatibility
+- Index-based person references for efficient serialization
+- Full snapshot restoration support
 
 ## Performance Characteristics
 
@@ -335,10 +425,12 @@ The framework uses parallel processing (PLINQ) to efficiently handle large popul
 
 ### Main Entry Points
 
-The library provides fluent builders for ease of use:
+The framework provides the following main components:
 
-- **`WorldBuilder`** - Construct worlds with cities, factors, and populations
-- **`SimulationBuilder`** - Configure and create simulation engines
+- **`World`** - Create worlds by directly instantiating with cities and factor definitions
+- **`City`** - Create cities with factor values and persons
+- **`SimulationEngine`** - Create and run simulations with custom stages and configuration
+- **`PersonCollection`** - Generate persons with flexible specifications
 
 ### Core Abstractions
 
@@ -363,22 +455,9 @@ Domain models available for use and extension:
 
 See the `/examples` directory for complete working examples:
 
-- **`PersonBasedExample.cs`** - Fujian Province simulation with 180,000 persons across 5 cities
-- **`README.md`** - Detailed explanation of features and usage
-
-## Migration from PopulationGroup Architecture
-
-If you're migrating from the old PopulationGroup-based architecture, see:
-
-- **`MIGRATION_GUIDE.md`** - Complete API migration guide
-- **`REFACTORING_SUMMARY.md`** - Technical details of the refactoring
-
-### Key Changes
-
-- **Removed**: `GroupDefinition`, `GroupValue` classes
-- **New**: `Person` entity with individual attributes
-- **API**: `WorldBuilder` now uses `.WithRandomPersons()` instead of `.AddPopulationGroup()`
-- **Simulation**: Individual decision-making instead of group-level aggregation
+- **`PersonBasedSimulationExample.cs`** - Complete person-based simulation with 230,000 persons across 3 cities
+- **`example-snapshot.json`** / **`example-snapshot.xml`** - Example snapshot files
+- **`README.md`** - Detailed explanation of features and PersonCollection usage
 
 ## Extensibility for REST API / Middleware
 
@@ -409,9 +488,9 @@ The library is designed to be consumed by middleware layers (console apps, web A
 ### Integration Points
 
 1. **Real-time Updates**: Use `ISimulationObserver` to stream events via SignalR/WebSocket
-2. **State Management**: Use `SnapshotService` for basic snapshot creation
+2. **State Management**: Use `SnapshotService` to save and restore simulation states in JSON or XML
 3. **Custom Stages**: Inject logging, metrics, or custom logic via `ISimulationStage`
-4. **Serialization**: JSON snapshots are ready for API responses
+4. **Serialization**: JSON and XML snapshots with async support for API integration
 
 ## Contributing
 

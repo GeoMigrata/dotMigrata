@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Snapshot Version="1.0"
+          CreatedAt="2025-11-14T05:26:05.7805660Z"
+          LastModifiedAt="2025-11-14T05:26:05.7805660Z">
+    <World Id="c8836553-be0c-42c5-be58-abbae82c6918"
+           DisplayName="Example XML Snapshot">
+        <FactorDefinitions>
+            <FactorDefinition Id="pollution" DisplayName="Pollution" Max="12" Min="0" Transform="Linear"
+                              Type="Negative"/>
+            <FactorDefinition Id="transport" DisplayName="Transport" Max="10" Min="0" Transform="Linear"
+                              Type="Positive"/>
+            <FactorDefinition Id="income" DisplayName="Avg. Income" Max="1000" Min="0" Transform="Log"
+                              Type="Positive"/>
+            <FactorDefinition Id="security" DisplayName="Security" Max="10" Min="0" Type="Positive"/>
+            <!-- No Transform attribute: Transform is nullable in the code. -->
+        </FactorDefinitions>
+        <PersonCollectionDefinitions>
+            <PersonCollectionDefnition Id="young_people">
+                <Person>
+                    <FactorSensitivities>
+                        <FactorSensitivity Id="pollution" Value="0.5"/>
+                        <FactorSensitivity Id="transport" Value="0.5"/>
+                        <FactorSensitivity Id="income" Value="0.1"/>
+                        <FactorSensitivity Id="security" Value="0.8"/>
+                    </FactorSensitivities>
+                    <MovingWillingness>0.5</MovingWillingness>
+                    <RetentionRate>0.3</RetentionRate>
+                    <AttractionThreshold>0.3</AttractionThreshold>
+                    <SensitivityScaling>0.5</SensitivityScaling>
+                    <MinimumAcceptableAttraction>10</MinimumAcceptableAttraction>
+                    <Tags>tag1;tag2;tag3</Tags>
+                </Person>
+                <Generator Amount="100000">
+                    <FactorSensitivities>
+                        <FactorSensitivity Id="pollution">
+                            <GenerateValue/>
+                        </FactorSensitivity>
+                        <FactorSensitivity Id="transport"/>
+                        <FactorSensitivity Id="income">
+                            <GenerateValue Bias="-0.3"/>
+                        </FactorSensitivity>
+                        <FactorSensitivity Id="security">
+                            <GenerateValue Bias="0.4"/>
+                        </FactorSensitivity>
+                    </FactorSensitivities>
+                    <MovingWillingness>
+                        <GenerateValue Min="0.5" Max="1"/>
+                    </MovingWillingness>
+                    <RetentionRate>0.1</RetentionRate>
+                    <AttractionThreshold>
+                        <GenerateValue/>
+                    </AttractionThreshold>
+                    <SensitivityScaling>
+                        <GenerateValue/>
+                    </SensitivityScaling>
+                    <MinimumAcceptableAttraction>10</MinimumAcceptableAttraction>
+                    <Tags>tag1;tag2;tag3</Tags>
+                </Generator >
+                <Generator Seed="132" Amount="100">
+                    <FactorSensitivities>
+                        <FactorSensitivity Id="pollution" Value="0.5"/>
+                        <FactorSensitivity Id="transport" Value="0.5"/>
+                        <FactorSensitivity Id="income" Value="0.1"/>
+                        <FactorSensitivity Id="security" Value="0.8"/>
+                    </FactorSensitivities>
+                    <MovingWillingness>0.5</MovingWillingness>
+                    <RetentionRate>0.3</RetentionRate>
+                    <AttractionThreshold>0.3</AttractionThreshold>
+                    <SensitivityScaling>0.5</SensitivityScaling>
+                    <MinimumAcceptableAttraction>10</MinimumAcceptableAttraction>
+                    <Tags>tag1</Tags>
+                </Generator>
+            </PersonCollectionDefnition>
+        </PersonCollectionDefinitions>
+        <Cities>
+            <City Id="shanghai_cn" DisplayName="Shanghai" Latitude="31.2304" Longitude="121.4737">
+                <FactorValues>
+                    <FactorValue Id="pollution" Value="8"/>
+                    <FactorValue Id="transport" Value="7"/>
+                    <FactorValue Id="income" Value="900"/>
+                    <FactorValue Id="security" Value="4"/>
+                </FactorValues>
+                <PersonCollections>
+                    <PersonCollection Id="young_people" />
+                </PersonCollections>
+            </City>
+            <City Id="sydney_au" DisplayName="Sydney" Latitude="-33.8688" Longitude="151.2093">
+                <FactorValues>
+                    <FactorValue Id="pollution" Value="3"/>
+                    <FactorValue Id="transport" Value="8"/>
+                    <FactorValue Id="income" Value="850"/>
+                    <FactorValue Id="security" Value="9"/>
+                </FactorValues>
+                <PersonCollections>
+                    <PersonCollection Id="young_people" />
+                </PersonCollections>
+            </City>
+        </Cities>
+    </World>
+</Snapshot>

@@ -1,84 +1,21 @@
 ﻿# API Reference
 
-This document provides a comprehensive reference for the public API of dotGeoMigrata with the new Person-based
-architecture.
+This document provides a comprehensive reference for the public API of dotGeoMigrata.
 
 ## Main Entry Points
-
-### WorldBuilder
-
-Fluent builder for creating `World` instances with person-based populations.
-
-```csharp
-var world = new WorldBuilder()
-    .WithName("My World")
-    .AddFactor(name, type, min, max, transform)
-    .AddCity(name, lat, lon, area, capacity, configureCity)
-    .Build();
-```
-
-**Methods:**
-
-- `WithName(string)` - Sets the world display name
-- `AddFactor(string, FactorType, double, double, TransformType?)` - Adds a factor definition
-- `AddFactor(FactorDefinition)` - Adds a pre-configured factor
-- `AddCity(string, double, double, double, int?, Action<CityBuilder>)` - Adds a city
-- `AddCity(City)` - Adds a pre-configured city
-- `WithRandomPopulation(int, IDictionary<string, int>?, PersonGeneratorConfig?)` - Populates world with random persons
-- `Build()` - Builds and validates the world
-
-### CityBuilder
-
-Helper builder for configuring city properties and initial population.
-
-```csharp
-city => city
-    .WithFactorValue("Income", 50000)
-    .WithRandomPersons(100000)
-    .WithPersonCollection(collection)
-```
-
-**Methods:**
-
-- `WithFactorValue(string, double)` - Sets the intensity value for a specific factor
-- `WithPerson(Person)` - Adds a single person to the city
-- `WithPersons(IEnumerable<Person>)` - Adds multiple persons to the city
-- `WithRandomPersons(int, PersonGeneratorConfig?, string?)` - Generates and adds random persons
-- `WithPersonCollection(PersonCollection)` - Adds persons from a PersonCollection
-
-### SimulationBuilder
-
-Fluent builder for creating and configuring `SimulationEngine` instances.
-
-```csharp
-var engine = new SimulationBuilder()
-    .WithWorld(world)
-    .WithModelConfig(modelConfig)
-    .WithSimulationConfig(simConfig)
-    .UseStandardPipeline()
-    .AddConsoleObserver()
-    .Build();
-```
-
-**Methods:**
-
-- `WithWorld(World)` - Sets the world to simulate (required)
-- `WithSimulationConfig(SimulationConfig?)` - Configures simulation parameters
-- `WithModelConfig(StandardModelConfig?)` - Configures model parameters
-- `WithAttractionCalculator(IAttractionCalculator)` - Sets custom attraction calculator
-- `WithMigrationCalculator(IMigrationCalculator)` - Sets custom migration calculator
-- `AddCustomStage(ISimulationStage)` - Adds a custom pipeline stage
-- `UseStandardPipeline()` - Uses the default simulation pipeline
-- `AddObserver(ISimulationObserver)` - Adds a simulation observer
-- `AddConsoleObserver(bool)` - Adds a console observer (colored output optional)
-- `Build()` - Builds the simulation engine
-- `BuildAndRunAsync()` - Builds and immediately runs the simulation
-
-## Core Models
 
 ### World
 
 Top-level entity containing cities and factor definitions.
+
+**Constructor:**
+
+```csharp
+new World(
+    IEnumerable<City> cities,
+    IEnumerable<FactorDefinition> factorDefinitions)
+{ DisplayName = "..." }
+```
 
 **Properties:**
 
@@ -88,13 +25,13 @@ Top-level entity containing cities and factor definitions.
 - `AllPersons` (IEnumerable<Person>) - All persons across all cities
 - `Population` (int) - Total population across all cities
 
-**Constructor:**
+**Example:**
 
 ```csharp
-new World(
-    IEnumerable<City> cities,
-    IEnumerable<FactorDefinition> factorDefinitions)
-{ DisplayName = "..." }
+var world = new World([city1, city2], [factor1, factor2])
+{
+    DisplayName = "My World"
+};
 ```
 
 ### City
@@ -486,6 +423,46 @@ void OnError(SimulationContext context, Exception exception)
 
 - `ConsoleObserver` - Prints to console with person-based statistics
 
+## Simulation Pipeline
+
+### Creating a Simulation
+
+To create and run a simulation:
+
+```csharp
+using dotGeoMigrata.Logic.Calculators;
+using dotGeoMigrata.Simulation.Engine;
+using dotGeoMigrata.Simulation.Interfaces;
+using dotGeoMigrata.Simulation.Pipeline;
+using dotGeoMigrata.Simulation.Models;
+
+// Create calculators
+var attractionCalc = new StandardAttractionCalculator();
+var migrationCalc = new StandardMigrationCalculator();
+
+// Create pipeline stages
+var stages = new List<ISimulationStage>
+{
+    new MigrationDecisionStage(migrationCalc, attractionCalc),
+    new MigrationExecutionStage()
+};
+
+// Create simulation engine
+var config = SimulationConfig.Default;
+var engine = new SimulationEngine(stages, config);
+
+// Add observers
+engine.AddObserver(new ConsoleObserver(colored: true));
+
+// Run simulation
+var result = await engine.RunAsync(world);
+```
+
+### Standard Pipeline Stages
+
+**MigrationDecisionStage** - Calculates migration decisions for all persons
+**MigrationExecutionStage** - Executes migrations by moving persons between cities
+
 ## Simulation Engine
 
 ### SimulationEngine
@@ -529,7 +506,7 @@ Runtime simulation state shared between stages.
 
 ### SnapshotService
 
-Static service for creating snapshots.
+Static service for creating and restoring world snapshots with person-based architecture.
 
 **Methods:**
 
@@ -539,24 +516,74 @@ static WorldSnapshot CreateSnapshot(
     SnapshotStatus status = SnapshotStatus.Seed,
     IEnumerable<SimulationStep>? steps = null)
 
-static World RestoreWorld(WorldSnapshot snapshot) // Currently throws NotImplementedException
+static World RestoreWorld(WorldSnapshot snapshot)
 
-static MigrationRecord CreateMigrationRecord(MigrationFlow flow)
+static MigrationRecord CreateMigrationRecord(
+    MigrationFlow flow, 
+    Dictionary<Person, int> personToIndex)
 ```
 
-*Note: Full person-based snapshot restoration is pending implementation.*
+The snapshot system uses index-based person references for efficient serialization.
 
 ### JsonSnapshotSerializer
 
-JSON serialization for snapshots.
+JSON serialization for snapshots with formatting options and async support.
 
 **Methods:**
 
 ```csharp
 static string Serialize(WorldSnapshot snapshot, JsonSerializerOptions? options = null)
 static void SerializeToFile(WorldSnapshot snapshot, string filePath, JsonSerializerOptions? options = null)
+static Task SerializeToFileAsync(WorldSnapshot snapshot, string filePath, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
+
 static WorldSnapshot? Deserialize(string json, JsonSerializerOptions? options = null)
 static WorldSnapshot? DeserializeFromFile(string filePath, JsonSerializerOptions? options = null)
+static Task<WorldSnapshot?> DeserializeFromFileAsync(string filePath, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
+
+static JsonSerializerOptions GetDefaultOptions()  // Formatted with camelCase
+static JsonSerializerOptions GetCompactOptions()  // No indentation
+```
+
+**Features:**
+
+- camelCase property naming for API compatibility
+- Formatted (default) or compact output
+- Async I/O operations
+- Null value handling
+- Enum serialization as strings
+
+### XmlSnapshotSerializer
+
+XML serialization for snapshots with custom formatting and schema compatibility.
+
+**Methods:**
+
+```csharp
+static string Serialize(WorldSnapshot snapshot, XmlWriterSettings? writerSettings = null)
+static void SerializeToFile(WorldSnapshot snapshot, string filePath, XmlWriterSettings? writerSettings = null)
+
+static WorldSnapshot? Deserialize(string xml, XmlReaderSettings? readerSettings = null)
+static WorldSnapshot? DeserializeFromFile(string filePath, XmlReaderSettings? readerSettings = null)
+```
+
+**Features:**
+
+- Formatted, indented XML output
+- Schema-compatible structure (see `examples/WorldSnapshot.xsd`)
+- Culture-invariant number formatting
+- XDocument-based for flexibility
+- Proper null handling
+
+### SnapshotStatus
+
+```csharp
+public enum SnapshotStatus
+{
+    Seed,       // Initial snapshot with no simulation steps performed
+    Active,     // Active snapshot that can continue simulation
+    Stabilized, // Simulation has stabilized and should not continue
+    Completed   // Maximum iterations reached
+}
 ```
 
 ## Result Models
@@ -602,13 +629,3 @@ Represents an individual person's migration decision.
 - `Seed` - Initial state
 - `InProgress` - Simulation in progress
 - `Completed` - Simulation completed
-
-## Migration from Old API
-
-If you're migrating from the PopulationGroup-based API, see `MIGRATION_GUIDE.md` for detailed migration instructions.
-
-**Key Changes:**
-
-- **Removed**: `GroupDefinition`, `GroupValue`, `AddPopulationGroup()` methods
-- **New**: `Person` entity, `PersonGenerator`, `WithRandomPersons()` method
-- **Modified**: `World` constructor, calculator interfaces, `MigrationFlow` model

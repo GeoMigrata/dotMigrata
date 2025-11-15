@@ -9,5 +9,5 @@ public sealed record FactorSnapshot
     public required string Type { get; init; }
     public required double MinValue { get; init; }
     public required double MaxValue { get; init; }
-    public required string? Transform { get; init; }
+    public string? Transform { get; init; }
 }

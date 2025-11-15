@@ -56,46 +56,102 @@ dotnet add reference /path/to/dotGeoMigrata.csproj
 
 ### 快速入门示例
 
-以下是使用流式构建器 API 的简单示例：
+以下是一个简单示例：
 
 ```csharp
-using dotGeoMigrata.Builder;
+using dotGeoMigrata.Core.Entities;
 using dotGeoMigrata.Core.Enums;
+using dotGeoMigrata.Core.Values;
+using dotGeoMigrata.Generator;
+using dotGeoMigrata.Logic.Calculators;
+using dotGeoMigrata.Simulation.Engine;
+using dotGeoMigrata.Simulation.Interfaces;
+using dotGeoMigrata.Simulation.Models;
+using dotGeoMigrata.Simulation.Pipeline;
+using static dotGeoMigrata.Generator.AttributeValueBuilder;
 
-// 创建包含因素和填充了个体人员的城市的世界
-var world = new WorldBuilder()
-    .WithName("示例世界")
-    
-    // 定义影响个体迁移决策的因素
-    .AddFactor("收入", FactorType.Positive, 20000, 100000)
-    .AddFactor("污染", FactorType.Negative, 0, 100)
-    .AddFactor("房价", FactorType.Negative, 500, 3000)
-    
-    // 添加具有个体初始人口的城市
-    .AddCity("城市 A", 
-        latitude: 26.0, longitude: 119.3, area: 100.0, capacity: 1000000,
-        city => city
-            .WithFactorValue("收入", 50000)
-            .WithFactorValue("污染", 30)
-            .WithFactorValue("房价", 1500)
-            .WithRandomPersons(100000))  // 生成 100,000 个个体
-    
-    .AddCity("城市 B",
-        latitude: 24.5, longitude: 118.1, area: 80.0, capacity: 800000,
-        city => city
-            .WithFactorValue("收入", 40000)
-            .WithFactorValue("污染", 20)
-            .WithFactorValue("房价", 1000)
-            .WithRandomPersons(80000))  // 生成 80,000 个个体
-    
-    .Build();
+// 步骤 1：定义因素
+var incomeFactor = new FactorDefinition
+{
+    DisplayName = "收入",
+    Type = FactorType.Positive,
+    MinValue = 20000,
+    MaxValue = 100000
+};
 
-// 创建并运行模拟
-var result = await new SimulationBuilder()
-    .WithWorld(world)
-    .UseStandardPipeline()
-    .AddConsoleObserver(colored: true)
-    .BuildAndRunAsync();
+var pollutionFactor = new FactorDefinition
+{
+    DisplayName = "污染",
+    Type = FactorType.Negative,
+    MinValue = 0,
+    MaxValue = 100
+};
+
+var allFactors = new[] { incomeFactor, pollutionFactor };
+
+// 步骤 2：使用 PersonCollection 生成人群
+var collection = new PersonCollection();
+collection.Add(new GeneratorConfig
+{
+    Count = 100000,
+    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
+    {
+        [incomeFactor] = Value().InRange(3, 8),
+        [pollutionFactor] = Value().InRange(-7, -3)
+    },
+    MovingWillingness = Value().InRange(0.4, 0.7),
+    RetentionRate = Value().InRange(0.3, 0.6),
+    Tags = ["城市居民"]
+});
+
+// 步骤 3：创建带有因素值和人群的城市
+var cityA = new City(
+    factorValues: [
+        new FactorValue { Definition = incomeFactor, Intensity = 50000 },
+        new FactorValue { Definition = pollutionFactor, Intensity = 30 }
+    ],
+    persons: collection.GenerateAllPersons(allFactors))
+{
+    DisplayName = "城市 A",
+    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
+    Area = 100.0,
+    Capacity = 1000000
+};
+
+var cityB = new City(
+    factorValues: [
+        new FactorValue { Definition = incomeFactor, Intensity = 40000 },
+        new FactorValue { Definition = pollutionFactor, Intensity = 20 }
+    ],
+    persons: []) // 初始为空
+{
+    DisplayName = "城市 B",
+    Location = new Coordinate { Latitude = 24.5, Longitude = 118.1 },
+    Area = 80.0,
+    Capacity = 800000
+};
+
+// 步骤 4：创建世界
+var world = new World([cityA, cityB], allFactors)
+{
+    DisplayName = "示例世界"
+};
+
+// 步骤 5：创建模拟引擎
+var attractionCalc = new StandardAttractionCalculator();
+var migrationCalc = new StandardMigrationCalculator();
+
+var stages = new List<ISimulationStage>
+{
+    new MigrationDecisionStage(migrationCalc, attractionCalc),
+    new MigrationExecutionStage()
+};
+
+var engine = new SimulationEngine(stages, SimulationConfig.Default);
+engine.AddObserver(new ConsoleObserver(colored: true));
+
+// 步骤 6：运行模拟
+var result = await engine.RunAsync(world);
 
 Console.WriteLine($"模拟在 {result.CurrentTick} 步后完成");
 Console.WriteLine($"最终人口: {result.World.Population:N0} 人");
@@ -156,19 +212,52 @@ collection.Add(new GeneratorSpecification(seed: 42)
     Tags = new[] { "年轻专业人士", "技术工作者" }
 });
 
-// 在城市中使用 PersonCollection
-var world = new WorldBuilder()
-    .WithName("多群体世界")
-    .AddFactor("收入", FactorType.Positive, 30000, 150000)
-    .AddFactor("污染", FactorType.Negative, 0, 100)
-    .AddFactor("房价", FactorType.Negative, 500, 3000)
-    .AddCity("城市 A", 26.0, 119.3, 100.0, capacity: 500000,
-        city => city
-            .WithFactorValue("收入", 80000)
-            .WithFactorValue("污染", 30)
-            .WithFactorValue("房价", 25000)
-            .WithPersonCollection(collection)) // 使用 PersonCollection
-    .Build();
+// 直接创建世界
+var incomeFactor = new FactorDefinition
+{
+    DisplayName = "收入",
+    Type = FactorType.Positive,
+    MinValue = 30000,
+    MaxValue = 150000
+};
+
+var pollutionFactor = new FactorDefinition
+{
+    DisplayName = "污染",
+    Type = FactorType.Negative,
+    MinValue = 0,
+    MaxValue = 100
+};
+
+var housingFactor = new FactorDefinition
+{
+    DisplayName = "房价",
+    Type = FactorType.Negative,
+    MinValue = 500,
+    MaxValue = 3000
+};
+
+var allFactors = new[] { incomeFactor, pollutionFactor, housingFactor };
+var persons = collection.GenerateAllPersons(allFactors);
+
+var city = new City(
+    factorValues: [
+        new FactorValue { Definition = incomeFactor, Intensity = 80000 },
+        new FactorValue { Definition = pollutionFactor, Intensity = 30 },
+        new FactorValue { Definition = housingFactor, Intensity = 25000 }
+    ],
+    persons: persons)
+{
+    DisplayName = "城市 A",
+    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
+    Area = 100.0,
+    Capacity = 500000
+};
+
+var world = new World([city], allFactors)
+{
+    DisplayName = "多群体世界"
+};
 
 // 按标签分析人口
 var tagStats = world.AllPersons
@@ -205,15 +294,33 @@ var personConfig = new PersonGeneratorConfig
     RandomSeed = 42  // 用于可重现的结果
 };
 
-// 在构建城市时使用自定义配置
-var world = new WorldBuilder()
-    .WithName("自定义世界")
-    .AddFactor("收入", FactorType.Positive, 30000, 150000)
-    .AddCity("城市 A", 26.0, 119.3, 100.0, capacity: 500000,
-        city => city
-            .WithFactorValue("收入", 80000)
-            .WithRandomPersons(50000, personConfig))  // 使用自定义配置
-    .Build();
+// 创建 PersonCollection 并使用自定义配置
+var collection = new PersonCollection();
+collection.Add(new GeneratorConfig
+{
+    Count = 50000,
+    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
+    {
+        [incomeFactor] = Value().InRange(5, 9)
+    },
+    MovingWillingness = Value().InRange(0.4, 0.7),
+    RetentionRate = Value().InRange(0.3, 0.6)
+});
+
+var persons = collection.GenerateAllPersons(allFactors, personConfig);
+
+// 将人群添加到城市
+var city = new City(
+    factorValues: [
+        new FactorValue { Definition = incomeFactor, Intensity = 80000 }
+    ],
+    persons: persons)
+{
+    DisplayName = "城市 A",
+    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
+    Area = 100.0,
+    Capacity = 500000
+};
 ```
 
 ### 配置模拟参数
@@ -244,16 +351,22 @@ var simConfig = new SimulationConfig
     MinTicksBeforeStabilityCheck = 20
 };
 
-// 使用自定义配置构建
-var engine = new SimulationBuilder()
-    .WithWorld(world)
-    .WithModelConfig(modelConfig)
-    .WithSimulationConfig(simConfig)
-    .UseStandardPipeline()
-    .AddConsoleObserver(colored: true)
-    .Build();
+// 使用自定义配置创建计算器和引擎
+var attractionCalc = new StandardAttractionCalculator(modelConfig);
+var migrationCalc = new StandardMigrationCalculator(modelConfig);
 
-var context = await engine.RunAsync(world);
+// 创建模拟引擎
+var stages = new List<ISimulationStage>
+{
+    new MigrationDecisionStage(migrationCalc, attractionCalc),
+    new MigrationExecutionStage()
+};
+
+var engine = new SimulationEngine(stages, simConfig);
+engine.AddObserver(new ConsoleObserver(colored: true));
+
+// 运行模拟
+var result = await engine.RunAsync(world);
 ```
 
 ## 架构
@@ -293,11 +406,13 @@ var context = await engine.RunAsync(world);
 
 ### 快照层（`/src/Snapshot`）
 
-用于保存模拟状态的快照系统：
+用于保存和恢复模拟状态的完整快照系统：
 
-- `SnapshotService` - 创建和管理快照（存根实现）
-- JSON 序列化支持
-- *注意：基于个体的快照恢复功能尚待实现*
+- `SnapshotService` - 使用基于个体的架构创建和恢复世界快照
+- `JsonSnapshotSerializer` - 支持格式化选项和异步操作的 JSON 序列化
+- `XmlSnapshotSerializer` - 支持架构兼容性的 XML 序列化
+- 基于索引的个体引用，实现高效序列化
+- 完整的快照恢复支持
 
 ## 性能特征
 
@@ -321,10 +436,12 @@ var context = await engine.RunAsync(world);
 
 ### 主要入口点
 
-库提供流式构建器以简化使用：
+框架提供以下主要组件：
 
-- **`WorldBuilder`** - 构建包含城市、因素和人口的世界
-- **`SimulationBuilder`** - 配置和创建模拟引擎
+- **`World`** - 通过直接实例化城市和因素定义来创建世界
+- **`City`** - 创建带有因素值和人群的城市
+- **`SimulationEngine`** - 使用自定义阶段和配置创建和运行模拟
+- **`PersonCollection`** - 使用灵活规范生成人群
 
 ### 核心抽象
 
@@ -349,22 +466,9 @@ var context = await engine.RunAsync(world);
 
 查看 `/examples` 目录获取完整的工作示例：
 
-- **`PersonBasedExample.cs`** - 福建省模拟，5 个城市共 180,000 人
-- **`README.md`** - 功能和用法的详细说明
-
-## 从 PopulationGroup 架构迁移
-
-如果您正在从旧的基于 PopulationGroup 的架构迁移，请参阅：
-
-- **`MIGRATION_GUIDE.md`** - 完整的 API 迁移指南
-- **`REFACTORING_SUMMARY.md`** - 重构的技术细节
-
-### 主要变化
-
-- **移除**：`GroupDefinition`、`GroupValue` 类
-- **新增**：具有个体属性的 `Person` 实体
-- **API**：`WorldBuilder` 现在使用 `.WithRandomPersons()` 而非 `.AddPopulationGroup()`
-- **模拟**：个体决策而非群体级别聚合
+- **`PersonBasedSimulationExample.cs`** - 完整的基于个体的模拟，3 个城市共 230,000 人
+- **`example-snapshot.json`** / **`example-snapshot.xml`** - 示例快照文件
+- **`README.md`** - 功能和 PersonCollection 用法的详细说明
 
 ## REST API / 中间层的可扩展性
 
@@ -395,9 +499,9 @@ var context = await engine.RunAsync(world);
 ### 集成点
 
 1. **实时更新**：使用 `ISimulationObserver` 通过 SignalR/WebSocket 流式传输事件
-2. **状态管理**：使用 `SnapshotService` 进行基本快照创建
+2. **状态管理**：使用 `SnapshotService` 以 JSON 或 XML 格式保存和恢复模拟状态
 3. **自定义阶段**：通过 `ISimulationStage` 注入日志、指标或自定义逻辑
-4. **序列化**：JSON 快照可直接用于 API 响应
+4. **序列化**：支持异步操作的 JSON 和 XML 快照，用于 API 集成
 
 ## 贡献
 

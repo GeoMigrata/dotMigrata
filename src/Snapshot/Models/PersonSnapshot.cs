@@ -12,7 +12,7 @@ public sealed record PersonSnapshot
     /// </summary>
     public required int Index { get; init; }
 
-    public required string? CurrentCityName { get; init; }
+    public string? CurrentCityName { get; init; }
     public required double MovingWillingness { get; init; }
     public required double RetentionRate { get; init; }
     public required double SensitivityScaling { get; init; }
