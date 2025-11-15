@@ -1,79 +1,97 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <Snapshot Version="1.0"
+          xmlns="http://geomigrata.pages.dev/snapshot"
+          xmlns:c="http://geomigrata.pages.dev/code"
+          Id="c8836553-be0c-42c5-be58-abbae82c6918"
+          Status="Seed"
           CreatedAt="2025-11-14T05:26:05.7805660Z"
-          LastModifiedAt="2025-11-14T05:26:05.7805660Z">
-    <World Id="c8836553-be0c-42c5-be58-abbae82c6918"
-           DisplayName="Example XML Snapshot">
+          LastModifiedAt="2025-11-14T05:26:05.7805660Z"
+          CurrentStep="0">
+    <World DisplayName="Example XML Snapshot">
+        <!-- FactorDefinitions container (snapshot structure) contains c:FactorDefinition elements (code concept) -->
         <FactorDefinitions>
-            <FactorDefinition Id="pollution" DisplayName="Pollution" Max="12" Min="0" Transform="Linear"
-                              Type="Negative"/>
-            <FactorDefinition Id="transport" DisplayName="Transport" Max="10" Min="0" Transform="Linear"
-                              Type="Positive"/>
-            <FactorDefinition Id="income" DisplayName="Avg. Income" Max="1000" Min="0" Transform="Log"
-                              Type="Positive"/>
-            <FactorDefinition Id="security" DisplayName="Security" Max="10" Min="0" Type="Positive"/>
-            <!-- No Transform attribute: Transform is nullable in the code. -->
+            <c:FactorDefinition Id="pollution" DisplayName="Pollution" Type="Negative" Min="0" Max="12"
+                                Transform="Linear"/>
+            <c:FactorDefinition Id="transport" DisplayName="Transport" Type="Positive" Min="0" Max="10"
+                                Transform="Linear"/>
+            <c:FactorDefinition Id="income" DisplayName="Avg. Income" Type="Positive" Min="0" Max="1000"
+                                Transform="Log"/>
+            <c:FactorDefinition Id="security" DisplayName="Security" Type="Positive" Min="0" Max="10"/>
         </FactorDefinitions>
-        <PersonCollectionDefinitions>
-            <PersonCollectionDefnition Id="young_people">
-                <Person>
+
+        <!-- PersonCollections container (snapshot structure) contains PersonCollection entries -->
+        <PersonCollections>
+            <PersonCollection Id="young_people">
+                <!-- c:Person element (code concept) with Count for duplication -->
+                <c:Person Count="1" MovingWillingness="0.5" RetentionRate="0.3" AttractionThreshold="0.3"
+                          SensitivityScaling="0.5" MinimumAcceptableAttraction="10" Tags="tag1;tag2;tag3">
                     <FactorSensitivities>
-                        <FactorSensitivity Id="pollution" Value="0.5"/>
-                        <FactorSensitivity Id="transport" Value="0.5"/>
-                        <FactorSensitivity Id="income" Value="0.1"/>
-                        <FactorSensitivity Id="security" Value="0.8"/>
+                        <Sensitivity Id="pollution" Value="0.5"/>
+                        <Sensitivity Id="transport" Value="0.5"/>
+                        <Sensitivity Id="income" Value="0.1"/>
+                        <Sensitivity Id="security" Value="0.8"/>
                     </FactorSensitivities>
-                    <MovingWillingness>0.5</MovingWillingness>
-                    <RetentionRate>0.3</RetentionRate>
-                    <AttractionThreshold>0.3</AttractionThreshold>
-                    <SensitivityScaling>0.5</SensitivityScaling>
-                    <MinimumAcceptableAttraction>10</MinimumAcceptableAttraction>
-                    <Tags>tag1;tag2;tag3</Tags>
-                </Person>
-                <Generator Amount="100000">
+                </c:Person>
+
+                <!-- Generator element (matches GeneratorConfig code class) -->
+                <Generator Count="100000" Seed="42">
                     <FactorSensitivities>
-                        <FactorSensitivity Id="pollution">
-                            <GenerateValue/>
-                        </FactorSensitivity>
-                        <FactorSensitivity Id="transport"/>
-                        <FactorSensitivity Id="income">
-                            <GenerateValue Bias="-0.3"/>
-                        </FactorSensitivity>
-                        <FactorSensitivity Id="security">
-                            <GenerateValue Bias="0.4"/>
-                        </FactorSensitivity>
+                        <!-- InRange matches ValueSpecification.InRange() method -->
+                        <Sensitivity Id="pollution">
+                            <InRange Min="-7" Max="-3"/>
+                        </Sensitivity>
+                        <Sensitivity Id="transport">
+                            <InRange Min="3" Max="8"/>
+                        </Sensitivity>
+                        <!-- Random matches ValueSpecification.Random() method -->
+                        <Sensitivity Id="income">
+                            <Random Scale="0.7"/>
+                        </Sensitivity>
+                        <Sensitivity Id="security">
+                            <InRange Min="0.6" Max="0.9"/>
+                        </Sensitivity>
                     </FactorSensitivities>
                     <MovingWillingness>
-                        <GenerateValue Min="0.5" Max="1"/>
+                        <InRange Min="0.5" Max="1.0"/>
                     </MovingWillingness>
-                    <RetentionRate>0.1</RetentionRate>
+                    <!-- Fixed matches ValueSpecification.Fixed() method -->
+                    <RetentionRate>
+                        <Fixed Value="0.1"/>
+                    </RetentionRate>
                     <AttractionThreshold>
-                        <GenerateValue/>
+                        <Random/>
                     </AttractionThreshold>
                     <SensitivityScaling>
-                        <GenerateValue/>
+                        <Random/>
                     </SensitivityScaling>
-                    <MinimumAcceptableAttraction>10</MinimumAcceptableAttraction>
+                    <MinimumAcceptableAttraction>
+                        <Fixed Value="10"/>
+                    </MinimumAcceptableAttraction>
                     <Tags>tag1;tag2;tag3</Tags>
                 </Generator>
-                <Generator Seed="132" Amount="100">
+
+                <!-- Another Generator with different seed -->
+                <Generator Count="100" Seed="132">
                     <FactorSensitivities>
-                        <FactorSensitivity Id="pollution" Value="0.5"/>
-                        <FactorSensitivity Id="transport" Value="0.5"/>
-                        <FactorSensitivity Id="income" Value="0.1"/>
-                        <FactorSensitivity Id="security" Value="0.8"/>
+                        <Sensitivity Id="pollution" Value="0.5"/>
+                        <Sensitivity Id="transport" Value="0.5"/>
+                        <Sensitivity Id="income" Value="0.1"/>
+                        <Sensitivity Id="security" Value="0.8"/>
                     </FactorSensitivities>
-                    <MovingWillingness>0.5</MovingWillingness>
-                    <RetentionRate>0.3</RetentionRate>
-                    <AttractionThreshold>0.3</AttractionThreshold>
-                    <SensitivityScaling>0.5</SensitivityScaling>
-                    <MinimumAcceptableAttraction>10</MinimumAcceptableAttraction>
+                    <MovingWillingness Value="0.5"/>
+                    <RetentionRate Value="0.3"/>
+                    <AttractionThreshold Value="0.3"/>
+                    <SensitivityScaling Value="0.5"/>
+                    <MinimumAcceptableAttraction Value="10"/>
                     <Tags>tag1</Tags>
                 </Generator>
-            </PersonCollectionDefnition>
-        </PersonCollectionDefinitions>
+            </PersonCollection>
+        </PersonCollections>
+
+        <!-- Cities container (snapshot structure) contains c:City elements (code concept) -->
         <Cities>
-            <City Id="shanghai_cn" DisplayName="Shanghai" Latitude="31.2304" Longitude="121.4737">
+            <c:City Id="shanghai_cn" DisplayName="Shanghai" Latitude="31.2304" Longitude="121.4737"
+                    Area="6340.5" Capacity="30000000">
                 <FactorValues>
                     <FactorValue Id="pollution" Value="8"/>
                     <FactorValue Id="transport" Value="7"/>
@@ -81,10 +99,12 @@
                     <FactorValue Id="security" Value="4"/>
                 </FactorValues>
                 <PersonCollections>
-                    <PersonCollection Id="young_people"/>
+                    <CollectionRef Id="young_people"/>
                 </PersonCollections>
-            </City>
-            <City Id="sydney_au" DisplayName="Sydney" Latitude="-33.8688" Longitude="151.2093">
+            </c:City>
+
+            <c:City Id="sydney_au" DisplayName="Sydney" Latitude="-33.8688" Longitude="151.2093"
+                    Area="12367.7" Capacity="6000000">
                 <FactorValues>
                     <FactorValue Id="pollution" Value="3"/>
                     <FactorValue Id="transport" Value="8"/>
@@ -92,9 +112,12 @@
                     <FactorValue Id="security" Value="9"/>
                 </FactorValues>
                 <PersonCollections>
-                    <PersonCollection Id="young_people"/>
+                    <CollectionRef Id="young_people"/>
                 </PersonCollections>
-            </City>
+            </c:City>
         </Cities>
     </World>
+
+    <!-- Steps for simulation reproducibility -->
+    <Steps/>
 </Snapshot>

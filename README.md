@@ -395,13 +395,21 @@ Person generation module:
 
 ### Snapshot Layer (`/src/Snapshot`)
 
-Complete snapshot system for saving and restoring simulation states:
+Complete snapshot system for saving and restoring simulation states with PersonCollection-based architecture:
 
-- `SnapshotService` - Create and restore world snapshots with person-based architecture
-- `JsonSnapshotSerializer` - JSON serialization with formatting options and async support
-- `XmlSnapshotSerializer` - XML serialization with schema compatibility
-- Index-based person references for efficient serialization
-- Full snapshot restoration support
+- **XML Serialization** - Attribute-based XML format using `System.Xml.Serialization` with namespace support
+- **PersonCollection Storage** - Stores collection specifications (templates + generators) instead of individual persons
+- **Deterministic Reproducibility** - Uses random seeds to regenerate exact simulation states
+- **Namespace Design** - Distinguishes code concepts (`c:Person`, `c:City`) from snapshot containers
+- **Efficient Format** - Compact XML with attributes for simple values, elements for complex structures
+
+**Key Features:**
+
+- PersonCollections are permanent snapshot data (like FactorDefinitions)
+- Persons regenerated from specifications on load (immutable properties)
+- Step-based state tracking for simulation reproducibility
+- Collections "expanded" at simulation start (generators produce persons)
+- No individual person serialization (enables millions of persons)
 
 ## Performance Characteristics
 
@@ -456,7 +464,7 @@ Domain models available for use and extension:
 See the `/examples` directory for complete working examples:
 
 - **`PersonBasedSimulationExample.cs`** - Complete person-based simulation with 230,000 persons across 3 cities
-- **`example-snapshot.json`** / **`example-snapshot.xml`** - Example snapshot files
+- **`example-snapshot.xml`** - Example XML snapshot with PersonCollection architecture and namespace design
 - **`README.md`** - Detailed explanation of features and PersonCollection usage
 
 ## Extensibility for REST API / Middleware
@@ -488,9 +496,10 @@ The library is designed to be consumed by middleware layers (console apps, web A
 ### Integration Points
 
 1. **Real-time Updates**: Use `ISimulationObserver` to stream events via SignalR/WebSocket
-2. **State Management**: Use `SnapshotService` to save and restore simulation states in JSON or XML
+2. **State Management**: Use `XmlSnapshotSerializer` to save and restore simulation states with PersonCollection
+   specifications
 3. **Custom Stages**: Inject logging, metrics, or custom logic via `ISimulationStage`
-4. **Serialization**: JSON and XML snapshots with async support for API integration
+4. **Serialization**: XML snapshots with namespace-based format for API integration and deterministic reproducibility
 
 ## Contributing
 

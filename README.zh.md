@@ -32,14 +32,14 @@ dotGeoMigrata 是一个基于 C# .NET 9.0 的模拟框架，用于对多城市�
 ## 模拟流程
 
 1. 初始化世界：设置城市、因素定义和个体。
-    - 每个城市必须具有所有因素定义对应的因素值
-    - 个体使用随机化的敏感度和属性生成
-    - 每个个体被分配到初始城市
+   - 每个城市必须具有所有因素定义对应的因素值
+   - 个体使用随机化的敏感度和属性生成
+   - 每个个体被分配到初始城市
 2. 每步模拟：
-    - 对每个个体，根据个人敏感度计算对所有城市的吸引力
-    - 每个个体根据吸引力差异和个人意愿独立决定是否迁移
-    - 通过在城市间移动个体来执行迁移（线程安全操作）
-    - 可选地根据迁移反馈更新城市因素
+   - 对每个个体，根据个人敏感度计算对所有城市的吸引力
+   - 每个个体根据吸引力差异和个人意愿独立决定是否迁移
+   - 通过在城市间移动个体来执行迁移（线程安全操作）
+   - 可选地根据迁移反馈更新城市因素
 3. 重复至模拟结束（达到最大步数或系统稳定）。
 
 ## 安装与使用
@@ -406,13 +406,20 @@ var result = await engine.RunAsync(world);
 
 ### 快照层（`/src/Snapshot`）
 
-用于保存和恢复模拟状态的完整快照系统：
+基于 PersonCollection 架构的完整快照系统，用于保存和恢复模拟状态：
 
-- `SnapshotService` - 使用基于个体的架构创建和恢复世界快照
-- `JsonSnapshotSerializer` - 支持格式化选项和异步操作的 JSON 序列化
-- `XmlSnapshotSerializer` - 支持架构兼容性的 XML 序列化
-- 基于索引的个体引用，实现高效序列化
-- 完整的快照恢复支持
+- **XML 序列化** - 使用 `System.Xml.Serialization` 的基于属性的 XML 格式，支持命名空间
+- **PersonCollection 存储** - 存储集合规范（模板 + 生成器）而非单个个体
+- **确定性可重现** - 使用随机种子重新生成精确的模拟状态
+- **命名空间设计** - 区分代码概念（`c:Person`、`c:City`）和快照容器
+- **高效格式** - 简单值使用属性，复杂结构使用元素的紧凑 XML
+
+**主要特性：**
+- PersonCollection 是永久快照数据（类似 FactorDefinition）
+- 从规范重新生成个体（不可变属性）
+- 基于步数的状态跟踪实现模拟可重现
+- 模拟开始时"展开"集合（生成器产生个体）
+- 无需序列化单个个体（支持数百万个体）
 
 ## 性能特征
 
@@ -467,7 +474,7 @@ var result = await engine.RunAsync(world);
 查看 `/examples` 目录获取完整的工作示例：
 
 - **`PersonBasedSimulationExample.cs`** - 完整的基于个体的模拟，3 个城市共 230,000 人
-- **`example-snapshot.json`** / **`example-snapshot.xml`** - 示例快照文件
+- **`example-snapshot.xml`** - 采用 PersonCollection 架构和命名空间设计的示例 XML 快照
 - **`README.md`** - 功能和 PersonCollection 用法的详细说明
 
 ## REST API / 中间层的可扩展性
@@ -499,9 +506,9 @@ var result = await engine.RunAsync(world);
 ### 集成点
 
 1. **实时更新**：使用 `ISimulationObserver` 通过 SignalR/WebSocket 流式传输事件
-2. **状态管理**：使用 `SnapshotService` 以 JSON 或 XML 格式保存和恢复模拟状态
+2. **状态管理**：使用 `XmlSnapshotSerializer` 保存和恢复包含 PersonCollection 规范的模拟状态
 3. **自定义阶段**：通过 `ISimulationStage` 注入日志、指标或自定义逻辑
-4. **序列化**：支持异步操作的 JSON 和 XML 快照，用于 API 集成
+4. **序列化**：采用基于命名空间的 XML 快照格式，用于 API 集成和确定性可重现
 
 ## 贡献
 

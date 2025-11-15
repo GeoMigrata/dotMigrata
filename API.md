@@ -504,75 +504,123 @@ Runtime simulation state shared between stages.
 
 ## Snapshot System
 
-### SnapshotService
-
-Static service for creating and restoring world snapshots with person-based architecture.
-
-**Methods:**
-
-```csharp
-static WorldSnapshot CreateSnapshot(
-    World world,
-    SnapshotStatus status = SnapshotStatus.Seed,
-    IEnumerable<SimulationStep>? steps = null)
-
-static World RestoreWorld(WorldSnapshot snapshot)
-
-static MigrationRecord CreateMigrationRecord(
-    MigrationFlow flow, 
-    Dictionary<Person, int> personToIndex)
-```
-
-The snapshot system uses index-based person references for efficient serialization.
-
-### JsonSnapshotSerializer
-
-JSON serialization for snapshots with formatting options and async support.
-
-**Methods:**
-
-```csharp
-static string Serialize(WorldSnapshot snapshot, JsonSerializerOptions? options = null)
-static void SerializeToFile(WorldSnapshot snapshot, string filePath, JsonSerializerOptions? options = null)
-static Task SerializeToFileAsync(WorldSnapshot snapshot, string filePath, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
-
-static WorldSnapshot? Deserialize(string json, JsonSerializerOptions? options = null)
-static WorldSnapshot? DeserializeFromFile(string filePath, JsonSerializerOptions? options = null)
-static Task<WorldSnapshot?> DeserializeFromFileAsync(string filePath, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
-
-static JsonSerializerOptions GetDefaultOptions()  // Formatted with camelCase
-static JsonSerializerOptions GetCompactOptions()  // No indentation
-```
-
-**Features:**
-
-- camelCase property naming for API compatibility
-- Formatted (default) or compact output
-- Async I/O operations
-- Null value handling
-- Enum serialization as strings
+The snapshot system uses PersonCollection-based architecture for efficient, deterministic simulation state management.
+Person properties are immutable (except CurrentCity), enabling PersonCollections to be stored as specifications rather
+than individual instances.
 
 ### XmlSnapshotSerializer
 
-XML serialization for snapshots with custom formatting and schema compatibility.
+Attribute-based XML serialization using `System.Xml.Serialization` with namespace support for code concepts vs. snapshot
+containers.
 
 **Methods:**
 
 ```csharp
-static string Serialize(WorldSnapshot snapshot, XmlWriterSettings? writerSettings = null)
-static void SerializeToFile(WorldSnapshot snapshot, string filePath, XmlWriterSettings? writerSettings = null)
+static string Serialize(WorldSnapshotXml snapshot)
+static void SerializeToFile(WorldSnapshotXml snapshot, string filePath)
 
-static WorldSnapshot? Deserialize(string xml, XmlReaderSettings? readerSettings = null)
-static WorldSnapshot? DeserializeFromFile(string filePath, XmlReaderSettings? readerSettings = null)
+static WorldSnapshotXml? Deserialize(string xml)
+static WorldSnapshotXml? DeserializeFromFile(string filePath)
 ```
 
 **Features:**
 
-- Formatted, indented XML output
-- Schema-compatible structure (see `examples/WorldSnapshot.xsd`)
-- Culture-invariant number formatting
-- XDocument-based for flexibility
-- Proper null handling
+- **Namespace Design**: Distinguishes code concepts (`c:`) from snapshot containers (default namespace)
+- **PersonCollection Storage**: Stores collection specifications (templates + generators) instead of individual persons
+- **Deterministic Reproducibility**: Uses random seeds to regenerate exact simulation states from step count
+- **Attribute-Based Format**: Simple properties as attributes, complex structures as elements
+- **Efficient**: Supports millions of persons without storing individual instances
+- **Immutable Person Properties**: Persons regenerated from specifications on load
+
+**XML Structure with Namespaces:**
+
+```xml
+
+<Snapshot xmlns="http://geomigrata.org/snapshot"
+          xmlns:c="http://geomigrata.org/code"
+          Version="1.0" Id="..." Status="Seed" CreatedAt="..." CurrentStep="0">
+    <World DisplayName="Example World">
+        <!-- FactorDefinitions is a snapshot container (default namespace) -->
+        <FactorDefinitions>
+            <!-- c:FactorDefinition maps to FactorDefinition class in code -->
+            <c:FactorDefinition Id="pollution" DisplayName="Pollution" Type="Negative" Min="0" Max="12"
+                                Transform="Linear"/>
+        </FactorDefinitions>
+
+        <!-- PersonCollections are snapshot-only constructs -->
+        <PersonCollections>
+            <PersonCollection Id="young_people">
+                <!-- c:Person maps to Person class with Count attribute for duplication -->
+                <c:Person Count="1" MovingWillingness="0.5" RetentionRate="0.3"
+                          AttractionThreshold="0.3" SensitivityScaling="0.5"
+                          MinimumAcceptableAttraction="10" Tags="tag1;tag2">
+                    <FactorSensitivities>
+                        <Sensitivity Id="pollution" Value="0.5"/>
+                    </FactorSensitivities>
+                </c:Person>
+
+                <!-- Generator uses ValueSpecifications for mass person generation -->
+                <Generator Count="100000">
+                    <Seed>42</Seed>
+                    <FactorSensitivities>
+                        <Sensitivity Id="pollution">
+                            <InRange Min="-7" Max="-3"/>
+                        </Sensitivity>
+                    </FactorSensitivities>
+                    <MovingWillingness>
+                        <InRange Min="0.5" Max="1.0"/>
+                    </MovingWillingness>
+                    <RetentionRate>
+                        <Fixed Value="0.3"/>
+                    </RetentionRate>
+                </Generator>
+            </PersonCollection>
+        </PersonCollections>
+
+        <!-- Cities container (default namespace) -->
+        <Cities>
+            <!-- c:City maps to City class in code -->
+            <c:City Id="shanghai" DisplayName="Shanghai" Latitude="31.2304" Longitude="121.4737" Area="6340.5">
+                <FactorValues>
+                    <FactorValue Id="pollution" Value="8"/>
+                </FactorValues>
+                <PersonCollections>
+                    <CollectionRef Id="young_people"/>
+                </PersonCollections>
+            </c:City>
+        </Cities>
+    </World>
+
+    <!-- Steps for simulation reproducibility -->
+    <Steps/>
+</Snapshot>
+```
+
+**ValueSpecification Types:**
+
+- `<Fixed Value="0.5"/>` - Fixed value for all generated persons
+- `<InRange Min="0.3" Max="0.8"/>` - Random value within range
+- `<Random/>` or `<Random Scale="1.5"/>` - Random with optional scaling
+
+**Shorthand for Fixed Values:**
+
+```xml
+<!-- Full form -->
+<MovingWillingness>
+    <Fixed Value="0.5"/>
+</MovingWillingness>
+
+        <!-- Shorthand -->
+<MovingWillingness Value="0.5"/>
+```
+
+**Architecture Benefits:**
+
+1. **PersonCollections are permanent** - Like FactorDefinitions, they don't change during simulation
+2. **Deterministic reproduction** - Same seed + step count = exact same state
+3. **Scalable** - Millions of persons without storing individual instances
+4. **Immutable persons** - Only CurrentCity changes, all other properties from specifications
+5. **Collections "expand" at startup** - Generators run to produce actual Person instances
 
 ### SnapshotStatus
 
