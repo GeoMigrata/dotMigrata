@@ -55,7 +55,7 @@
                     </SensitivityScaling>
                     <MinimumAcceptableAttraction>10</MinimumAcceptableAttraction>
                     <Tags>tag1;tag2;tag3</Tags>
-                </Generator >
+                </Generator>
                 <Generator Seed="132" Amount="100">
                     <FactorSensitivities>
                         <FactorSensitivity Id="pollution" Value="0.5"/>
@@ -81,7 +81,7 @@
                     <FactorValue Id="security" Value="4"/>
                 </FactorValues>
                 <PersonCollections>
-                    <PersonCollection Id="young_people" />
+                    <PersonCollection Id="young_people"/>
                 </PersonCollections>
             </City>
             <City Id="sydney_au" DisplayName="Sydney" Latitude="-33.8688" Longitude="151.2093">
@@ -92,7 +92,7 @@
                     <FactorValue Id="security" Value="9"/>
                 </FactorValues>
                 <PersonCollections>
-                    <PersonCollection Id="young_people" />
+                    <PersonCollection Id="young_people"/>
                 </PersonCollections>
             </City>
         </Cities>

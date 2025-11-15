@@ -31,8 +31,10 @@ public static class JsonSnapshotSerializer
     /// <param name="snapshot">The snapshot to serialize.</param>
     /// <param name="options">Optional JSON serializer options. Uses default formatted options if null.</param>
     /// <returns>JSON string representation.</returns>
-    public static string Serialize(WorldSnapshot snapshot, JsonSerializerOptions? options = null) =>
-        JsonSerializer.Serialize(snapshot, options ?? DefaultOptions);
+    public static string Serialize(WorldSnapshot snapshot, JsonSerializerOptions? options = null)
+    {
+        return JsonSerializer.Serialize(snapshot, options ?? DefaultOptions);
+    }
 
     /// <summary>
     /// Serializes a snapshot to a JSON file.
@@ -41,8 +43,10 @@ public static class JsonSnapshotSerializer
     /// <param name="filePath">The file path to write to.</param>
     /// <param name="options">Optional JSON serializer options. Uses default formatted options if null.</param>
     public static void SerializeToFile(WorldSnapshot snapshot, string filePath,
-        JsonSerializerOptions? options = null) =>
+        JsonSerializerOptions? options = null)
+    {
         File.WriteAllText(filePath, Serialize(snapshot, options));
+    }
 
     /// <summary>
     /// Serializes a snapshot to a JSON file asynchronously.
@@ -67,8 +71,10 @@ public static class JsonSnapshotSerializer
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="options">Optional JSON serializer options. Uses default options if null.</param>
     /// <returns>The deserialized world snapshot, or null if deserialization fails.</returns>
-    public static WorldSnapshot? Deserialize(string json, JsonSerializerOptions? options = null) =>
-        JsonSerializer.Deserialize<WorldSnapshot>(json, options ?? DefaultOptions);
+    public static WorldSnapshot? Deserialize(string json, JsonSerializerOptions? options = null)
+    {
+        return JsonSerializer.Deserialize<WorldSnapshot>(json, options ?? DefaultOptions);
+    }
 
     /// <summary>
     /// Deserializes a snapshot from a JSON file.
@@ -76,8 +82,10 @@ public static class JsonSnapshotSerializer
     /// <param name="filePath">The file path to read from.</param>
     /// <param name="options">Optional JSON serializer options. Uses default options if null.</param>
     /// <returns>The deserialized world snapshot, or null if deserialization fails.</returns>
-    public static WorldSnapshot? DeserializeFromFile(string filePath, JsonSerializerOptions? options = null) =>
-        Deserialize(File.ReadAllText(filePath), options);
+    public static WorldSnapshot? DeserializeFromFile(string filePath, JsonSerializerOptions? options = null)
+    {
+        return Deserialize(File.ReadAllText(filePath), options);
+    }
 
     /// <summary>
     /// Deserializes a snapshot from a JSON file asynchronously.
@@ -99,10 +107,16 @@ public static class JsonSnapshotSerializer
     /// <summary>
     /// Gets the default JSON serializer options (formatted with camelCase naming).
     /// </summary>
-    public static JsonSerializerOptions GetDefaultOptions() => new(DefaultOptions);
+    public static JsonSerializerOptions GetDefaultOptions()
+    {
+        return new JsonSerializerOptions(DefaultOptions);
+    }
 
     /// <summary>
     /// Gets compact JSON serializer options (no indentation, camelCase naming).
     /// </summary>
-    public static JsonSerializerOptions GetCompactOptions() => new(CompactOptions);
+    public static JsonSerializerOptions GetCompactOptions()
+    {
+        return new JsonSerializerOptions(CompactOptions);
+    }
 }

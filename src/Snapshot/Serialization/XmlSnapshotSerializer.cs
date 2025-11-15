@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using dotGeoMigrata.Snapshot.Enums;
@@ -18,7 +19,7 @@ public static class XmlSnapshotSerializer
         NewLineChars = "\n",
         NewLineHandling = NewLineHandling.Replace,
         OmitXmlDeclaration = false,
-        Encoding = System.Text.Encoding.UTF8
+        Encoding = Encoding.UTF8
     };
 
     /// <summary>
@@ -30,7 +31,7 @@ public static class XmlSnapshotSerializer
     public static string Serialize(WorldSnapshot snapshot, XmlWriterSettings? writerSettings = null)
     {
         var doc = CreateXDocument(snapshot);
-        using var stringWriter = new System.IO.StringWriter();
+        using var stringWriter = new StringWriter();
         using var xmlWriter = XmlWriter.Create(stringWriter, writerSettings ?? DefaultWriterSettings);
         doc.Save(xmlWriter);
         return stringWriter.ToString();
