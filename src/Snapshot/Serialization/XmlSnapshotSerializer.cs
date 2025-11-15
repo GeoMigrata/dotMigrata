@@ -1,4 +1,5 @@
-﻿using System.Xml;
+﻿using System.Text;
+using System.Xml;
 using System.Xml.Serialization;
 using dotGeoMigrata.Snapshot.Models;
 
@@ -9,10 +10,18 @@ namespace dotGeoMigrata.Snapshot.Serialization;
 /// <para>
 /// Provides attribute-based XML serialization with namespace support:
 /// <list type="bullet">
-/// <item><description>Code concepts use 'c:' namespace (c:Person, c:City, c:FactorDefinition)</description></item>
-/// <item><description>Snapshot containers use default namespace (PersonCollections, FactorDefinitions, Cities)</description></item>
-/// <item><description>Automatic serialization/deserialization via System.Xml.Serialization</description></item>
-/// <item><description>Deterministic XML output with proper formatting and namespace handling</description></item>
+///     <item>
+///         <description>Code concepts use 'c:' namespace (c:Person, c:City, c:FactorDefinition)</description>
+///     </item>
+///     <item>
+///         <description>Snapshot containers use default namespace (PersonCollections, FactorDefinitions, Cities)</description>
+///     </item>
+///     <item>
+///         <description>Automatic serialization/deserialization via System.Xml.Serialization</description>
+///     </item>
+///     <item>
+///         <description>Deterministic XML output with proper formatting and namespace handling</description>
+///     </item>
 /// </list>
 /// </para>
 /// </summary>
@@ -27,7 +36,7 @@ public static class XmlSnapshotSerializer
         NewLineChars = "\n",
         NewLineHandling = NewLineHandling.Replace,
         OmitXmlDeclaration = false,
-        Encoding = System.Text.Encoding.UTF8,
+        Encoding = Encoding.UTF8,
         NamespaceHandling = NamespaceHandling.OmitDuplicates
     };
 
@@ -36,8 +45,8 @@ public static class XmlSnapshotSerializer
     static XmlSnapshotSerializer()
     {
         // Configure XML namespaces
-        Namespaces.Add("", "http://geomigrata.org/snapshot"); // Default namespace for snapshot structures
-        Namespaces.Add("c", "http://geomigrata.org/code"); // Code namespace for framework classes
+        Namespaces.Add("", "http://geomigrata.pages.dev/snapshot"); // Default namespace for snapshot structures
+        Namespaces.Add("c", "http://geomigrata.pages.dev/code"); // Code namespace for framework classes
     }
 
     /// <summary>

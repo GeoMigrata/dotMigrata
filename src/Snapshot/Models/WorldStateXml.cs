@@ -10,7 +10,7 @@ public class WorldStateXml
     [XmlAttribute("DisplayName")] public string DisplayName { get; set; } = string.Empty;
 
     [XmlArray("FactorDefinitions")]
-    [XmlArrayItem("FactorDefinition", Namespace = "http://geomigrata.org/code")]
+    [XmlArrayItem("FactorDefinition", Namespace = "http://geomigrata.pages.dev/code")]
     public List<FactorDefXml>? FactorDefinitions { get; set; }
 
     [XmlArray("PersonCollections")]
@@ -18,6 +18,6 @@ public class WorldStateXml
     public List<PersonCollectionXml>? PersonCollections { get; set; }
 
     [XmlArray("Cities")]
-    [XmlArrayItem("City", Namespace = "http://geomigrata.org/code")]
+    [XmlArrayItem("City", Namespace = "http://geomigrata.pages.dev/code")]
     public List<CityXml>? Cities { get; set; }
 }

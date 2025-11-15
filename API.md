@@ -536,8 +536,8 @@ static WorldSnapshotXml? DeserializeFromFile(string filePath)
 
 ```xml
 
-<Snapshot xmlns="http://geomigrata.org/snapshot"
-          xmlns:c="http://geomigrata.org/code"
+<Snapshot xmlns="http://geomigrata.pages.dev/snapshot"
+          xmlns:c="http://geomigrata.pages.dev/code"
           Version="1.0" Id="..." Status="Seed" CreatedAt="..." CurrentStep="0">
     <World DisplayName="Example World">
         <!-- FactorDefinitions is a snapshot container (default namespace) -->

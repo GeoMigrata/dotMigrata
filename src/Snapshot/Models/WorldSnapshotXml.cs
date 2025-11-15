@@ -7,7 +7,7 @@ namespace dotGeoMigrata.Snapshot.Models;
 /// Root snapshot model with XML serialization support.
 /// Uses namespaces to distinguish code concepts from snapshot containers.
 /// </summary>
-[XmlRoot("Snapshot", Namespace = "http://geomigrata.org/snapshot")]
+[XmlRoot("Snapshot", Namespace = "http://geomigrata.pages.dev/snapshot")]
 public sealed class WorldSnapshotXml
 {
     /// <summary>

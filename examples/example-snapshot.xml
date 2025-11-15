@@ -1,11 +1,13 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<Snapshot Version="1.0"
+<Snapshot xmlns:c="http://geomigrata.pages.dev/code"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          Version="1.0"
           xmlns="http://geomigrata.pages.dev/snapshot"
-          xmlns:c="http://geomigrata.pages.dev/code"
+          xsi:schemaLocation="http://geomigrata.pages.dev/snapshot ../schemas/snapshot.xsd
+                              http://geomigrata.pages.dev/code ../schemas/code.xsd"
           Id="c8836553-be0c-42c5-be58-abbae82c6918"
           Status="Seed"
           CreatedAt="2025-11-14T05:26:05.7805660Z"
-          LastModifiedAt="2025-11-14T05:26:05.7805660Z"
           CurrentStep="0">
     <World DisplayName="Example XML Snapshot">
         <!-- FactorDefinitions container (snapshot structure) contains c:FactorDefinition elements (code concept) -->
@@ -117,7 +119,4 @@
             </c:City>
         </Cities>
     </World>
-
-    <!-- Steps for simulation reproducibility -->
-    <Steps/>
 </Snapshot>
