@@ -1,0 +1,204 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:c="http://geomigrata.pages.dev/code"
+           xmlns="http://geomigrata.pages.dev/snapshot"
+           targetNamespace="http://geomigrata.pages.dev/snapshot"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+    <xs:import namespace="http://geomigrata.pages.dev/code" schemaLocation="code.xsd"/>
+
+    <!-- Root Snapshot Element -->
+    <xs:element name="Snapshot">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="World" type="WorldStateType"/>
+            </xs:sequence>
+            <xs:attribute name="Version" type="xs:string" use="required"/>
+            <xs:attribute name="Id" type="xs:string" use="required"/>
+            <xs:attribute name="Status" type="SnapshotStatusType" use="required"/>
+            <xs:attribute name="CreatedAt" type="xs:dateTime" use="required"/>
+            <xs:attribute name="CurrentStep" type="xs:nonNegativeInteger" default="0"/>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Snapshot Status Enumeration -->
+    <xs:simpleType name="SnapshotStatusType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Seed"/>
+            <xs:enumeration value="Active"/>
+            <xs:enumeration value="Stabilized"/>
+            <xs:enumeration value="Completed"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- World State Type -->
+    <xs:complexType name="WorldStateType">
+        <xs:sequence>
+            <xs:element name="FactorDefinitions" type="FactorDefinitionsType" minOccurs="0"/>
+            <xs:element name="PersonCollections" type="PersonCollectionsType" minOccurs="0"/>
+            <xs:element name="Cities" type="CitiesType" minOccurs="0"/>
+            <xs:element name="SimulationSteps" type="SimulationStepsType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="DisplayName" type="xs:string" use="optional"/>
+    </xs:complexType>
+
+    <!-- Factor Definitions Container -->
+    <xs:complexType name="FactorDefinitionsType">
+        <xs:sequence>
+            <xs:element ref="c:FactorDefinition" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Person Collections Container -->
+    <xs:complexType name="PersonCollectionsType">
+        <xs:sequence>
+            <xs:element name="PersonCollection" type="PersonCollectionType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Person Collection Type -->
+    <xs:complexType name="PersonCollectionType">
+        <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element ref="c:Person"/>
+                <xs:element name="Generator" type="GeneratorType"/>
+            </xs:choice>
+        </xs:sequence>
+        <xs:attribute name="Id" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <!-- Generator Type -->
+    <xs:complexType name="GeneratorType">
+        <xs:sequence>
+            <xs:element name="FactorSensitivities" type="SensitivitySpecsType" minOccurs="0"/>
+            <xs:element name="MovingWillingness" type="ValueSpecType" minOccurs="0"/>
+            <xs:element name="RetentionRate" type="ValueSpecType" minOccurs="0"/>
+            <xs:element name="AttractionThreshold" type="ValueSpecType" minOccurs="0"/>
+            <xs:element name="SensitivityScaling" type="ValueSpecType" minOccurs="0"/>
+            <xs:element name="MinimumAcceptableAttraction" type="ValueSpecType" minOccurs="0"/>
+            <xs:element name="Tags" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="Seed" type="xs:int" use="optional"/>
+        <xs:attribute name="Count" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+    <!-- Value Specification Type (Choice of Fixed, InRange, Random, or shorthand Value attribute) -->
+    <xs:complexType name="ValueSpecType">
+        <xs:choice minOccurs="0">
+            <xs:element name="Fixed" type="FixedValueType"/>
+            <xs:element name="InRange" type="RangeValueType"/>
+            <xs:element name="Random" type="RandomValueType"/>
+        </xs:choice>
+        <xs:attribute name="Value" type="xs:double" use="optional"/>
+    </xs:complexType>
+
+    <!-- Fixed Value Type -->
+    <xs:complexType name="FixedValueType">
+        <xs:attribute name="Value" type="xs:double" use="required"/>
+    </xs:complexType>
+
+    <!-- Range Value Type -->
+    <xs:complexType name="RangeValueType">
+        <xs:attribute name="Min" type="xs:double" use="required"/>
+        <xs:attribute name="Max" type="xs:double" use="required"/>
+    </xs:complexType>
+
+    <!-- Random Value Type -->
+    <xs:complexType name="RandomValueType">
+        <xs:attribute name="Scale" type="xs:double" use="optional" default="1.0"/>
+    </xs:complexType>
+
+    <!-- Sensitivity Specifications Container -->
+    <xs:complexType name="SensitivitySpecsType">
+        <xs:sequence>
+            <xs:element name="Sensitivity" type="SensitivitySpecType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Sensitivity Specification Type -->
+    <xs:complexType name="SensitivitySpecType">
+        <xs:choice minOccurs="0">
+            <xs:element name="Fixed" type="FixedValueType"/>
+            <xs:element name="InRange" type="RangeValueType"/>
+            <xs:element name="Random" type="RandomValueType"/>
+        </xs:choice>
+        <xs:attribute name="Id" type="xs:string" use="required"/>
+        <xs:attribute name="Value" type="xs:double" use="optional"/>
+    </xs:complexType>
+
+    <!-- Cities Container -->
+    <xs:complexType name="CitiesType">
+        <xs:sequence>
+            <xs:element ref="c:City" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Collection Reference Type -->
+    <xs:complexType name="CollectionRefType">
+        <xs:attribute name="Id" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <!-- Factor Sensitivities Type (for c:Person in default namespace) -->
+    <xs:complexType name="FactorSensitivitiesType">
+        <xs:sequence>
+            <xs:element name="Sensitivity" type="FactorSensitivityType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Factor Sensitivity Type (simple fixed value) -->
+    <xs:complexType name="FactorSensitivityType">
+        <xs:attribute name="Id" type="xs:string" use="required"/>
+        <xs:attribute name="Value" type="xs:double" use="required"/>
+    </xs:complexType>
+
+    <!-- Factor Values Type (for c:City in default namespace) -->
+    <xs:complexType name="FactorValuesType">
+        <xs:sequence>
+            <xs:element name="FactorValue" type="FactorValueType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Factor Value Type -->
+    <xs:complexType name="FactorValueType">
+        <xs:attribute name="Id" type="xs:string" use="required"/>
+        <xs:attribute name="Value" type="xs:double" use="required"/>
+    </xs:complexType>
+
+    <!-- Person Collections References Type (for c:City in default namespace) -->
+    <xs:complexType name="PersonCollectionsRefType">
+        <xs:sequence>
+            <xs:element name="CollectionRef" type="CollectionRefType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Simulation Steps Container -->
+    <xs:complexType name="SimulationStepsType">
+        <xs:sequence>
+            <xs:element name="Step" type="SimulationStepType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Simulation Step Type -->
+    <xs:complexType name="SimulationStepType">
+        <xs:sequence>
+            <xs:element name="Migrations" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Migration" type="MigrationType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="StepNumber" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="Timestamp" type="xs:dateTime" use="required"/>
+    </xs:complexType>
+
+    <!-- Migration Type -->
+    <xs:complexType name="MigrationType">
+        <xs:attribute name="FromCityId" type="xs:string" use="required"/>
+        <xs:attribute name="ToCityId" type="xs:string" use="required"/>
+        <xs:attribute name="PersonCount" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+</xs:schema>
