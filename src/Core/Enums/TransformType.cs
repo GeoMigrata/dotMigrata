@@ -1,4 +1,4 @@
-﻿namespace dotGeoMigrata.Core.Enums;
+﻿namespace dotMigrata.Core.Enums;
 
 /// <summary>
 /// Defines the transformation function used to normalize factor values.

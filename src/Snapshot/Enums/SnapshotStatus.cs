@@ -1,4 +1,4 @@
-﻿namespace dotGeoMigrata.Snapshot.Enums;
+﻿namespace dotMigrata.Snapshot.Enums;
 
 /// <summary>
 /// Indicates the state of a snapshot.

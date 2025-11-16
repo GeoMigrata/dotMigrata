@@ -1,15 +1,14 @@
-﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Core.Values;
+﻿using dotMigrata.Core.Entities;
 
-namespace dotGeoMigrata.Logic.Models;
+namespace dotMigrata.Logic.Models;
 
 /// <summary>
-/// Represents a migration flow from an origin city to a destination city for a specific population group.
+/// Represents a migration decision for an individual person from an origin city to a destination city.
 /// </summary>
 public sealed record MigrationFlow
 {
     /// <summary>
-    /// gets the origin city where the migration starts.
+    /// Gets the origin city where the migration starts.
     /// </summary>
     public required City OriginCity { get; init; }
 
@@ -19,14 +18,9 @@ public sealed record MigrationFlow
     public required City DestinationCity { get; init; }
 
     /// <summary>
-    /// Gets the population group that is migrating.
+    /// Gets the person who is migrating.
     /// </summary>
-    public required GroupDefinition Group { get; init; }
-
-    /// <summary>
-    /// Gets the number of people migrating (can be fractional for probabilistic calculations).
-    /// </summary>
-    public required double MigrationCount { get; init; }
+    public required Person Person { get; init; }
 
     /// <summary>
     /// Gets the migration probability (0-1) for this flow.

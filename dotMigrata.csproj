@@ -10,11 +10,11 @@
         <PackageId>GeoMigrata.Framework</PackageId>
         <Authors>GeoMigrata</Authors>
         <Company>GeoMigrata</Company>
-        <Product>dotGeoMigrata</Product>
+        <Product>dotMigrata</Product>
         <Description>A .NET 9.0 simulation framework for modeling population migration and city evolution in multi-city, multi-population systems. Captures how city characteristics influence population movement and how migration feedback affects city factors over time.</Description>
         <Copyright>Copyright © 2025 GeoMigrata</Copyright>
-        <PackageProjectUrl>https://github.com/GeoMigrata/dotGeoMigrata</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/GeoMigrata/dotGeoMigrata</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/GeoMigrata/dotMigrata</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/GeoMigrata/dotMigrata</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageTags>gis;simulation;migration;population;geospatial;urban-planning;agent-based-model;city-evolution;geomigrata</PackageTags>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -23,7 +23,6 @@
 
         <!-- Documentation -->
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <NoWarn>$(NoWarn);1591</NoWarn><!-- Disable warning for missing XML comments on internal members -->
 
         <!-- Assembly Information -->
         <AssemblyVersion>1.0.0.0</AssemblyVersion>
@@ -39,6 +38,7 @@
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
         <DebugType>portable</DebugType>
         <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+        <RootNamespace>dotMigrata</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

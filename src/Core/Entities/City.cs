@@ -1,36 +1,38 @@
-﻿using dotGeoMigrata.Core.Values;
+﻿using dotMigrata.Core.Values;
 
-namespace dotGeoMigrata.Core.Entities;
+namespace dotMigrata.Core.Entities;
 
 /// <summary>
-/// Represents a city with geographic location, factors, and population group values.
+/// Represents a city with geographic location, factors, and individual persons.
+/// Uses reference-based person management with HashSet for O(1) operations.
 /// </summary>
 public class City
 {
     private readonly double _area;
-
     private readonly Dictionary<FactorDefinition, FactorValue> _factorLookup;
-
     private readonly List<FactorValue> _factorValues;
-
-    private readonly Dictionary<GroupDefinition, GroupValue> _populationGroupLookup;
-
-    private readonly List<GroupValue> _populationGroupValues;
+    private readonly HashSet<Person> _persons;
+    private readonly ReaderWriterLockSlim _personsLock = new();
 
     /// <summary>
     /// Initializes a new instance of the City class.
     /// </summary>
     /// <param name="factorValues">Optional initial factor values.</param>
-    /// <param name="populationGroupValues">Optional initial population group values.</param>
+    /// <param name="persons">Optional initial persons residing in this city.</param>
     public City(
         IEnumerable<FactorValue>? factorValues = null,
-        IEnumerable<GroupValue>? populationGroupValues = null)
+        IEnumerable<Person>? persons = null)
     {
         _factorValues = factorValues?.ToList() ?? [];
-        _populationGroupValues = populationGroupValues?.ToList() ?? [];
-
         _factorLookup = _factorValues.ToDictionary(fv => fv.Definition, fv => fv);
-        _populationGroupLookup = _populationGroupValues.ToDictionary(pgv => pgv.Definition, pgv => pgv);
+
+        _persons = [];
+        if (persons == null) return;
+        foreach (var person in persons)
+        {
+            _persons.Add(person);
+            person.CurrentCity = this;
+        }
     }
 
     /// <summary>
@@ -66,14 +68,43 @@ public class City
     public IReadOnlyList<FactorValue> FactorValues => _factorValues;
 
     /// <summary>
-    /// Gets the read-only list of population group values in this city.
+    /// Gets the read-only collection of persons residing in this city.
+    /// Returns a snapshot to avoid holding locks during iteration.
     /// </summary>
-    public IReadOnlyList<GroupValue> PopulationGroupValues => _populationGroupValues;
+    public IReadOnlyList<Person> Persons
+    {
+        get
+        {
+            _personsLock.EnterReadLock();
+            try
+            {
+                return _persons.ToList().AsReadOnly();
+            }
+            finally
+            {
+                _personsLock.ExitReadLock();
+            }
+        }
+    }
 
     /// <summary>
-    /// Gets the total population of all groups in this city.
+    /// Gets the total population count (number of persons) in this city.
     /// </summary>
-    public int Population => _populationGroupValues.Sum(pgv => pgv.Population);
+    public int Population
+    {
+        get
+        {
+            _personsLock.EnterReadLock();
+            try
+            {
+                return _persons.Count;
+            }
+            finally
+            {
+                _personsLock.ExitReadLock();
+            }
+        }
+    }
 
     /// <summary>
     /// Updates the intensity of an existing FactorValue for the specified factor definition.
@@ -104,38 +135,53 @@ public class City
     }
 
     /// <summary>
-    /// Tries to get the population group value for the specified population group definition.
+    /// Adds a person to this city. Thread-safe O(1) operation using HashSet.
     /// </summary>
-    /// <param name="definition">The population group definition to look up.</param>
-    /// <param name="groupValue">The population group value if found.</param>
-    /// <returns>True if the population group value exists, false otherwise.</returns>
-    public bool TryGetPopulationGroupValue(GroupDefinition definition, out GroupValue? groupValue)
+    /// <param name="person">The person to add.</param>
+    /// <exception cref="ArgumentNullException">Thrown when person is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the person already exists in this city.</exception>
+    public void AddPerson(Person person)
     {
-        ArgumentNullException.ThrowIfNull(definition);
-        return _populationGroupLookup.TryGetValue(definition, out groupValue);
+        ArgumentNullException.ThrowIfNull(person);
+
+        _personsLock.EnterWriteLock();
+        try
+        {
+            if (!_persons.Add(person))
+                throw new InvalidOperationException($"Person already exists in city '{DisplayName}'.");
+        }
+        finally
+        {
+            _personsLock.ExitWriteLock();
+        }
+
+        person.CurrentCity = this;
     }
 
     /// <summary>
-    /// Updates the population count for a specific population group definition.
+    /// Removes a person from this city. Thread-safe O(1) operation using HashSet.
     /// </summary>
-    /// <param name="definition">The population group definition.</param>
-    /// <param name="newCount">The new population count.</param>
-    /// <exception cref="ArgumentNullException">Thrown when definition is null.</exception>
-    /// <exception cref="ArgumentException">
-    /// Thrown when the definition has no matched value in this city or when newCount is
-    /// negative.
-    /// </exception>
-    public void UpdatePopulationCount(GroupDefinition definition, int newCount)
+    /// <param name="person">The person to remove.</param>
+    /// <exception cref="ArgumentNullException">Thrown when person is null.</exception>
+    /// <returns>True if the person was removed, false if the person was not in this city.</returns>
+    public bool RemovePerson(Person person)
     {
-        ArgumentNullException.ThrowIfNull(definition);
+        ArgumentNullException.ThrowIfNull(person);
 
-        if (newCount < 0)
-            throw new ArgumentException("Population count cannot be negative.", nameof(newCount));
+        bool removed;
+        _personsLock.EnterWriteLock();
+        try
+        {
+            removed = _persons.Remove(person);
+        }
+        finally
+        {
+            _personsLock.ExitWriteLock();
+        }
 
-        if (!_populationGroupLookup.TryGetValue(definition, out var groupValue))
-            throw new ArgumentException("Given population group definition has no matched value in this city.",
-                nameof(definition));
+        if (removed && person.CurrentCity == this)
+            person.CurrentCity = null;
 
-        groupValue.Population = newCount;
+        return removed;
     }
 }

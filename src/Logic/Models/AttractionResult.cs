@@ -1,6 +1,6 @@
-﻿using dotGeoMigrata.Core.Entities;
+﻿using dotMigrata.Core.Entities;
 
-namespace dotGeoMigrata.Logic.Models;
+namespace dotMigrata.Logic.Models;
 
 /// <summary>
 /// Represents the result of an attraction calculation for a city and population group.

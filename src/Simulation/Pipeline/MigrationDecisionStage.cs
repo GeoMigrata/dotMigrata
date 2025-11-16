@@ -1,27 +1,29 @@
-﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Core.Values;
-using dotGeoMigrata.Logic.Interfaces;
-using dotGeoMigrata.Logic.Models;
-using dotGeoMigrata.Simulation.Interfaces;
-using dotGeoMigrata.Simulation.Models;
+﻿using dotMigrata.Logic.Interfaces;
+using dotMigrata.Simulation.Interfaces;
+using dotMigrata.Simulation.Models;
 
-namespace dotGeoMigrata.Simulation.Pipeline;
+namespace dotMigrata.Simulation.Pipeline;
 
 /// <summary>
-/// Simulation stage that calculates migration flows based on attraction differences.
-/// Uses pre-calculated attraction results from the AttractionCalculationStage.
+/// Simulation stage that calculates migration decisions for all persons based on attraction differences.
+/// Uses the migration calculator to determine which persons will migrate and to which cities.
 /// </summary>
 public sealed class MigrationDecisionStage : ISimulationStage
 {
+    private readonly IAttractionCalculator _attractionCalculator;
     private readonly IMigrationCalculator _migrationCalculator;
 
     /// <summary>
     /// Initializes a new instance of the MigrationDecisionStage.
     /// </summary>
-    /// <param name="migrationCalculator">The calculator to use for determining migration flows.</param>
-    public MigrationDecisionStage(IMigrationCalculator migrationCalculator)
+    /// <param name="migrationCalculator">The calculator to use for determining migration decisions.</param>
+    /// <param name="attractionCalculator">The calculator to use for calculating attractions.</param>
+    public MigrationDecisionStage(
+        IMigrationCalculator migrationCalculator,
+        IAttractionCalculator attractionCalculator)
     {
         _migrationCalculator = migrationCalculator ?? throw new ArgumentNullException(nameof(migrationCalculator));
+        _attractionCalculator = attractionCalculator ?? throw new ArgumentNullException(nameof(attractionCalculator));
     }
 
     /// <inheritdoc />
@@ -30,41 +32,13 @@ public sealed class MigrationDecisionStage : ISimulationStage
     /// <inheritdoc />
     public Task ExecuteAsync(SimulationContext context)
     {
-        // Retrieve attractions from previous stage
-        var allAttractions =
-            context.GetData<Dictionary<(GroupDefinition, City), IDictionary<City, AttractionResult>>>("Attractions");
-        if (allAttractions == null)
-            throw new InvalidOperationException(
-                "Attraction data not found. AttractionCalculationStage must run before MigrationDecisionStage.");
-
-        var allFlows = new List<MigrationFlow>();
-
-        // Calculate migration flows for each group-origin combination
-        foreach (var group in context.World.GroupDefinitions)
-        foreach (var originCity in context.World.Cities)
-        {
-            // Get current population
-            if (!originCity.TryGetPopulationGroupValue(group, out var gv) || gv!.Population <= 0)
-                continue;
-
-            // Get pre-calculated attractions
-            if (!allAttractions.TryGetValue((group, originCity), out var attractions))
-                continue;
-
-            // Calculate migration flows
-            var flows = _migrationCalculator.CalculateMigrationFlows(
-                originCity,
-                context.World.Cities,
-                group,
-                gv.Population,
-                attractions);
-
-            allFlows.AddRange(flows);
-        }
+        // Calculate all migration decisions using parallel processing
+        var flows = _migrationCalculator.CalculateAllMigrationFlows(context.World, _attractionCalculator);
+        var flowList = flows.ToList();
 
         // Store flows in context for use by execution stage
-        context.CurrentMigrationFlows = allFlows;
-        context.SetData("MigrationFlows", allFlows);
+        context.CurrentMigrationFlows = flowList;
+        context.SetData("MigrationFlows", flowList);
 
         return Task.CompletedTask;
     }

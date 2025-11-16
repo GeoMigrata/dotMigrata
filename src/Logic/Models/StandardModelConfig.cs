@@ -1,4 +1,4 @@
-﻿namespace dotGeoMigrata.Logic.Models;
+﻿namespace dotMigrata.Logic.Models;
 
 /// <summary>
 /// Configuration parameters for the Standard Migration Model calculator.
@@ -6,6 +6,9 @@
 /// </summary>
 public record StandardModelConfig
 {
+    /// <summary>
+    /// Default configuration instance with recommended parameter values.
+    /// </summary>
     public static StandardModelConfig Default { get; } = new()
     {
         CapacitySteepness = 5.0,

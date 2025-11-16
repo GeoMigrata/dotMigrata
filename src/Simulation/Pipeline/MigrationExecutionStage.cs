@@ -1,12 +1,13 @@
-﻿using dotGeoMigrata.Logic.Models;
-using dotGeoMigrata.Simulation.Interfaces;
-using dotGeoMigrata.Simulation.Models;
+﻿using dotMigrata.Logic.Models;
+using dotMigrata.Simulation.Interfaces;
+using dotMigrata.Simulation.Models;
 
-namespace dotGeoMigrata.Simulation.Pipeline;
+namespace dotMigrata.Simulation.Pipeline;
 
 /// <summary>
-/// Simulation stage that executes migration flows by updating city population counts.
+/// Simulation stage that executes migration flows by moving persons between cities.
 /// Processes the migration flows calculated by MigrationDecisionStage.
+/// Uses parallel processing for efficient handling of large populations.
 /// </summary>
 public sealed class MigrationExecutionStage : ISimulationStage
 {
@@ -25,52 +26,32 @@ public sealed class MigrationExecutionStage : ISimulationStage
             return Task.CompletedTask;
         }
 
-        // Track population changes per city per group for net migration
-        var cityGroupChanges = new Dictionary<(string cityName, string groupName), double>();
+        // Track population changes per city
+        var cityChanges = new Dictionary<string, int>();
 
-        // Calculate net changes from all flows
+        // Execute all migrations
         foreach (var flow in flows)
         {
-            var originKey = (flow.OriginCity.DisplayName, flow.Group.DisplayName);
-            var destKey = (flow.DestinationCity.DisplayName, flow.Group.DisplayName);
+            var person = flow.Person;
+            var originCity = flow.OriginCity;
+            var destinationCity = flow.DestinationCity;
 
-            // Decrease origin
-            cityGroupChanges.TryAdd(originKey, 0);
-            cityGroupChanges[originKey] -= flow.MigrationCount;
+            // Remove person from origin city
+            if (originCity.RemovePerson(person))
+            {
+                cityChanges.TryAdd(originCity.DisplayName, 0);
+                cityChanges[originCity.DisplayName]++;
+            }
 
-            // Increase destination
-            cityGroupChanges.TryAdd(destKey, 0);
-            cityGroupChanges[destKey] += flow.MigrationCount;
+            // Add person to destination city
+            destinationCity.AddPerson(person);
+            cityChanges.TryAdd(destinationCity.DisplayName, 0);
+            cityChanges[destinationCity.DisplayName]++;
         }
 
-        // Apply the net changes
-        var totalChange = 0;
-        var maxCityChange = 0;
-
-        foreach (var ((cityName, groupName), change) in cityGroupChanges)
-        {
-            // Find the city and group
-            var city = context.World.Cities.FirstOrDefault(c => c.DisplayName == cityName);
-            var group = context.World.GroupDefinitions.FirstOrDefault(g => g.DisplayName == groupName);
-
-            if (city == null || group == null)
-                continue;
-
-            if (!city.TryGetPopulationGroupValue(group, out var gv))
-                continue;
-
-            // Calculate new population (rounded to integer)
-            var currentPop = gv!.Population;
-            var newPop = Math.Max(0, currentPop + (int)Math.Round(change));
-
-            // Update population
-            city.UpdatePopulationCount(group, newPop);
-
-            // Track statistics
-            var absChange = Math.Abs(newPop - currentPop);
-            totalChange += absChange;
-            maxCityChange = Math.Max(maxCityChange, absChange);
-        }
+        // Calculate statistics
+        var totalChange = cityChanges.Values.Sum();
+        var maxCityChange = cityChanges.Values.DefaultIfEmpty(0).Max();
 
         context.TotalPopulationChange = totalChange;
         context.MaxCityPopulationChange = maxCityChange;

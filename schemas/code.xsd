@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:c="http://geomigrata.pages.dev/code"
+           targetNamespace="http://geomigrata.pages.dev/code"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+    <!-- Factor Definition Element -->
+    <xs:element name="FactorDefinition">
+        <xs:complexType>
+            <xs:attribute name="Id" type="xs:string" use="required"/>
+            <xs:attribute name="DisplayName" type="xs:string" use="optional"/>
+            <xs:attribute name="Type" type="c:FactorTypeEnum" use="required"/>
+            <xs:attribute name="Min" type="xs:double" use="required"/>
+            <xs:attribute name="Max" type="xs:double" use="required"/>
+            <xs:attribute name="Transform" type="c:TransformTypeEnum" use="optional"/>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Factor Type Enumeration -->
+    <xs:simpleType name="FactorTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Positive"/>
+            <xs:enumeration value="Negative"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Transform Type Enumeration -->
+    <xs:simpleType name="TransformTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Linear"/>
+            <xs:enumeration value="Log"/>
+            <xs:enumeration value="Sigmoid"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Person Element -->
+    <xs:element name="Person">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+            <xs:attribute name="Count" type="xs:positiveInteger" default="1"/>
+            <xs:attribute name="MovingWillingness" type="c:ZeroToOneDouble" use="required"/>
+            <xs:attribute name="RetentionRate" type="c:ZeroToOneDouble" use="required"/>
+            <xs:attribute name="AttractionThreshold" type="xs:double" use="required"/>
+            <xs:attribute name="SensitivityScaling" type="xs:double" use="required"/>
+            <xs:attribute name="MinimumAcceptableAttraction" type="xs:double" use="required"/>
+            <xs:attribute name="Tags" type="xs:string" use="optional"/>
+        </xs:complexType>
+    </xs:element>
+
+
+    <!-- City Element -->
+    <xs:element name="City">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+            <xs:attribute name="Id" type="xs:string" use="required"/>
+            <xs:attribute name="DisplayName" type="xs:string" use="optional"/>
+            <xs:attribute name="Latitude" type="c:LatitudeType" use="required"/>
+            <xs:attribute name="Longitude" type="c:LongitudeType" use="required"/>
+            <xs:attribute name="Area" type="c:PositiveDouble" use="required"/>
+            <xs:attribute name="Capacity" type="xs:positiveInteger" use="optional"/>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Custom Simple Types -->
+
+    <!-- Positive Double (greater than 0) -->
+    <xs:simpleType name="PositiveDouble">
+        <xs:restriction base="xs:double">
+            <xs:minExclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Latitude: -90 to 90 -->
+    <xs:simpleType name="LatitudeType">
+        <xs:restriction base="xs:double">
+            <xs:minInclusive value="-90"/>
+            <xs:maxInclusive value="90"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Longitude: -180 to 180 -->
+    <xs:simpleType name="LongitudeType">
+        <xs:restriction base="xs:double">
+            <xs:minInclusive value="-180"/>
+            <xs:maxInclusive value="180"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Zero to One Double (for probabilities and rates) -->
+    <xs:simpleType name="ZeroToOneDouble">
+        <xs:restriction base="xs:double">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="1"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>

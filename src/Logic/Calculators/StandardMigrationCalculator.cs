@@ -1,18 +1,19 @@
-﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Core.Values;
-using dotGeoMigrata.Logic.Common;
-using dotGeoMigrata.Logic.Interfaces;
-using dotGeoMigrata.Logic.Models;
+﻿using dotMigrata.Core.Entities;
+using dotMigrata.Logic.Common;
+using dotMigrata.Logic.Interfaces;
+using dotMigrata.Logic.Models;
 
-namespace dotGeoMigrata.Logic.Calculators;
+namespace dotMigrata.Logic.Calculators;
 
 /// <summary>
-/// Standard migration calculator implementing the model described in model.md.
-/// Calculates migration flows based on attraction differences and population group willingness.
+/// Standard migration calculator implementing optimized individual-based migration decisions.
+/// Calculates migration decisions based on attraction differences and individual willingness.
+/// Uses parallel processing for performance with large populations.
 /// </summary>
 public class StandardMigrationCalculator : IMigrationCalculator
 {
     private readonly StandardModelConfig _config;
+    private readonly Random _random;
 
     /// <summary>
     /// Initializes a new instance of the StandardMigrationCalculator.
@@ -21,26 +22,27 @@ public class StandardMigrationCalculator : IMigrationCalculator
     public StandardMigrationCalculator(StandardModelConfig? config = null)
     {
         _config = config ?? StandardModelConfig.Default;
+        _random = new Random();
     }
 
     /// <inheritdoc />
-    public IEnumerable<MigrationFlow> CalculateMigrationFlows(
-        City originCity,
+    public MigrationFlow? CalculateMigrationDecision(
+        Person person,
         IEnumerable<City> destinationCities,
-        GroupDefinition group,
-        int currentPopulation,
         IDictionary<City, AttractionResult> attractionResults)
     {
-        if (currentPopulation <= 0)
-            return [];
+        var originCity = person.CurrentCity;
+        if (originCity == null)
+            return null;
 
         // Get origin city attraction
         if (!attractionResults.TryGetValue(originCity, out var originAttraction))
-            return [];
+            return null;
 
-        // Calculate migration probabilities for each destination
+        // Find best destination city
+        City? bestDestination = null;
+        var bestProbability = 0.0;
         var destinations = destinationCities.Where(c => c != originCity).ToList();
-        var migrationProbabilities = new Dictionary<City, double>();
 
         foreach (var destCity in destinations)
         {
@@ -49,7 +51,15 @@ public class StandardMigrationCalculator : IMigrationCalculator
 
             // Calculate attraction difference modified by move willingness
             var attractionDiff = (destAttraction.AdjustedAttraction - originAttraction.AdjustedAttraction)
-                                 * group.MovingWillingness;
+                                 * person.MovingWillingness;
+
+            // Skip if below person's attraction threshold
+            if (attractionDiff < person.AttractionThreshold)
+                continue;
+
+            // Skip if destination attraction below minimum acceptable
+            if (destAttraction.AdjustedAttraction < person.MinimumAcceptableAttraction)
+                continue;
 
             // Convert to migration probability using sigmoid
             var probability = MathUtils.Sigmoid(
@@ -57,42 +67,35 @@ public class StandardMigrationCalculator : IMigrationCalculator
                 _config.MigrationProbabilitySteepness,
                 _config.MigrationProbabilityThreshold);
 
-            migrationProbabilities[destCity] = probability;
+            if (probability > bestProbability)
+            {
+                bestProbability = probability;
+                bestDestination = destCity;
+            }
         }
 
-        if (migrationProbabilities.Count == 0)
-            return [];
+        // No suitable destination found
+        if (bestDestination == null || bestProbability <= 0.0)
+            return null;
 
-        // Calculate expected number of migrations
-        var expectedMigrants = currentPopulation * group.MovingWillingness;
+        // Apply retention rate - person may decide to stay
+        var retentionRoll = _random.NextDouble();
+        if (retentionRoll < person.RetentionRate)
+            return null;
 
-        // Normalize probabilities using softmax to get migration distribution
-        var probValues = migrationProbabilities.Values.ToList();
-        var normalizedProbs = MathUtils.Softmax(probValues);
+        // Make probabilistic migration decision
+        var migrationRoll = _random.NextDouble();
+        if (migrationRoll > bestProbability)
+            return null;
 
-        // Create migration flows
-        var flows = new List<MigrationFlow>();
-        var cities = migrationProbabilities.Keys.ToList();
-
-        for (var i = 0; i < cities.Count; i++)
+        // Person decides to migrate
+        return new MigrationFlow
         {
-            var destCity = cities[i];
-            var migrationShare = normalizedProbs[i];
-            var migrationCount = expectedMigrants * migrationShare;
-
-            // Only create flow if migration count is meaningful
-            if (migrationCount > .01)
-                flows.Add(new MigrationFlow
-                {
-                    OriginCity = originCity,
-                    DestinationCity = destCity,
-                    Group = group,
-                    MigrationCount = migrationCount,
-                    MigrationProbability = migrationProbabilities[destCity]
-                });
-        }
-
-        return flows;
+            OriginCity = originCity,
+            DestinationCity = bestDestination,
+            Person = person,
+            MigrationProbability = bestProbability
+        };
     }
 
     /// <inheritdoc />
@@ -100,32 +103,26 @@ public class StandardMigrationCalculator : IMigrationCalculator
         World world,
         IAttractionCalculator attractionCalculator)
     {
-        var allFlows = new List<MigrationFlow>();
+        var allPersons = world.AllPersons.ToList();
 
-        foreach (var group in world.GroupDefinitions)
-        foreach (var originCity in world.Cities)
-        {
-            // get current population for this group in this city
-            if (!originCity.TryGetPopulationGroupValue(group, out var gv) || gv!.Population <= 0)
-                continue;
+        // Process persons in parallel for performance
+        var flows = allPersons
+            .AsParallel()
+            .Select(person =>
+            {
+                // Calculate attractions for all cities for this person
+                var attractions = attractionCalculator.CalculateAttractionForAllCities(
+                    world.Cities,
+                    person,
+                    person.CurrentCity);
 
-            // Calculate attractions for all cities from this origin
-            var attractions = attractionCalculator.CalculateAttractionForAllCities(
-                world.Cities,
-                group,
-                originCity);
+                // Calculate migration decision
+                return CalculateMigrationDecision(person, world.Cities, attractions);
+            })
+            .Where(flow => flow != null)
+            .Cast<MigrationFlow>()
+            .ToList();
 
-            // Calculate migration flows
-            var flows = CalculateMigrationFlows(
-                originCity,
-                world.Cities,
-                group,
-                gv.Population,
-                attractions);
-
-            allFlows.AddRange(flows);
-        }
-
-        return allFlows;
+        return flows;
     }
 }

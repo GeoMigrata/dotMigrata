@@ -1,15 +1,14 @@
-﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Core.Enums;
-using dotGeoMigrata.Core.Values;
-using dotGeoMigrata.Logic.Common;
-using dotGeoMigrata.Logic.Interfaces;
-using dotGeoMigrata.Logic.Models;
+﻿using dotMigrata.Core.Entities;
+using dotMigrata.Core.Enums;
+using dotMigrata.Logic.Common;
+using dotMigrata.Logic.Interfaces;
+using dotMigrata.Logic.Models;
 
-namespace dotGeoMigrata.Logic.Calculators;
+namespace dotMigrata.Logic.Calculators;
 
 /// <summary>
-/// Standard attraction calculator implementing the model described in model.md.
-/// Calculates city attraction based on factor sensitivities, capacity resistance, and distance decay.
+/// Standard attraction calculator implementing optimized individual-based calculations.
+/// Calculates city attraction based on person's factor sensitivities, capacity resistance, and distance decay.
 /// </summary>
 public sealed class StandardAttractionCalculator : IAttractionCalculator
 {
@@ -25,15 +24,15 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
     }
 
     /// <inheritdoc />
-    public AttractionResult CalculateAttraction(City city, GroupDefinition group, City? originCity = null)
+    public AttractionResult CalculateAttraction(City city, Person person, City? originCity = null)
     {
         // Step 1: Calculate base attraction from factor system
-        var baseAttraction = CalculateBaseAttraction(city, group);
+        var baseAttraction = CalculateBaseAttraction(city, person);
 
         // Step 2: Calculate capacity resistance
         var capacityResistance = CalculateCapacityResistance(city);
 
-        // Step 3: Calculate distance resistance (if origin city provided
+        // Step 3: Calculate distance resistance (if origin city provided)
         var distanceResistance = 1.0;
         if (originCity != null)
             distanceResistance = CalculateDistanceResistance(originCity, city);
@@ -51,46 +50,47 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
         };
     }
 
-    public IDictionary<City, AttractionResult> CalculateAttractionForAllCities(IEnumerable<City> cities,
-        GroupDefinition group, City? originCity = null)
+    /// <inheritdoc />
+    public IDictionary<City, AttractionResult> CalculateAttractionForAllCities(
+        IEnumerable<City> cities,
+        Person person,
+        City? originCity = null)
     {
         return cities.ToDictionary(
             city => city,
-            city => CalculateAttraction(city, group, originCity));
+            city => CalculateAttraction(city, person, originCity));
     }
 
     /// <summary>
-    /// Calculates the base attraction score from the factor system.
-    /// Formula: A_ij = Σ(S_ik * I_jk * D_k) where:
-    /// - S_ik: sensitivity of group i to factor k
-    /// - I_jk: normalized intensity of factor k in city j
+    /// Calculates the base attraction score from the factor system for an individual person.
+    /// Formula: A_p = Σ(S_pk * I_ck * D_k) where:
+    /// - S_pk: sensitivity of person p to factor k
+    /// - I_ck: normalized intensity of factor k in city c
     /// - D_k: direction of factor k (+1 for positive, -1 for negative)
     /// </summary>
-    private static double CalculateBaseAttraction(City city, GroupDefinition group)
+    private static double CalculateBaseAttraction(City city, Person person)
     {
-        var totalScore = .0;
+        var totalScore = 0.0;
 
-        foreach (var sensitivity in group.Sensitivities)
+        foreach (var (factor, sensitivity) in person.FactorSensitivities)
         {
-            if (!city.TryGetFactorValue(sensitivity.Factor, out var factorValue))
+            if (!city.TryGetFactorValue(factor, out var factorValue))
                 continue;
 
             // Normalize the factor intensity
-            var normalizedIntensity = factorValue!.Normalize(sensitivity.Factor);
+            var normalizedIntensity = factorValue!.Normalize(factor);
 
-            // Determine the factor direction (use override if specified)
-            var factorType = sensitivity.OverriddenFactorType ?? sensitivity.Factor.Type;
-            var direction = factorType == FactorType.Positive ? 1.0 : -1.0;
+            // Determine the factor direction
+            var direction = factor.Type == FactorType.Positive ? 1.0 : -1.0;
 
             // Calculate contribution: sensitivity * normalized_intensity * direction
-            totalScore += sensitivity.Sensitivity * normalizedIntensity * direction;
+            totalScore += sensitivity * normalizedIntensity * direction;
         }
 
-        // Apply sensitivity scaling if specified
-        totalScore *= group.SensitivityScaling;
+        // Apply person's sensitivity scaling
+        totalScore *= person.SensitivityScaling;
 
-        // Normalize to [0, 1] range - we'll use a sigmoid to keep it bounded
-        // but allow both positive and negative total scores to be meaningful
+        // Normalize to [0, 1] range using sigmoid
         return MathUtils.Sigmoid(totalScore, 1.0);
     }
 
@@ -102,7 +102,7 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
     private double CalculateCapacityResistance(City city)
     {
         if (city.Capacity is null or 0)
-            return .0; // No capacity limit means no resistance
+            return 0.0; // No capacity limit means no resistance
 
         return MathUtils.CapacityResistance(
             city.Population,

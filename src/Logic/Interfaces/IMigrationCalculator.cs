@@ -1,37 +1,32 @@
-﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Core.Values;
-using dotGeoMigrata.Logic.Models;
+﻿using dotMigrata.Core.Entities;
+using dotMigrata.Logic.Models;
 
-namespace dotGeoMigrata.Logic.Interfaces;
+namespace dotMigrata.Logic.Interfaces;
 
 /// <summary>
-/// Interface for calculating migration flows between cities.
-/// Implementations determine how many people from each group migrate from origin cities to destination cities.
+/// Interface for calculating migration decisions for individual persons.
+/// Implementations determine which persons migrate from their current cities to destination cities.
 /// </summary>
 public interface IMigrationCalculator
 {
     /// <summary>
-    /// Calculates migration flows for a specific population group from an origin city to all potential destination cities.
+    /// Calculates migration decision for a specific person considering all potential destination cities.
     /// </summary>
-    /// <param name="originCity">The city where the population group currently resides.</param>
+    /// <param name="person">The person considering migration.</param>
     /// <param name="destinationCities">The potential destination cities.</param>
-    /// <param name="group">The population group definition.</param>
-    /// <param name="currentPopulation">Current population count of the group in the origin city.</param>
-    /// <param name="attractionResults">Pre-calculated attraction results for all cities.</param>
-    /// <returns>A collection of migration flow results indicating how many people migrate to each destination.</returns>
-    IEnumerable<MigrationFlow> CalculateMigrationFlows(
-        City originCity,
+    /// <param name="attractionResults">Pre-calculated attraction results for all cities for this person.</param>
+    /// <returns>A migration flow result if the person decides to migrate, null otherwise.</returns>
+    MigrationFlow? CalculateMigrationDecision(
+        Person person,
         IEnumerable<City> destinationCities,
-        GroupDefinition group,
-        int currentPopulation,
         IDictionary<City, AttractionResult> attractionResults);
 
     /// <summary>
-    /// Calculates all migration flows across all cities for all population groups in a world.
+    /// Calculates all migration decisions for all persons in a world.
     /// </summary>
-    /// <param name="world">The world containing cities and population groups.</param>
-    /// <param name="attractionCalculator">The attraction calculator to use for pre-calculating attractions.</param>
-    /// <returns>A collection of all migration flows.</returns>
+    /// <param name="world">The world containing cities and persons.</param>
+    /// <param name="attractionCalculator">The attraction calculator to use for calculating attractions.</param>
+    /// <returns>A collection of all migration flows for persons who decide to migrate.</returns>
     IEnumerable<MigrationFlow> CalculateAllMigrationFlows(
         World world,
         IAttractionCalculator attractionCalculator);

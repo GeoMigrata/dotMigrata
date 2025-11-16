@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Snapshot xmlns:c="http://geomigrata.pages.dev/code"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          Version="1.0"
+          xmlns="http://geomigrata.pages.dev/snapshot"
+          xsi:schemaLocation="http://geomigrata.pages.dev/snapshot ../schemas/snapshot.xsd
+                              http://geomigrata.pages.dev/code ../schemas/code.xsd"
+          Id="c8836553-be0c-42c5-be58-abbae82c6918"
+          Status="Seed"
+          CreatedAt="2025-11-14T05:26:05.7805660Z"
+          CurrentStep="0">
+    <World DisplayName="Example XML Snapshot">
+        <!-- FactorDefinitions container (snapshot structure) contains c:FactorDefinition elements (code concept) -->
+        <FactorDefinitions>
+            <c:FactorDefinition Id="pollution" DisplayName="Pollution" Type="Negative" Min="0" Max="12"
+                                Transform="Linear"/>
+            <c:FactorDefinition Id="transport" DisplayName="Transport" Type="Positive" Min="0" Max="10"
+                                Transform="Linear"/>
+            <c:FactorDefinition Id="income" DisplayName="Avg. Income" Type="Positive" Min="0" Max="1000"
+                                Transform="Log"/>
+            <c:FactorDefinition Id="security" DisplayName="Security" Type="Positive" Min="0" Max="10"/>
+        </FactorDefinitions>
+
+        <!-- PersonCollections container (snapshot structure) contains PersonCollection entries -->
+        <PersonCollections>
+            <PersonCollection Id="young_people">
+                <!-- c:Person element (code concept) with Count for duplication -->
+                <c:Person Count="1" MovingWillingness="0.5" RetentionRate="0.3" AttractionThreshold="0.3"
+                          SensitivityScaling="0.5" MinimumAcceptableAttraction="10" Tags="tag1;tag2;tag3">
+                    <FactorSensitivities>
+                        <Sensitivity Id="pollution" Value="0.5"/>
+                        <Sensitivity Id="transport" Value="0.5"/>
+                        <Sensitivity Id="income" Value="0.1"/>
+                        <Sensitivity Id="security" Value="0.8"/>
+                    </FactorSensitivities>
+                </c:Person>
+
+                <!-- Generator element (matches GeneratorConfig code class) -->
+                <Generator Count="100000" Seed="42">
+                    <FactorSensitivities>
+                        <!-- InRange matches ValueSpecification.InRange() method -->
+                        <Sensitivity Id="pollution">
+                            <InRange Min="-7" Max="-3"/>
+                        </Sensitivity>
+                        <Sensitivity Id="transport">
+                            <InRange Min="3" Max="8"/>
+                        </Sensitivity>
+                        <!-- Random matches ValueSpecification.Random() method -->
+                        <Sensitivity Id="income">
+                            <Random Scale="0.7"/>
+                        </Sensitivity>
+                        <Sensitivity Id="security">
+                            <InRange Min="0.6" Max="0.9"/>
+                        </Sensitivity>
+                    </FactorSensitivities>
+                    <MovingWillingness>
+                        <InRange Min="0.5" Max="1.0"/>
+                    </MovingWillingness>
+                    <!-- Fixed matches ValueSpecification.Fixed() method -->
+                    <RetentionRate>
+                        <Fixed Value="0.1"/>
+                    </RetentionRate>
+                    <AttractionThreshold>
+                        <Random/>
+                    </AttractionThreshold>
+                    <SensitivityScaling>
+                        <Random/>
+                    </SensitivityScaling>
+                    <MinimumAcceptableAttraction>
+                        <Fixed Value="10"/>
+                    </MinimumAcceptableAttraction>
+                    <Tags>tag1;tag2;tag3</Tags>
+                </Generator>
+
+                <!-- Another Generator with different seed -->
+                <Generator Count="100" Seed="132">
+                    <FactorSensitivities>
+                        <Sensitivity Id="pollution" Value="0.5"/>
+                        <Sensitivity Id="transport" Value="0.5"/>
+                        <Sensitivity Id="income" Value="0.1"/>
+                        <Sensitivity Id="security" Value="0.8"/>
+                    </FactorSensitivities>
+                    <MovingWillingness Value="0.5"/>
+                    <RetentionRate Value="0.3"/>
+                    <AttractionThreshold Value="0.3"/>
+                    <SensitivityScaling Value="0.5"/>
+                    <MinimumAcceptableAttraction Value="10"/>
+                    <Tags>tag1</Tags>
+                </Generator>
+            </PersonCollection>
+        </PersonCollections>
+
+        <!-- Cities container (snapshot structure) contains c:City elements (code concept) -->
+        <Cities>
+            <c:City Id="shanghai_cn" DisplayName="Shanghai" Latitude="31.2304" Longitude="121.4737"
+                    Area="6340.5" Capacity="30000000">
+                <FactorValues>
+                    <FactorValue Id="pollution" Value="8"/>
+                    <FactorValue Id="transport" Value="7"/>
+                    <FactorValue Id="income" Value="900"/>
+                    <FactorValue Id="security" Value="4"/>
+                </FactorValues>
+                <PersonCollections>
+                    <CollectionRef Id="young_people"/>
+                </PersonCollections>
+            </c:City>
+
+            <c:City Id="sydney_au" DisplayName="Sydney" Latitude="-33.8688" Longitude="151.2093"
+                    Area="12367.7" Capacity="6000000">
+                <FactorValues>
+                    <FactorValue Id="pollution" Value="3"/>
+                    <FactorValue Id="transport" Value="8"/>
+                    <FactorValue Id="income" Value="850"/>
+                    <FactorValue Id="security" Value="9"/>
+                </FactorValues>
+                <PersonCollections>
+                    <CollectionRef Id="young_people"/>
+                </PersonCollections>
+            </c:City>
+        </Cities>
+    </World>
+</Snapshot>

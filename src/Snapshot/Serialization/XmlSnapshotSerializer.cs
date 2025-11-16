@@ -1,95 +1,106 @@
 ﻿using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
-using dotGeoMigrata.Snapshot.Models;
+using dotMigrata.Snapshot.Models;
 
-namespace dotGeoMigrata.Snapshot.Serialization;
+namespace dotMigrata.Snapshot.Serialization;
 
 /// <summary>
-/// Provides XML serialization and deserialization for world snapshots.
-/// Uses System.Xml.Serialization with proper formatting.
+/// XML snapshot serializer using C# XML serialization attributes.
+/// <para>
+/// Provides attribute-based XML serialization with namespace support:
+/// <list type="bullet">
+///     <item>
+///         <description>Code concepts use 'c:' namespace (c:Person, c:City, c:FactorDefinition)</description>
+///     </item>
+///     <item>
+///         <description>Snapshot containers use default namespace (PersonCollections, FactorDefinitions, Cities)</description>
+///     </item>
+///     <item>
+///         <description>Automatic serialization/deserialization via System.Xml.Serialization</description>
+///     </item>
+///     <item>
+///         <description>Deterministic XML output with proper formatting and namespace handling</description>
+///     </item>
+/// </list>
+/// </para>
 /// </summary>
 public static class XmlSnapshotSerializer
 {
-    private static readonly XmlSerializer Serializer = new(typeof(WorldSnapshot));
+    private static readonly XmlSerializer Serializer = new(typeof(WorldSnapshotXml));
 
     private static readonly XmlWriterSettings DefaultWriterSettings = new()
     {
         Indent = true,
         IndentChars = "  ",
+        NewLineChars = "\n",
+        NewLineHandling = NewLineHandling.Replace,
         OmitXmlDeclaration = false,
-        Encoding = Encoding.UTF8
+        Encoding = Encoding.UTF8,
+        NamespaceHandling = NamespaceHandling.OmitDuplicates
     };
 
-    private static readonly XmlReaderSettings DefaultReaderSettings = new()
+    private static readonly XmlSerializerNamespaces Namespaces = new();
+
+    static XmlSnapshotSerializer()
     {
-        IgnoreWhitespace = true,
-        IgnoreComments = true
-    };
+        // Configure XML namespaces
+        Namespaces.Add("", "http://geomigrata.pages.dev/snapshot"); // Default namespace for snapshot structures
+        Namespaces.Add("c", "http://geomigrata.pages.dev/code"); // Code namespace for framework classes
+    }
 
     /// <summary>
-    /// Serializes a world snapshot to XML.
+    /// Serializes a snapshot to an XML string with proper namespace handling.
     /// </summary>
     /// <param name="snapshot">The snapshot to serialize.</param>
-    /// <param name="writerSettings">Optional XML writer settings. If null, uses default settings.</param>
     /// <returns>XML string representation of the snapshot.</returns>
-    public static string Serialize(WorldSnapshot snapshot, XmlWriterSettings? writerSettings = null)
+    public static string Serialize(WorldSnapshotXml snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
         using var stringWriter = new StringWriter();
-        using var xmlWriter = XmlWriter.Create(stringWriter, writerSettings ?? DefaultWriterSettings);
-
-        Serializer.Serialize(xmlWriter, snapshot);
+        using var xmlWriter = XmlWriter.Create(stringWriter, DefaultWriterSettings);
+        Serializer.Serialize(xmlWriter, snapshot, Namespaces);
         return stringWriter.ToString();
     }
 
     /// <summary>
-    /// Serializes a world snapshot to an XML file.
+    /// Serializes a snapshot to an XML file with proper namespace handling.
     /// </summary>
     /// <param name="snapshot">The snapshot to serialize.</param>
-    /// <param name="filePath">The file path where the XML will be saved.</param>
-    /// <param name="writerSettings">Optional XML writer settings. If null, uses default settings.</param>
-    public static void SerializeToFile(WorldSnapshot snapshot, string filePath,
-        XmlWriterSettings? writerSettings = null)
+    /// <param name="filePath">Path to the output XML file.</param>
+    public static void SerializeToFile(WorldSnapshotXml snapshot, string filePath)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
-        using var xmlWriter = XmlWriter.Create(filePath, writerSettings ?? DefaultWriterSettings);
-        Serializer.Serialize(xmlWriter, snapshot);
+        using var xmlWriter = XmlWriter.Create(filePath, DefaultWriterSettings);
+        Serializer.Serialize(xmlWriter, snapshot, Namespaces);
     }
 
     /// <summary>
-    /// Deserializes a world snapshot from XML.
+    /// Deserializes a snapshot from an XML string.
     /// </summary>
-    /// <param name="xml">The XML string to deserialize.</param>
-    /// <param name="readerSettings">Optional XML reader settings. If null, uses default settings.</param>
-    /// <returns>The deserialized world snapshot.</returns>
-    public static WorldSnapshot? Deserialize(string xml, XmlReaderSettings? readerSettings = null)
+    /// <param name="xml">XML string containing the snapshot.</param>
+    /// <returns>Deserialized snapshot, or null if deserialization fails.</returns>
+    public static WorldSnapshotXml? Deserialize(string xml)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(xml);
 
         using var stringReader = new StringReader(xml);
-        using var xmlReader = XmlReader.Create(stringReader, readerSettings ?? DefaultReaderSettings);
-
-        return Serializer.Deserialize(xmlReader) as WorldSnapshot;
+        return Serializer.Deserialize(stringReader) as WorldSnapshotXml;
     }
 
     /// <summary>
-    /// Deserializes a world snapshot from an XML file.
+    /// Deserializes a snapshot from an XML file.
     /// </summary>
-    /// <param name="filePath">The file path to read from.</param>
-    /// <param name="readerSettings">Optional XML reader settings. If null, uses default settings.</param>
-    /// <returns>The deserialized world snapshot.</returns>
-    public static WorldSnapshot? DeserializeFromFile(string filePath, XmlReaderSettings? readerSettings = null)
+    /// <param name="filePath">Path to the XML file.</param>
+    /// <returns>Deserialized snapshot, or null if deserialization fails.</returns>
+    public static WorldSnapshotXml? DeserializeFromFile(string filePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
-        if (!File.Exists(filePath))
-            throw new FileNotFoundException($"Snapshot file not found: {filePath}");
-
-        using var xmlReader = XmlReader.Create(filePath, readerSettings ?? DefaultReaderSettings);
-        return Serializer.Deserialize(xmlReader) as WorldSnapshot;
+        using var fileStream = File.OpenRead(filePath);
+        return Serializer.Deserialize(fileStream) as WorldSnapshotXml;
     }
 }

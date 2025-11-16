@@ -1,8 +1,8 @@
-﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Simulation.Interfaces;
-using dotGeoMigrata.Simulation.Models;
+﻿using dotMigrata.Core.Entities;
+using dotMigrata.Simulation.Interfaces;
+using dotMigrata.Simulation.Models;
 
-namespace dotGeoMigrata.Simulation.Engine;
+namespace dotMigrata.Simulation.Engine;
 
 /// <summary>
 /// Main simulation engine that orchestrates the execution of simulation stages.
