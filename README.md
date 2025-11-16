@@ -2,9 +2,10 @@
 
 [![.NET8.0](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
 [![.NET9.0](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
+[![.NET10.0](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
 
-dotMigrata, a product from Project GeoMigrata, is a C# .NET 9.0 simulation framework designed to model individual-based population migration and city
+dotMigrata, a product from Project GeoMigrata, is a C# .NET simulation framework designed to model individual-based population migration and city
 evolution in a multi-city system. The framework simulates individual persons (10,000 to 1,000,000+) with unique
 characteristics, capturing how city factors influence individual migration decisions and how migration feedback affects
 city dynamics over time.

@@ -2,9 +2,10 @@
 
 [![.NET8.0](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
 [![.NET9.0](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
+[![.NET10.0](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
 
-dotMigrata 是一个基于 C# .NET 9.0 的模拟框架，是 Project GeoMigrata 的一个产品，用于对多城市系统中的个体人口迁移和城市演化进行建模。
+dotMigrata 是一个基于 C# .NET 的模拟框架，是 Project GeoMigrata 的一个产品，用于对多城市系统中的个体人口迁移和城市演化进行建模。
 该框架模拟具有独特特征的个体人员（10,000 到 1,000,000+），捕捉城市因素如何影响个体迁移决策，以及迁移反馈如何随时间影响城市动态。
 
 ## 核心思想
