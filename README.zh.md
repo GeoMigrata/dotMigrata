@@ -1,11 +1,11 @@
-﻿# dotGeoMigrata
+﻿# dotMigrata
 
 [![.NET8.0](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
 [![.NET9.0](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
 
-dotGeoMigrata 是一个基于 C# .NET 9.0 的模拟框架，用于对多城市系统中的个体人口迁移和城市演化进行建模。该框架模拟具有独特特征的个体人员（10,000
-到 1,000,000+），捕捉城市因素如何影响个体迁移决策，以及迁移反馈如何随时间影响城市动态。
+dotMigrata 是一个基于 C# .NET 9.0 的模拟框架，是 Project GeoMigrata 的一个产品，用于对多城市系统中的个体人口迁移和城市演化进行建模。
+该框架模拟具有独特特征的个体人员（10,000 到 1,000,000+），捕捉城市因素如何影响个体迁移决策，以及迁移反馈如何随时间影响城市动态。
 
 ## 核心思想
 
@@ -49,7 +49,7 @@ dotGeoMigrata 是一个基于 C# .NET 9.0 的模拟框架，用于对多城市�
 将库添加到您的 .NET 9.0 项目中：
 
 ```bash
-dotnet add reference /path/to/dotGeoMigrata.csproj
+dotnet add reference /path/to/dotMigrata.csproj
 # 或者，发布到 NuGet 后：
 # dotnet add package GeoMigrata.Framework
 ```
@@ -59,16 +59,16 @@ dotnet add reference /path/to/dotGeoMigrata.csproj
 以下是一个简单示例：
 
 ```csharp
-using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Core.Enums;
-using dotGeoMigrata.Core.Values;
-using dotGeoMigrata.Generator;
-using dotGeoMigrata.Logic.Calculators;
-using dotGeoMigrata.Simulation.Engine;
-using dotGeoMigrata.Simulation.Interfaces;
-using dotGeoMigrata.Simulation.Models;
-using dotGeoMigrata.Simulation.Pipeline;
-using static dotGeoMigrata.Generator.AttributeValueBuilder;
+using dotMigrata.Core.Entities;
+using dotMigrata.Core.Enums;
+using dotMigrata.Core.Values;
+using dotMigrata.Generator;
+using dotMigrata.Logic.Calculators;
+using dotMigrata.Simulation.Engine;
+using dotMigrata.Simulation.Interfaces;
+using dotMigrata.Simulation.Models;
+using dotMigrata.Simulation.Pipeline;
+using static dotMigrata.Generator.AttributeValueBuilder;
 
 // 步骤 1：定义因素
 var incomeFactor = new FactorDefinition
@@ -162,7 +162,7 @@ Console.WriteLine($"最终人口: {result.World.Population:N0} 人");
 **PersonCollection** 系统提供对人口生成的精细控制，支持 Individual、Individuals（复制）和 Generator 规范：
 
 ```csharp
-using dotGeoMigrata.Generator;
+using dotMigrata.Generator;
 
 // 创建包含混合规范的 PersonCollection
 var collection = new PersonCollection { IdPrefix = "CITY" };
@@ -279,7 +279,7 @@ var tagStats = world.AllPersons
 如需更多控制个体属性，您可以配置个体生成器：
 
 ```csharp
-using dotGeoMigrata.Generator;
+using dotMigrata.Generator;
 
 // 使用自定义参数配置个体生成
 var personConfig = new PersonGeneratorConfig
@@ -328,8 +328,8 @@ var city = new City(
 您还可以配置模拟执行和模型参数：
 
 ```csharp
-using dotGeoMigrata.Logic.Models;
-using dotGeoMigrata.Simulation.Models;
+using dotMigrata.Logic.Models;
+using dotMigrata.Simulation.Models;
 
 // 配置模型参数
 var modelConfig = new StandardModelConfig
@@ -499,7 +499,7 @@ var result = await engine.RunAsync(world);
 └────────────┬────────────────────┘
              │ 直接引用
 ┌────────────▼────────────────────┐
-│    dotGeoMigrata 库             │
+│    dotMigrata 库             │
 │    (本包)                        │
 └─────────────────────────────────┘
 ```

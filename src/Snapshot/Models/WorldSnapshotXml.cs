@@ -1,7 +1,7 @@
 ﻿using System.Xml.Serialization;
-using dotGeoMigrata.Snapshot.Enums;
+using dotMigrata.Snapshot.Enums;
 
-namespace dotGeoMigrata.Snapshot.Models;
+namespace dotMigrata.Snapshot.Models;
 
 /// <summary>
 /// Root snapshot model with XML serialization support.

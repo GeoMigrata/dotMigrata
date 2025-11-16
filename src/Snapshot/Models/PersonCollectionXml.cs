@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace dotGeoMigrata.Snapshot.Models;
+namespace dotMigrata.Snapshot.Models;
 
 /// <summary>
 /// Person collection definition (snapshot-only container).

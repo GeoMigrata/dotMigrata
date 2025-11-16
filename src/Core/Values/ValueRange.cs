@@ -1,6 +1,6 @@
-﻿using dotGeoMigrata.Core.Enums;
+﻿using dotMigrata.Core.Enums;
 
-namespace dotGeoMigrata.Core.Values;
+namespace dotMigrata.Core.Values;
 
 /// <summary>
 /// Represents a value range with minimum and maximum bounds.

@@ -1,6 +1,6 @@
-﻿using dotGeoMigrata.Core.Values;
+﻿using dotMigrata.Core.Values;
 
-namespace dotGeoMigrata.Core.Entities;
+namespace dotMigrata.Core.Entities;
 
 /// <summary>
 /// Represents a city with geographic location, factors, and individual persons.

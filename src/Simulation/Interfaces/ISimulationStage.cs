@@ -1,6 +1,6 @@
-﻿using dotGeoMigrata.Simulation.Models;
+﻿using dotMigrata.Simulation.Models;
 
-namespace dotGeoMigrata.Simulation.Interfaces;
+namespace dotMigrata.Simulation.Interfaces;
 
 /// <summary>
 /// Represents a single stage in the simulation pipeline.

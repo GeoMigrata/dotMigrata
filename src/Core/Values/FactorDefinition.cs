@@ -1,6 +1,6 @@
-﻿using dotGeoMigrata.Core.Enums;
+﻿using dotMigrata.Core.Enums;
 
-namespace dotGeoMigrata.Core.Values;
+namespace dotMigrata.Core.Values;
 
 /// <summary>
 /// Defines a factor including its transformation type, direction, and normalization rule.

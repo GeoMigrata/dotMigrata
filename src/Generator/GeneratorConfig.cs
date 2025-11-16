@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Core.Values;
+using dotMigrata.Core.Entities;
+using dotMigrata.Core.Values;
 
-namespace dotGeoMigrata.Generator;
+namespace dotMigrata.Generator;
 
 /// <summary>
 /// Configuration for generating random persons with specified attributes and sensitivities.

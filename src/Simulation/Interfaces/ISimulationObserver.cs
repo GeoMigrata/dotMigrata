@@ -1,6 +1,6 @@
-﻿using dotGeoMigrata.Simulation.Models;
+﻿using dotMigrata.Simulation.Models;
 
-namespace dotGeoMigrata.Simulation.Interfaces;
+namespace dotMigrata.Simulation.Interfaces;
 
 /// <summary>
 /// Observer interface for monitoring simulation progress and events.

@@ -1,7 +1,7 @@
-﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Core.Values;
+﻿using dotMigrata.Core.Entities;
+using dotMigrata.Core.Values;
 
-namespace dotGeoMigrata.Generator;
+namespace dotMigrata.Generator;
 
 /// <summary>
 /// A collection of person specifications that can be used to generate a population.

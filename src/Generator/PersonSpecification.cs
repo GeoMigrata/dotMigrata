@@ -1,7 +1,7 @@
-﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Core.Values;
+﻿using dotMigrata.Core.Entities;
+using dotMigrata.Core.Values;
 
-namespace dotGeoMigrata.Generator;
+namespace dotMigrata.Generator;
 
 /// <summary>
 /// Specifies a person or group of persons to be added to a population.

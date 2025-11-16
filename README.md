@@ -1,10 +1,10 @@
-﻿# dotGeoMigrata
+﻿# dotMigrata
 
 [![.NET8.0](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
 [![.NET9.0](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
 
-dotGeoMigrata is a C# .NET 9.0 simulation framework designed to model individual-based population migration and city
+dotMigrata, a product from Project GeoMigrata, is a C# .NET 9.0 simulation framework designed to model individual-based population migration and city
 evolution in a multi-city system. The framework simulates individual persons (10,000 to 1,000,000+) with unique
 characteristics, capturing how city factors influence individual migration decisions and how migration feedback affects
 city dynamics over time.
@@ -62,7 +62,7 @@ factors in an ongoing iterative process.
 Add the library to your .NET 9.0 project:
 
 ```bash
-dotnet add reference /path/to/dotGeoMigrata.csproj
+dotnet add reference /path/to/dotMigrata.csproj
 # Or, once published to NuGet:
 # dotnet add package GeoMigrata.Framework
 ```
@@ -72,16 +72,16 @@ dotnet add reference /path/to/dotGeoMigrata.csproj
 Here's a simple example:
 
 ```csharp
-using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Core.Enums;
-using dotGeoMigrata.Core.Values;
-using dotGeoMigrata.Generator;
-using dotGeoMigrata.Logic.Calculators;
-using dotGeoMigrata.Simulation.Engine;
-using dotGeoMigrata.Simulation.Interfaces;
-using dotGeoMigrata.Simulation.Models;
-using dotGeoMigrata.Simulation.Pipeline;
-using static dotGeoMigrata.Generator.AttributeValueBuilder;
+using dotMigrata.Core.Entities;
+using dotMigrata.Core.Enums;
+using dotMigrata.Core.Values;
+using dotMigrata.Generator;
+using dotMigrata.Logic.Calculators;
+using dotMigrata.Simulation.Engine;
+using dotMigrata.Simulation.Interfaces;
+using dotMigrata.Simulation.Models;
+using dotMigrata.Simulation.Pipeline;
+using static dotMigrata.Generator.AttributeValueBuilder;
 
 // Step 1: Define factors
 var incomeFactor = new FactorDefinition
@@ -176,7 +176,7 @@ The **PersonCollection** system provides fine-grained control over population ge
 Individuals (duplicates), and Generator specifications:
 
 ```csharp
-using dotGeoMigrata.Generator;
+using dotMigrata.Generator;
 
 // Create a PersonCollection with mixed specifications
 var collection = new PersonCollection { IdPrefix = "CITY" };
@@ -268,7 +268,7 @@ var tagStats = world.AllPersons
 For more control over person attributes, you can configure the person generator:
 
 ```csharp
-using dotGeoMigrata.Generator;
+using dotMigrata.Generator;
 
 // Configure person generation with custom parameters
 var personConfig = new PersonGeneratorConfig
@@ -317,8 +317,8 @@ var city = new City(
 You can also configure the simulation execution and model parameters:
 
 ```csharp
-using dotGeoMigrata.Logic.Models;
-using dotGeoMigrata.Simulation.Models;
+using dotMigrata.Logic.Models;
+using dotMigrata.Simulation.Models;
 
 // Configure model parameters
 var modelConfig = new StandardModelConfig
@@ -488,7 +488,7 @@ The library is designed to be consumed by middleware layers (console apps, web A
 └────────────┬────────────────────┘
              │ Direct Reference
 ┌────────────▼────────────────────┐
-│    dotGeoMigrata Library        │
+│    dotMigrata Library        │
 │    (This Package)               │
 └─────────────────────────────────┘
 ```

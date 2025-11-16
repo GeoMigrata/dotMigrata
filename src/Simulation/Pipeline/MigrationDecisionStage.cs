@@ -1,8 +1,8 @@
-﻿using dotGeoMigrata.Logic.Interfaces;
-using dotGeoMigrata.Simulation.Interfaces;
-using dotGeoMigrata.Simulation.Models;
+﻿using dotMigrata.Logic.Interfaces;
+using dotMigrata.Simulation.Interfaces;
+using dotMigrata.Simulation.Models;
 
-namespace dotGeoMigrata.Simulation.Pipeline;
+namespace dotMigrata.Simulation.Pipeline;
 
 /// <summary>
 /// Simulation stage that calculates migration decisions for all persons based on attraction differences.

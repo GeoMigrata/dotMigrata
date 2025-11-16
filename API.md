@@ -1,6 +1,6 @@
 ﻿# API Reference
 
-This document provides a comprehensive reference for the public API of dotGeoMigrata.
+This document provides a comprehensive reference for the public API of dotMigrata.
 
 ## Main Entry Points
 
@@ -430,11 +430,11 @@ void OnError(SimulationContext context, Exception exception)
 To create and run a simulation:
 
 ```csharp
-using dotGeoMigrata.Logic.Calculators;
-using dotGeoMigrata.Simulation.Engine;
-using dotGeoMigrata.Simulation.Interfaces;
-using dotGeoMigrata.Simulation.Pipeline;
-using dotGeoMigrata.Simulation.Models;
+using dotMigrata.Logic.Calculators;
+using dotMigrata.Simulation.Engine;
+using dotMigrata.Simulation.Interfaces;
+using dotMigrata.Simulation.Pipeline;
+using dotMigrata.Simulation.Models;
 
 // Create calculators
 var attractionCalc = new StandardAttractionCalculator();

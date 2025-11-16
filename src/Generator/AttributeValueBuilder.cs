@@ -1,4 +1,4 @@
-﻿namespace dotGeoMigrata.Generator;
+﻿namespace dotMigrata.Generator;
 
 /// <summary>
 /// Fluent builder for specifying person attribute values with semantic API.

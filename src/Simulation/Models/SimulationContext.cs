@@ -1,7 +1,7 @@
-﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Logic.Models;
+﻿using dotMigrata.Core.Entities;
+using dotMigrata.Logic.Models;
 
-namespace dotGeoMigrata.Simulation.Models;
+namespace dotMigrata.Simulation.Models;
 
 /// <summary>
 /// Represents the context and state for a single simulation execution.

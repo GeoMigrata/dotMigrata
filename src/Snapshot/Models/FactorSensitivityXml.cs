@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace dotGeoMigrata.Snapshot.Models;
+namespace dotMigrata.Snapshot.Models;
 
 /// <summary>
 /// Factor sensitivity for person template (fixed value).

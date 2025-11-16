@@ -1,9 +1,9 @@
-﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Logic.Common;
-using dotGeoMigrata.Logic.Interfaces;
-using dotGeoMigrata.Logic.Models;
+﻿using dotMigrata.Core.Entities;
+using dotMigrata.Logic.Common;
+using dotMigrata.Logic.Interfaces;
+using dotMigrata.Logic.Models;
 
-namespace dotGeoMigrata.Logic.Calculators;
+namespace dotMigrata.Logic.Calculators;
 
 /// <summary>
 /// Standard migration calculator implementing optimized individual-based migration decisions.

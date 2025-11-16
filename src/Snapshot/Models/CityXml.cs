@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace dotGeoMigrata.Snapshot.Models;
+namespace dotMigrata.Snapshot.Models;
 
 /// <summary>
 /// City with code namespace (c:City).

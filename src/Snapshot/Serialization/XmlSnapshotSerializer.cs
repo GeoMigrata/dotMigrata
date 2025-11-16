@@ -1,9 +1,9 @@
 ﻿using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
-using dotGeoMigrata.Snapshot.Models;
+using dotMigrata.Snapshot.Models;
 
-namespace dotGeoMigrata.Snapshot.Serialization;
+namespace dotMigrata.Snapshot.Serialization;
 
 /// <summary>
 /// XML snapshot serializer using C# XML serialization attributes.

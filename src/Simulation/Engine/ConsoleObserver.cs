@@ -1,7 +1,7 @@
-﻿using dotGeoMigrata.Simulation.Interfaces;
-using dotGeoMigrata.Simulation.Models;
+﻿using dotMigrata.Simulation.Interfaces;
+using dotMigrata.Simulation.Models;
 
-namespace dotGeoMigrata.Simulation.Engine;
+namespace dotMigrata.Simulation.Engine;
 
 /// <summary>
 /// A built-in observer that outputs simulation progress to the console.

@@ -1,4 +1,4 @@
-﻿namespace dotGeoMigrata.Core.Values;
+﻿namespace dotMigrata.Core.Values;
 
 /// <summary>
 /// Represents a geographic coordinate using WGS84 datum (latitude and longitude).

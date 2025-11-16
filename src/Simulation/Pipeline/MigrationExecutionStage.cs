@@ -1,8 +1,8 @@
-﻿using dotGeoMigrata.Logic.Models;
-using dotGeoMigrata.Simulation.Interfaces;
-using dotGeoMigrata.Simulation.Models;
+﻿using dotMigrata.Logic.Models;
+using dotMigrata.Simulation.Interfaces;
+using dotMigrata.Simulation.Models;
 
-namespace dotGeoMigrata.Simulation.Pipeline;
+namespace dotMigrata.Simulation.Pipeline;
 
 /// <summary>
 /// Simulation stage that executes migration flows by moving persons between cities.

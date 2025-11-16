@@ -1,4 +1,4 @@
-﻿namespace dotGeoMigrata.Simulation.Models;
+﻿namespace dotMigrata.Simulation.Models;
 
 /// <summary>
 /// Configuration for simulation execution behavior.

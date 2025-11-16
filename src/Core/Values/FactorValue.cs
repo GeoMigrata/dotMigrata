@@ -1,4 +1,4 @@
-﻿namespace dotGeoMigrata.Core.Values;
+﻿namespace dotMigrata.Core.Values;
 
 /// <summary>
 /// Represents the intensity value for a specific factor in a city.

@@ -1,6 +1,6 @@
-﻿using dotGeoMigrata.Core.Entities;
+﻿using dotMigrata.Core.Entities;
 
-namespace dotGeoMigrata.Logic.Models;
+namespace dotMigrata.Logic.Models;
 
 /// <summary>
 /// Represents a migration decision for an individual person from an origin city to a destination city.

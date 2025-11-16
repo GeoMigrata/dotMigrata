@@ -1,7 +1,7 @@
-﻿using dotGeoMigrata.Core.Entities;
-using dotGeoMigrata.Logic.Models;
+﻿using dotMigrata.Core.Entities;
+using dotMigrata.Logic.Models;
 
-namespace dotGeoMigrata.Logic.Interfaces;
+namespace dotMigrata.Logic.Interfaces;
 
 /// <summary>
 /// Interface for calculating city attraction for individual persons.

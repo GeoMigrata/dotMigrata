@@ -1,6 +1,6 @@
-﻿using dotGeoMigrata.Core.Values;
+﻿using dotMigrata.Core.Values;
 
-namespace dotGeoMigrata.Core.Entities;
+namespace dotMigrata.Core.Entities;
 
 /// <summary>
 /// Represents an individual person in the simulation with unique attributes and factor sensitivities.

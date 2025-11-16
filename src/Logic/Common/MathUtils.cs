@@ -1,4 +1,4 @@
-﻿namespace dotGeoMigrata.Logic.Common;
+﻿namespace dotMigrata.Logic.Common;
 
 /// <summary>
 /// Provides common mathematical functions for migration calculations.

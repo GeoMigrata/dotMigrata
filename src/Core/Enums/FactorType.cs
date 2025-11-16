@@ -1,4 +1,4 @@
-﻿namespace dotGeoMigrata.Core.Enums;
+﻿namespace dotMigrata.Core.Enums;
 
 /// <summary>
 /// Defines the direction of a factor's influence on city attractiveness.

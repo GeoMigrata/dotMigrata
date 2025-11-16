@@ -1,4 +1,4 @@
-﻿namespace dotGeoMigrata.Generator;
+﻿namespace dotMigrata.Generator;
 
 /// <summary>
 /// Represents a value specification for a person attribute or factor sensitivity.
