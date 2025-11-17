@@ -18,8 +18,11 @@ public readonly record struct ValueRange(double Min, double Max)
     /// <summary>
     /// Gets whether this range is valid (Min &lt; Max).
     /// </summary>
-    public bool IsValid => Min < Max && !double.IsNaN(Min) && !double.IsNaN(Max) &&
-                           !double.IsInfinity(Min) && !double.IsInfinity(Max);
+    public bool IsValid => Min < Max
+                           && !double.IsNaN(Min)
+                           && !double.IsNaN(Max)
+                           && !double.IsInfinity(Min)
+                           && !double.IsInfinity(Max);
 
     /// <summary>
     /// Normalizes a value to the 0-1 range using the specified transformation.
@@ -58,6 +61,7 @@ public readonly record struct ValueRange(double Min, double Max)
         return Min + normalized * Size;
     }
 
+
     /// <summary>
     /// Clamps a value to this range.
     /// </summary>
@@ -68,6 +72,7 @@ public readonly record struct ValueRange(double Min, double Max)
         return Math.Clamp(value, Min, Max);
     }
 
+
     /// <summary>
     /// Checks if a value is within this range (inclusive).
     /// </summary>
@@ -77,6 +82,7 @@ public readonly record struct ValueRange(double Min, double Max)
     {
         return value >= Min && value <= Max;
     }
+
 
     private double NormalizeLogarithmic(double clamped, double range)
     {

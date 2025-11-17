@@ -9,8 +9,6 @@ namespace dotMigrata.Core.Entities;
 public sealed class Person
 {
     private readonly Dictionary<FactorDefinition, double> _factorSensitivities;
-    private double _movingWillingness;
-    private double _retentionRate;
 
     /// <summary>
     /// Initializes a new instance of the Person class.
@@ -35,8 +33,8 @@ public sealed class Person
     /// </summary>
     public double MovingWillingness
     {
-        get => _movingWillingness;
-        set => _movingWillingness = value is >= 0 and <= 1
+        get;
+        init => field = value is >= 0 and <= 1
             ? value
             : throw new ArgumentException("MovingWillingness must be between 0 and 1.", nameof(value));
     }
@@ -48,8 +46,8 @@ public sealed class Person
     /// </summary>
     public double RetentionRate
     {
-        get => _retentionRate;
-        set => _retentionRate = value is >= 0 and <= 1
+        get;
+        init => field = value is >= 0 and <= 1
             ? value
             : throw new ArgumentException("RetentionRate must be between 0 and 1.", nameof(value));
     }
@@ -58,20 +56,20 @@ public sealed class Person
     /// Gets or sets the sensitivity scaling coefficient (A_G).
     /// Scales the final attraction score. Default is 1.0.
     /// </summary>
-    public double SensitivityScaling { get; set; } = 1.0;
+    public double SensitivityScaling { get; init; } = 1.0;
 
     /// <summary>
     /// Gets or sets the attraction threshold (τ).
     /// Minimum attraction difference required to trigger migration consideration.
     /// Default is 0.0.
     /// </summary>
-    public double AttractionThreshold { get; set; }
+    public double AttractionThreshold { get; init; }
 
     /// <summary>
     /// Gets or sets the minimum acceptable attraction score (α_min).
     /// Destinations below this score are not considered. Default is 0.0.
     /// </summary>
-    public double MinimumAcceptableAttraction { get; set; }
+    public double MinimumAcceptableAttraction { get; init; }
 
     /// <summary>
     /// Gets or sets the tags associated with this person for categorization and statistical analysis.

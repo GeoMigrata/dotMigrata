@@ -20,6 +20,7 @@ public sealed class GeneratorConfig
         _random = new Random();
     }
 
+
     /// <summary>
     /// Initializes a new instance with a specific seed for reproducibility.
     /// </summary>
@@ -28,6 +29,7 @@ public sealed class GeneratorConfig
     {
         _random = new Random(seed);
     }
+
 
     /// <summary>
     /// Gets or sets the number of persons to generate.

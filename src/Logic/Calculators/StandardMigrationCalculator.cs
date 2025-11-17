@@ -67,11 +67,9 @@ public class StandardMigrationCalculator : IMigrationCalculator
                 _config.MigrationProbabilitySteepness,
                 _config.MigrationProbabilityThreshold);
 
-            if (probability > bestProbability)
-            {
-                bestProbability = probability;
-                bestDestination = destCity;
-            }
+            if (!(probability > bestProbability)) continue;
+            bestProbability = probability;
+            bestDestination = destCity;
         }
 
         // No suitable destination found

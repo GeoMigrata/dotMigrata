@@ -6,8 +6,6 @@
 /// </summary>
 public sealed record FactorValue
 {
-    private double _intensity;
-
     /// <summary>
     /// Gets or initializes the factor definition this value is for.
     /// </summary>
@@ -20,12 +18,12 @@ public sealed record FactorValue
     /// <exception cref="ArgumentOutOfRangeException">Thrown when the value is NaN or Infinity.</exception>
     public required double Intensity
     {
-        get => _intensity;
+        get;
         set
         {
             if (double.IsNaN(value) || double.IsInfinity(value))
                 throw new ArgumentOutOfRangeException(nameof(Intensity), "Intensity must be a valid number.");
-            _intensity = value;
+            field = value;
         }
     }
 

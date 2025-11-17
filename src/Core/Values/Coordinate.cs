@@ -5,9 +5,6 @@
 /// </summary>
 public readonly record struct Coordinate
 {
-    private readonly double _latitude;
-    private readonly double _longitude;
-
     /// <summary>
     /// Gets or initializes the longitude in degrees.
     /// Valid range: -180 to 180.
@@ -15,8 +12,8 @@ public readonly record struct Coordinate
     /// <exception cref="ArgumentException">Thrown when longitude is outside the valid range.</exception>
     public required double Longitude
     {
-        get => _longitude;
-        init => _longitude = value is >= -180 and <= 180
+        get;
+        init => field = value is >= -180 and <= 180
             ? value
             : throw new ArgumentException("Longitude must be between -180 and 180 degrees.", nameof(value));
     }
@@ -28,8 +25,8 @@ public readonly record struct Coordinate
     /// <exception cref="ArgumentException">Thrown when latitude is outside the valid range.</exception>
     public required double Latitude
     {
-        get => _latitude;
-        init => _latitude = value is >= -90 and <= 90
+        get;
+        init => field = value is >= -90 and <= 90
             ? value
             : throw new ArgumentException("Latitude must be between -90 and 90 degrees.", nameof(value));
     }

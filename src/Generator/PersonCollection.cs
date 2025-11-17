@@ -66,8 +66,7 @@ public sealed class PersonCollection
         if (factors.Count == 0)
             throw new ArgumentException("Must provide at least one factor definition.", nameof(factorDefinitions));
 
-        foreach (var specification in _specifications)
-        foreach (var person in specification.GeneratePersons(factors))
+        foreach (var person in _specifications.SelectMany(specification => specification.GeneratePersons(factors)))
             yield return person;
     }
 
@@ -79,6 +78,7 @@ public sealed class PersonCollection
     {
         return _specifications.Sum(spec => spec.Count);
     }
+
 
     /// <summary>
     /// Clears all specifications from this collection.

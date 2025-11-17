@@ -10,10 +10,6 @@ public sealed class AttributeValueBuilder
     private (double Min, double Max)? _range;
     private double _scale = 1.0;
 
-    private AttributeValueBuilder()
-    {
-    }
-
     /// <summary>
     /// Starts building a value specification.
     /// </summary>

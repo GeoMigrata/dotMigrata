@@ -11,9 +11,7 @@ public sealed class ValueSpecification
 
     private ValueSpecification(double? fixedValue, (double, double)? range, double scale)
     {
-        _fixedValue = fixedValue;
-        _range = range;
-        Scale = scale;
+        (_fixedValue, _range, Scale) = (fixedValue, range, scale);
     }
 
     /// <summary>
@@ -39,7 +37,7 @@ public sealed class ValueSpecification
     /// <summary>
     /// Gets the scale factor to apply to random values.
     /// </summary>
-    public double Scale { get; }
+    public double Scale { get; private set; }
 
     /// <summary>
     /// Creates a fixed value specification.
@@ -69,9 +67,9 @@ public sealed class ValueSpecification
     /// <returns>A value specification with default range and scale.</returns>
     public static ValueSpecification RandomWithScale(double scale)
     {
-        if (scale < 0)
-            throw new ArgumentException("Scale must be non-negative.", nameof(scale));
-        return new ValueSpecification(null, null, scale);
+        return scale < 0
+            ? throw new ArgumentException("Scale must be non-negative.", nameof(scale))
+            : new ValueSpecification(null, null, scale);
     }
 
     /// <summary>
@@ -90,8 +88,8 @@ public sealed class ValueSpecification
     /// <returns>A new value specification with the scale applied.</returns>
     public ValueSpecification WithScale(double scale)
     {
-        if (scale < 0)
-            throw new ArgumentException("Scale must be non-negative.", nameof(scale));
-        return new ValueSpecification(_fixedValue, _range, scale);
+        return scale < 0
+            ? throw new ArgumentException("Scale must be non-negative.", nameof(scale))
+            : new ValueSpecification(_fixedValue, _range, scale);
     }
 }

@@ -20,7 +20,6 @@ public sealed class SimulationContext
         World = world ?? throw new ArgumentNullException(nameof(world));
     }
 
-
     /// <summary>
     /// Gets the world being simulated.
     /// </summary>
@@ -62,6 +61,7 @@ public sealed class SimulationContext
     {
         _sharedData[key] = value;
     }
+
 
     /// <summary>
     /// Retrieves data from the shared context with the specified key.

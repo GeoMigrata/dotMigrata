@@ -17,6 +17,7 @@ public static class MathUtils
         return 1.0 / (1.0 + Math.Exp(-steepness * (x - midpoint)));
     }
 
+
     /// <summary>
     /// Calculates exponential distance decay.
     /// </summary>
@@ -27,6 +28,7 @@ public static class MathUtils
     {
         return Math.Exp(-lambda * distance);
     }
+
 
     /// <summary>
     /// Calculates capacity resistance based on current population and capacity.

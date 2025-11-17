@@ -8,7 +8,6 @@ namespace dotMigrata.Core.Entities;
 /// </summary>
 public class City
 {
-    private readonly double _area;
     private readonly Dictionary<FactorDefinition, FactorValue> _factorLookup;
     private readonly List<FactorValue> _factorValues;
     private readonly HashSet<Person> _persons;
@@ -46,8 +45,8 @@ public class City
     /// </summary>
     public double Area
     {
-        get => _area;
-        init => _area = value > 0 ? value : throw new ArgumentException("Area must be greater than 0", nameof(value));
+        get;
+        init => field = value > 0 ? value : throw new ArgumentException("Area must be greater than 0", nameof(value));
     }
 
     /// <summary>
