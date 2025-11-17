@@ -7,15 +7,27 @@ namespace dotMigrata.Snapshot.Models;
 /// </summary>
 public class FactorDefXml
 {
-    [XmlAttribute("Id")] public string Id { get; set; } = string.Empty;
+    /// <summary>Gets or sets the unique identifier for the factor.</summary>
+    [XmlAttribute("Id")]
+    public string Id { get; set; } = string.Empty;
 
-    [XmlAttribute("DisplayName")] public string DisplayName { get; set; } = string.Empty;
+    /// <summary>Gets or sets the display name of the factor.</summary>
+    [XmlAttribute("DisplayName")]
+    public string DisplayName { get; set; } = string.Empty;
 
-    [XmlAttribute("Type")] public string Type { get; set; } = string.Empty;
+    /// <summary>Gets or sets the factor type (Positive or Negative).</summary>
+    [XmlAttribute("Type")]
+    public string Type { get; set; } = string.Empty;
 
-    [XmlAttribute("Min")] public double Min { get; set; }
+    /// <summary>Gets or sets the minimum value for normalization.</summary>
+    [XmlAttribute("Min")]
+    public double Min { get; set; }
 
-    [XmlAttribute("Max")] public double Max { get; set; }
+    /// <summary>Gets or sets the maximum value for normalization.</summary>
+    [XmlAttribute("Max")]
+    public double Max { get; set; }
 
-    [XmlAttribute("Transform")] public string? Transform { get; set; }
+    /// <summary>Gets or sets the transformation type.</summary>
+    [XmlAttribute("Transform")]
+    public string? Transform { get; set; }
 }

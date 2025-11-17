@@ -33,12 +33,11 @@ public sealed class MigrationDecisionStage : ISimulationStage
     public Task ExecuteAsync(SimulationContext context)
     {
         // Calculate all migration decisions using parallel processing
-        var flows = _migrationCalculator.CalculateAllMigrationFlows(context.World, _attractionCalculator);
-        var flowList = flows.ToList();
+        var flows = _migrationCalculator.CalculateAllMigrationFlows(context.World, _attractionCalculator).ToList();
 
         // Store flows in context for use by execution stage
-        context.CurrentMigrationFlows = flowList;
-        context.SetData("MigrationFlows", flowList);
+        context.CurrentMigrationFlows = flows;
+        context.SetData("MigrationFlows", flows);
 
         return Task.CompletedTask;
     }

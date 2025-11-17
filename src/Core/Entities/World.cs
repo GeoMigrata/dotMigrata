@@ -71,9 +71,7 @@ public class World
         foreach (var city in _cities)
         {
             var cityFactors = city.FactorValues.Select(fv => fv.Definition).ToHashSet();
-            var missingFactors = _factorDefinitions
-                .Where(fd => !cityFactors.Contains(fd))
-                .ToList();
+            var missingFactors = _factorDefinitions.Where(fd => !cityFactors.Contains(fd)).ToList();
 
             if (missingFactors.Count <= 0) continue;
             var missingNames = string.Join(", ", missingFactors.Select(f => f.DisplayName));

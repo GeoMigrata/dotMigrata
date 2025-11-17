@@ -66,10 +66,11 @@ public sealed class ConsoleObserver : ISimulationObserver
         SetColor(ConsoleColor.Yellow);
         Write($"Tick {context.CurrentTick}: ");
 
-        if (context.CurrentMigrationFlows.Any())
+        var migrationCount = context.CurrentMigrationFlows.Count();
+        if (migrationCount > 0)
         {
             SetColor(ConsoleColor.White);
-            WriteLine($"{context.CurrentMigrationFlows.Count():N0} persons migrated");
+            WriteLine($"{migrationCount:N0} persons migrated");
         }
         else
         {
@@ -146,7 +147,6 @@ public sealed class ConsoleObserver : ISimulationObserver
     {
         Console.Write(message);
     }
-
 
     private static void WriteLine(string message = "")
     {

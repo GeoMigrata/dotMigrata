@@ -25,13 +25,9 @@ public class City
         _factorValues = factorValues?.ToList() ?? [];
         _factorLookup = _factorValues.ToDictionary(fv => fv.Definition, fv => fv);
 
-        _persons = [];
-        if (persons == null) return;
-        foreach (var person in persons)
-        {
-            _persons.Add(person);
+        _persons = persons?.ToHashSet() ?? [];
+        foreach (var person in _persons)
             person.CurrentCity = this;
-        }
     }
 
     /// <summary>

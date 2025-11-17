@@ -106,13 +106,9 @@ public sealed class SimulationEngine
     /// </summary>
     private bool ShouldCheckStability(SimulationContext context)
     {
-        if (!_config.CheckStability)
-            return false;
-
-        if (context.CurrentTick < _config.MinTicksBeforeStabilityCheck)
-            return false;
-
-        return context.CurrentTick % _config.StabilityCheckInterval == 0;
+        return _config.CheckStability &&
+               context.CurrentTick >= _config.MinTicksBeforeStabilityCheck &&
+               context.CurrentTick % _config.StabilityCheckInterval == 0;
     }
 
     /// <summary>

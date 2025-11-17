@@ -7,8 +7,11 @@ namespace dotMigrata.Snapshot.Models;
 /// </summary>
 public class SimulationStepXml
 {
-    [XmlAttribute("Tick")] public int Tick { get; set; }
+    /// <summary>Gets or sets the tick number.</summary>
+    [XmlAttribute("Tick")]
+    public int Tick { get; set; }
 
+    /// <summary>Gets or sets the migrations that occurred in this step.</summary>
     [XmlArray("Migrations")]
     [XmlArrayItem("Migration")]
     public List<MigrationXml>? Migrations { get; set; }

@@ -7,5 +7,7 @@ namespace dotMigrata.Snapshot.Models;
 /// </summary>
 public class RandomValueXml
 {
-    [XmlAttribute("Scale")] public double Scale { get; set; } = 1.0;
+    /// <summary>Gets or sets the scale factor for random values.</summary>
+    [XmlAttribute("Scale")]
+    public double Scale { get; set; } = 1.0;
 }

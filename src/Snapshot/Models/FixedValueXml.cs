@@ -7,5 +7,7 @@ namespace dotMigrata.Snapshot.Models;
 /// </summary>
 public class FixedValueXml
 {
-    [XmlAttribute("Value")] public double Value { get; set; }
+    /// <summary>Gets or sets the fixed value.</summary>
+    [XmlAttribute("Value")]
+    public double Value { get; set; }
 }

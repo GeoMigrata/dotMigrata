@@ -7,7 +7,11 @@ namespace dotMigrata.Snapshot.Models;
 /// </summary>
 public class RangeValueXml
 {
-    [XmlAttribute("Min")] public double Min { get; set; }
+    /// <summary>Gets or sets the minimum value.</summary>
+    [XmlAttribute("Min")]
+    public double Min { get; set; }
 
-    [XmlAttribute("Max")] public double Max { get; set; }
+    /// <summary>Gets or sets the maximum value.</summary>
+    [XmlAttribute("Max")]
+    public double Max { get; set; }
 }

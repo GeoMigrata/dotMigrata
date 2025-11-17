@@ -19,7 +19,7 @@ public sealed class MigrationExecutionStage : ISimulationStage
     {
         var flows = context.GetData<List<MigrationFlow>>("MigrationFlows");
 
-        if (flows == null || flows.Count == 0)
+        if (flows is not { Count: > 0 })
         {
             context.TotalPopulationChange = 0;
             context.MaxCityPopulationChange = 0;
@@ -51,7 +51,7 @@ public sealed class MigrationExecutionStage : ISimulationStage
 
         // Calculate statistics
         var totalChange = cityChanges.Values.Sum();
-        var maxCityChange = cityChanges.Values.DefaultIfEmpty(0).Max();
+        var maxCityChange = cityChanges.Values.Max();
 
         context.TotalPopulationChange = totalChange;
         context.MaxCityPopulationChange = maxCityChange;
