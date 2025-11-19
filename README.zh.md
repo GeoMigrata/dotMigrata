@@ -23,8 +23,8 @@ dotMigrata 是一个基于 C# .NET 的模拟框架，是 Project GeoMigrata 的�
 - **世界（World）**：顶层实体，包含城市和因素定义。维护全局因素定义以及城市当前状态及其人口。
 - **城市（City）**：拥有因素值（如收入、污染、公共设施）以及居住在该城市的个体人员集合。每个城市都具有世界中定义的所有因素对应的值。
 - **个体（Person）**：具有唯一ID、个性化因素敏感度、迁移意愿和保留率的个体实体。每个个体根据自己的偏好做出独立的迁移决策。
-- **因素定义与因素值（FactorDefinition & FactorValue）**
-  ：定义因素元数据，包括方向（拉力或推力）、标准化方式及取值范围。因素值内部会被标准化用于计算。每个城市都具有世界中所有因素定义对应的因素值。
+- **因素定义与因素值（FactorDefinition & FactorValue）**：
+  定义因素元数据，包括方向（拉力或推力）、标准化方式及取值范围。因素值内部会被标准化用于计算。每个城市都具有世界中所有因素定义对应的因素值。
 - **个体生成器（PersonGenerator）**：用于生成大量人口（10,000 到 1,000,000+）的模块，使用可配置的分布（敏感度采用正态分布）生成随机属性。
 - **吸引力（Attraction）**：计算某城市对个体的净吸引力，考虑标准化因素值、个人敏感度和因素方向。
 - **迁移（Migration）**：个体迁移决策基于吸引力差异、个人阈值和迁移意愿。每个个体独立决定是否迁移以及迁移到哪个城市，考虑距离、容量和个人偏好。
@@ -43,332 +43,41 @@ dotMigrata 是一个基于 C# .NET 的模拟框架，是 Project GeoMigrata 的�
     - 可选地根据迁移反馈更新城市因素
 3. 重复至模拟结束（达到最大步数或系统稳定）。
 
-## 安装与使用
+## 核心特性
 
-### 添加到项目
+### 基于个体的模拟
 
-将库添加到您的 .NET 9.0 项目中：
+- **个体级建模**，支持 10,000 到 1,000,000+ 个体
+- **独特特征**，每个个体具有不同的敏感度、意愿和保留率
+- **独立决策**，基于个人偏好
+- **标签分类**，用于统计分析
 
-```bash
-dotnet add reference /path/to/dotMigrata.csproj
-# 或者，发布到 NuGet 后：
-# dotnet add package GeoMigrata.Framework
-```
+### PersonCollection 系统
 
-### 快速入门示例
+- **灵活的人口生成**，支持 Individual、Individuals（复制）和 Generator 规范
+- **可重现的模拟**，使用随机种子
+- **混合人口**，结合精确个体和程序生成的群体
+- **高效序列化**，存储规范而非单个实例
 
-以下是一个简单示例：
+### 并行处理
 
-```csharp
-using dotMigrata.Core.Entities;
-using dotMigrata.Core.Enums;
-using dotMigrata.Core.Values;
-using dotMigrata.Generator;
-using dotMigrata.Logic.Calculators;
-using dotMigrata.Simulation.Engine;
-using dotMigrata.Simulation.Interfaces;
-using dotMigrata.Simulation.Models;
-using dotMigrata.Simulation.Pipeline;
-using static dotMigrata.Generator.AttributeValueBuilder;
+- **基于 PLINQ** 的计算，可扩展的性能
+- **线程安全操作**，使用并发集合
+- **多核优化**，适用于大规模模拟
 
-// 步骤 1：定义因素
-var incomeFactor = new FactorDefinition
-{
-    DisplayName = "收入",
-    Type = FactorType.Positive,
-    MinValue = 20000,
-    MaxValue = 100000
-};
+### 可扩展性
 
-var pollutionFactor = new FactorDefinition
-{
-    DisplayName = "污染",
-    Type = FactorType.Negative,
-    MinValue = 0,
-    MaxValue = 100
-};
+- **基于管线的架构**，支持自定义模拟阶段
+- **观察者模式**，用于实时监控
+- **自定义计算器**，用于吸引力和迁移逻辑
+- **可插拔算法**，适用于不同的模拟模型
 
-var allFactors = new[] { incomeFactor, pollutionFactor };
+### 状态管理
 
-// 步骤 2：使用 PersonCollection 生成人群
-var collection = new PersonCollection();
-collection.Add(new GeneratorConfig
-{
-    Count = 100000,
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
-    {
-        [incomeFactor] = Value().InRange(3, 8),
-        [pollutionFactor] = Value().InRange(-7, -3)
-    },
-    MovingWillingness = Value().InRange(0.4, 0.7),
-    RetentionRate = Value().InRange(0.3, 0.6),
-    Tags = ["城市居民"]
-});
-
-// 步骤 3：创建带有因素值和人群的城市
-var cityA = new City(
-    factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 50000 },
-        new FactorValue { Definition = pollutionFactor, Intensity = 30 }
-    ],
-    persons: collection.GenerateAllPersons(allFactors))
-{
-    DisplayName = "城市 A",
-    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
-    Area = 100.0,
-    Capacity = 1000000
-};
-
-var cityB = new City(
-    factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 40000 },
-        new FactorValue { Definition = pollutionFactor, Intensity = 20 }
-    ],
-    persons: []) // 初始为空
-{
-    DisplayName = "城市 B",
-    Location = new Coordinate { Latitude = 24.5, Longitude = 118.1 },
-    Area = 80.0,
-    Capacity = 800000
-};
-
-// 步骤 4：创建世界
-var world = new World([cityA, cityB], allFactors)
-{
-    DisplayName = "示例世界"
-};
-
-// 步骤 5：创建模拟引擎
-var attractionCalc = new StandardAttractionCalculator();
-var migrationCalc = new StandardMigrationCalculator();
-
-var stages = new List<ISimulationStage>
-{
-    new MigrationDecisionStage(migrationCalc, attractionCalc),
-    new MigrationExecutionStage()
-};
-
-var engine = new SimulationEngine(stages, SimulationConfig.Default);
-engine.AddObserver(new ConsoleObserver(colored: true));
-
-// 步骤 6：运行模拟
-var result = await engine.RunAsync(world);
-
-Console.WriteLine($"模拟在 {result.CurrentTick} 步后完成");
-Console.WriteLine($"最终人口: {result.World.Population:N0} 人");
-```
-
-### 高级用法 - PersonCollection（人口集合）
-
-**PersonCollection** 系统提供对人口生成的精细控制，支持 Individual、Individuals（复制）和 Generator 规范：
-
-```csharp
-using dotMigrata.Generator;
-
-// 创建包含混合规范的 PersonCollection
-var collection = new PersonCollection { IdPrefix = "CITY" };
-
-// 1. 添加具有精确属性的特定个体
-collection.Add(new IndividualSpecification
-{
-    FactorSensitivities = new Dictionary<string, double>
-    {
-        ["收入"] = 8.5,
-        ["污染"] = -6.0,
-        ["房价"] = -7.0
-    },
-    MovingWillingness = 0.85,
-    RetentionRate = 0.15,
-    Tags = new[] { "高流动性", "富裕" }
-});
-
-// 2. 添加 10,000 个相同的个体（复制）
-collection.Add(new IndividualsSpecification
-{
-    Count = 10_000,
-    FactorSensitivities = new Dictionary<string, double>
-    {
-        ["收入"] = 5.0,
-        ["污染"] = -3.0
-    },
-    MovingWillingness = 0.5,
-    RetentionRate = 0.5,
-    Tags = new[] { "中产阶级" }
-});
-
-// 3. 生成 100,000 个具有多样属性的个体
-collection.Add(new GeneratorSpecification(seed: 42)
-{
-    Count = 100_000,
-    FactorSensitivities = new Dictionary<string, ValueSpecification>
-    {
-        // 收入敏感度的自定义范围
-        ["收入"] = ValueSpecification.InRange(3, 15),
-        // 固定值 - 所有个体都是 -5.0
-        ["污染"] = ValueSpecification.Fixed(-5.0),
-        // 带偏移的随机（scale 1.2 = 平均高 20%）
-        ["房价"] = ValueSpecification.Random().WithScale(1.2)
-    },
-    MovingWillingness = ValueSpecification.InRange(0.6, 0.9),
-    Tags = new[] { "年轻专业人士", "技术工作者" }
-});
-
-// 直接创建世界
-var incomeFactor = new FactorDefinition
-{
-    DisplayName = "收入",
-    Type = FactorType.Positive,
-    MinValue = 30000,
-    MaxValue = 150000
-};
-
-var pollutionFactor = new FactorDefinition
-{
-    DisplayName = "污染",
-    Type = FactorType.Negative,
-    MinValue = 0,
-    MaxValue = 100
-};
-
-var housingFactor = new FactorDefinition
-{
-    DisplayName = "房价",
-    Type = FactorType.Negative,
-    MinValue = 500,
-    MaxValue = 3000
-};
-
-var allFactors = new[] { incomeFactor, pollutionFactor, housingFactor };
-var persons = collection.GenerateAllPersons(allFactors);
-
-var city = new City(
-    factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 80000 },
-        new FactorValue { Definition = pollutionFactor, Intensity = 30 },
-        new FactorValue { Definition = housingFactor, Intensity = 25000 }
-    ],
-    persons: persons)
-{
-    DisplayName = "城市 A",
-    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
-    Area = 100.0,
-    Capacity = 500000
-};
-
-var world = new World([city], allFactors)
-{
-    DisplayName = "多群体世界"
-};
-
-// 按标签分析人口
-var tagStats = world.AllPersons
-    .SelectMany(p => p.Tags)
-    .GroupBy(tag => tag)
-    .Select(g => new { Tag = g.Key, Count = g.Count() });
-```
-
-**PersonCollection 优势：**
-
-- 混合 Individual、Individuals 和 Generator 规范
-- 支持标签以分类和分析人口
-- 通过固定值、自定义范围或偏移随机实现精确控制
-- 使用种子实现可重现的生成
-- 高效的重复处理
-
-### 高级用法 - 自定义个体生成
-
-如需更多控制个体属性，您可以配置个体生成器：
-
-```csharp
-using dotMigrata.Generator;
-
-// 使用自定义参数配置个体生成
-var personConfig = new PersonGeneratorConfig
-{
-    MinMovingWillingness = 0.1,
-    MaxMovingWillingness = 0.9,
-    MinRetentionRate = 0.1,
-    MaxRetentionRate = 0.9,
-    MinSensitivity = -10.0,
-    MaxSensitivity = 10.0,
-    SensitivityStdDev = 3.0,  // 正态分布的标准差
-    RandomSeed = 42  // 用于可重现的结果
-};
-
-// 创建 PersonCollection 并使用自定义配置
-var collection = new PersonCollection();
-collection.Add(new GeneratorConfig
-{
-    Count = 50000,
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
-    {
-        [incomeFactor] = Value().InRange(5, 9)
-    },
-    MovingWillingness = Value().InRange(0.4, 0.7),
-    RetentionRate = Value().InRange(0.3, 0.6)
-});
-
-var persons = collection.GenerateAllPersons(allFactors, personConfig);
-
-// 将人群添加到城市
-var city = new City(
-    factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 80000 }
-    ],
-    persons: persons)
-{
-    DisplayName = "城市 A",
-    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
-    Area = 100.0,
-    Capacity = 500000
-};
-```
-
-### 配置模拟参数
-
-您还可以配置模拟执行和模型参数：
-
-```csharp
-using dotMigrata.Logic.Models;
-using dotMigrata.Simulation.Models;
-
-// 配置模型参数
-var modelConfig = new StandardModelConfig
-{
-    CapacitySteepness = 5.0,
-    DistanceDecayLambda = 0.001,
-    MigrationProbabilitySteepness = 10.0,
-    MigrationProbabilityThreshold = 0.0,
-    FactorSmoothingAlpha = 0.2
-};
-
-// 配置模拟参数
-var simConfig = new SimulationConfig
-{
-    MaxTicks = 500,
-    CheckStability = true,
-    StabilityThreshold = 100,  // 如果迁移人数 <100 则认为稳定
-    StabilityCheckInterval = 5,
-    MinTicksBeforeStabilityCheck = 20
-};
-
-// 使用自定义配置创建计算器和引擎
-var attractionCalc = new StandardAttractionCalculator(modelConfig);
-var migrationCalc = new StandardMigrationCalculator(modelConfig);
-
-// 创建模拟引擎
-var stages = new List<ISimulationStage>
-{
-    new MigrationDecisionStage(migrationCalc, attractionCalc),
-    new MigrationExecutionStage()
-};
-
-var engine = new SimulationEngine(stages, simConfig);
-engine.AddObserver(new ConsoleObserver(colored: true));
-
-// 运行模拟
-var result = await engine.RunAsync(world);
-```
+- **XML 快照系统**，具有确定性可重现性
+- **基于步数的跟踪**，用于模拟重放
+- **基于命名空间的格式**，区分代码概念和容器
+- **紧凑存储**，支持数百万个体
 
 ## 架构
 
@@ -404,24 +113,17 @@ var result = await engine.RunAsync(world);
 
 - `PersonGenerator` - 生成具有随机属性的大量人口
 - `PersonGeneratorConfig` - 个体生成配置（分布、范围、种子）
+- `PersonCollection` - 灵活的人口规范，支持 Individual、Individuals 和 Generator
 
 ### 快照层（`/src/Snapshot`）
 
 基于 PersonCollection 架构的完整快照系统，用于保存和恢复模拟状态：
 
-- **XML 序列化** - 使用 `System.Xml.Serialization` 的基于属性的 XML 格式，支持命名空间
-- **PersonCollection 存储** - 存储集合规范（模板 + 生成器）而非单个个体
+- **XML 序列化** - 使用 `System.Xml.Serialization` 的基于属性的 XML 格式
+- **PersonCollection 存储** - 存储集合规范而非单个个体
 - **确定性可重现** - 使用随机种子重新生成精确的模拟状态
 - **命名空间设计** - 区分代码概念（`c:Person`、`c:City`）和快照容器
-- **高效格式** - 简单值使用属性，复杂结构使用元素的紧凑 XML
-
-**主要特性：**
-
-- PersonCollection 是永久快照数据（类似 FactorDefinition）
-- 从规范重新生成个体（不可变属性）
-- 基于步数的状态跟踪实现模拟可重现
-- 模拟开始时"展开"集合（生成器产生个体）
-- 无需序列化单个个体（支持数百万个体）
+- **高效格式** - 紧凑 XML 支持数百万个体
 
 ## 性能特征
 
@@ -471,13 +173,68 @@ var result = await engine.RunAsync(world);
 - **`SimulationContext`** - 运行时模拟状态
 - **`AttractionResult`**, **`MigrationFlow`** - 计算结果
 
-## 示例
+## 使用快照
 
-查看 `/examples` 目录获取完整的工作示例：
+快照系统通过 XML 序列化实现确定性的模拟状态管理。
 
-- **`PersonBasedSimulationExample.cs`** - 完整的基于个体的模拟，3 个城市共 230,000 人
-- **`example-snapshot.xml`** - 采用 PersonCollection 架构和命名空间设计的示例 XML 快照
-- **`README.md`** - 功能和 PersonCollection 用法的详细说明
+### 从快照加载并运行模拟
+
+```csharp
+using dotMigrata.Snapshot.Serialization;
+
+// 从文件加载快照
+var snapshot = XmlSnapshotSerializer.DeserializeFromFile("path/to/snapshot.xml");
+
+if (snapshot?.World != null)
+{
+    // TODO: 将快照转换为 World 对象并运行模拟
+    // 注意：目前需要手动从 WorldSnapshotXml 转换为 World
+    // 这涉及重新创建 FactorDefinitions、Cities 和 PersonCollections
+}
+```
+
+### 导出快照到文件
+
+快照通常作为遵循模式格式的 XML 文件创建。完整示例请参见 [example-snapshot.xml](examples/example-snapshot.xml)。
+
+```csharp
+using dotMigrata.Snapshot.Models;
+using dotMigrata.Snapshot.Serialization;
+using dotMigrata.Snapshot.Enums;
+
+// 手动创建快照
+var snapshot = new WorldSnapshotXml
+{
+    Version = "1.0",
+    Status = SnapshotStatus.Seed,
+    CreatedAt = DateTime.UtcNow,
+    LastModifiedAt = DateTime.UtcNow,
+    CurrentStep = 0,
+    World = new WorldStateXml
+    {
+        DisplayName = "我的模拟",
+        FactorDefinitions = new List<FactorDefXml> { /* ... */ },
+        PersonCollections = new List<PersonCollectionXml> { /* ... */ },
+        Cities = new List<CityXml> { /* ... */ }
+    }
+};
+
+// 保存到文件
+XmlSnapshotSerializer.SerializeToFile(snapshot, "output-snapshot.xml");
+```
+
+**要点：**
+
+- 快照使用 PersonCollection 规范而非单个个体实例
+- 随机种子确保确定性可重现
+- 详细的快照模式和示例请参见 [API.md](API.md)
+- 完整的工作快照示例请参见 [examples/example-snapshot.xml](examples/example-snapshot.xml)
+
+## 文档
+
+- **[USAGE.zh.md](USAGE.zh.md)** - 详细的使用示例和代码片段
+- **[API.md](API.md)** - 完整的 API 参考文档
+- **[/examples](examples/)** - 工作示例和样本快照
 
 ## REST API / 中间层的可扩展性
 
@@ -508,9 +265,9 @@ var result = await engine.RunAsync(world);
 ### 集成点
 
 1. **实时更新**：使用 `ISimulationObserver` 通过 SignalR/WebSocket 流式传输事件
-2. **状态管理**：使用 `XmlSnapshotSerializer` 保存和恢复包含 PersonCollection 规范的模拟状态
+2. **状态管理**：使用 `XmlSnapshotSerializer` 保存和恢复模拟状态
 3. **自定义阶段**：通过 `ISimulationStage` 注入日志、指标或自定义逻辑
-4. **序列化**：采用基于命名空间的 XML 快照格式，用于 API 集成和确定性可重现
+4. **序列化**：采用基于命名空间的 XML 快照格式，用于 API 集成
 
 ## 贡献
 

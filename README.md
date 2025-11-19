@@ -57,308 +57,41 @@ factors in an ongoing iterative process.
     - Optionally update city factors based on migration feedback
 3. Repeat until simulation ends (max time steps or system stabilizes).
 
-## Installation & Usage
+## Key Features
 
-### Adding to Your Project
+### Person-Based Simulation
 
-Add the library to your .NET 9.0 project:
+- **Individual-level modeling** with 10,000 to 1,000,000+ persons
+- **Unique characteristics** for each person (sensitivities, willingness, retention)
+- **Independent decision-making** based on personal preferences
+- **Tag-based categorization** for statistical analysis
 
-```bash
-dotnet add reference /path/to/dotMigrata.csproj
-# Or, once published to NuGet:
-# dotnet add package GeoMigrata.Framework
-```
+### PersonCollection System
 
-### Quick Start Example
+- **Flexible population generation** with Individual, Individuals (duplicates), and Generator specifications
+- **Reproducible simulations** using random seeds
+- **Mixed populations** combining exact individuals with procedurally generated cohorts
+- **Efficient serialization** storing specifications instead of individual instances
 
-Here's a simple example:
+### Parallel Processing
 
-```csharp
-using dotMigrata.Core.Entities;
-using dotMigrata.Core.Enums;
-using dotMigrata.Core.Values;
-using dotMigrata.Generator;
-using dotMigrata.Logic.Calculators;
-using dotMigrata.Simulation.Engine;
-using dotMigrata.Simulation.Interfaces;
-using dotMigrata.Simulation.Models;
-using dotMigrata.Simulation.Pipeline;
-using static dotMigrata.Generator.AttributeValueBuilder;
+- **PLINQ-based** computation for scalable performance
+- **Thread-safe operations** using concurrent collections
+- **Multi-core optimization** for large-scale simulations
 
-// Step 1: Define factors
-var incomeFactor = new FactorDefinition
-{
-    DisplayName = "Income",
-    Type = FactorType.Positive,
-    MinValue = 20000,
-    MaxValue = 100000
-};
+### Extensibility
 
-var pollutionFactor = new FactorDefinition
-{
-    DisplayName = "Pollution",
-    Type = FactorType.Negative,
-    MinValue = 0,
-    MaxValue = 100
-};
+- **Pipeline-based architecture** with custom simulation stages
+- **Observer pattern** for real-time monitoring
+- **Custom calculators** for attraction and migration logic
+- **Pluggable algorithms** for different simulation models
 
-var allFactors = new[] { incomeFactor, pollutionFactor };
+### State Management
 
-// Step 2: Generate persons using PersonCollection
-var collection = new PersonCollection();
-collection.Add(new GeneratorConfig
-{
-    Count = 100000,
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
-    {
-        [incomeFactor] = Value().InRange(3, 8),
-        [pollutionFactor] = Value().InRange(-7, -3)
-    },
-    MovingWillingness = Value().InRange(0.4, 0.7),
-    RetentionRate = Value().InRange(0.3, 0.6),
-    Tags = ["urban_resident"]
-});
-
-// Step 3: Create cities with factor values and persons
-var cityA = new City(
-    factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 50000 },
-        new FactorValue { Definition = pollutionFactor, Intensity = 30 }
-    ],
-    persons: collection.GenerateAllPersons(allFactors))
-{
-    DisplayName = "City A",
-    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
-    Area = 100.0,
-    Capacity = 1000000
-};
-
-var cityB = new City(
-    factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 40000 },
-        new FactorValue { Definition = pollutionFactor, Intensity = 20 }
-    ],
-    persons: []) // Empty initially
-{
-    DisplayName = "City B",
-    Location = new Coordinate { Latitude = 24.5, Longitude = 118.1 },
-    Area = 80.0,
-    Capacity = 800000
-};
-
-// Step 4: Create world
-var world = new World([cityA, cityB], allFactors)
-{
-    DisplayName = "Example World"
-};
-
-// Step 5: Create simulation engine
-var attractionCalc = new StandardAttractionCalculator();
-var migrationCalc = new StandardMigrationCalculator();
-
-var stages = new List<ISimulationStage>
-{
-    new MigrationDecisionStage(migrationCalc, attractionCalc),
-    new MigrationExecutionStage()
-};
-
-var engine = new SimulationEngine(stages, SimulationConfig.Default);
-engine.AddObserver(new ConsoleObserver(colored: true));
-
-// Step 6: Run simulation
-var result = await engine.RunAsync(world);
-
-Console.WriteLine($"Simulation completed after {result.CurrentTick} ticks");
-Console.WriteLine($"Final population: {result.World.Population:N0} persons");
-```
-
-### Advanced Usage - PersonCollection
-
-The **PersonCollection** system provides fine-grained control over population generation with support for Individual,
-Individuals (duplicates), and Generator specifications:
-
-```csharp
-using dotMigrata.Generator;
-
-// Create a PersonCollection with mixed specifications
-var collection = new PersonCollection { IdPrefix = "CITY" };
-
-// 1. Add specific individuals with exact attributes
-collection.Add(new IndividualSpecification
-{
-    FactorSensitivities = new Dictionary<string, double>
-    {
-        ["Income"] = 8.5,
-        ["Pollution"] = -6.0,
-        ["Housing Cost"] = -7.0
-    },
-    MovingWillingness = 0.85,
-    RetentionRate = 0.15,
-    Tags = new[] { "high_mobility", "wealthy" }
-});
-
-// 2. Add 10,000 identical persons (duplicates)
-collection.Add(new IndividualsSpecification
-{
-    Count = 10_000,
-    FactorSensitivities = new Dictionary<string, double>
-    {
-        ["Income"] = 5.0,
-        ["Pollution"] = -3.0
-    },
-    MovingWillingness = 0.5,
-    RetentionRate = 0.5,
-    Tags = new[] { "middle_class" }
-});
-
-// 3. Generate 100,000 persons with varied attributes
-collection.Add(new GeneratorSpecification(seed: 42)
-{
-    Count = 100_000,
-    FactorSensitivities = new Dictionary<string, ValueSpecification>
-    {
-        // Custom range for Income sensitivity
-        ["Income"] = ValueSpecification.InRange(3, 15),
-        // Fixed value - all persons get -5.0
-        ["Pollution"] = ValueSpecification.Fixed(-5.0),
-        // Random with bias (scale 1.2 = 20% higher on average)
-        ["Housing Cost"] = ValueSpecification.Random().WithScale(1.2)
-    },
-    MovingWillingness = ValueSpecification.InRange(0.6, 0.9),
-    Tags = new[] { "young_professional", "tech_worker" }
-});
-
-// Use PersonCollection in city
-var persons = collection.GenerateAllPersons(allFactors);
-
-var city = new City(
-    factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 80000 },
-        new FactorValue { Definition = pollutionFactor, Intensity = 30 },
-        new FactorValue { Definition = housingFactor, Intensity = 2500 }
-    ],
-    persons: persons)
-{
-    DisplayName = "City A",
-    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
-    Area = 100.0,
-    Capacity = 500000
-};
-
-var world = new World([city], allFactors)
-{
-    DisplayName = "Multi-Cohort World"
-};
-
-// Analyze population by tags
-var tagStats = world.AllPersons
-    .SelectMany(p => p.Tags)
-    .GroupBy(tag => tag)
-    .Select(g => new { Tag = g.Key, Count = g.Count() });
-```
-
-**PersonCollection Benefits:**
-
-- Mix Individual, Individuals, and Generator specifications
-- Support for tags to categorize and analyze populations
-- Precise control with fixed values, custom ranges, or biased random
-- Reproducible generation with seeds
-- Efficient duplicate handling
-
-### Advanced Usage - Custom Person Generation
-
-For more control over person attributes, you can configure the person generator:
-
-```csharp
-using dotMigrata.Generator;
-
-// Configure person generation with custom parameters
-var personConfig = new PersonGeneratorConfig
-{
-    MinMovingWillingness = 0.1,
-    MaxMovingWillingness = 0.9,
-    MinRetentionRate = 0.1,
-    MaxRetentionRate = 0.9,
-    MinSensitivity = -10.0,
-    MaxSensitivity = 10.0,
-    SensitivityStdDev = 3.0,  // Standard deviation for normal distribution
-    RandomSeed = 42  // For reproducible results
-};
-
-// Create PersonCollection with custom configuration
-var collection = new PersonCollection();
-collection.Add(new GeneratorConfig
-{
-    Count = 50000,
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
-    {
-        [incomeFactor] = Value().InRange(5, 9)
-    },
-    MovingWillingness = Value().InRange(0.4, 0.7),
-    RetentionRate = Value().InRange(0.3, 0.6)
-});
-
-var persons = collection.GenerateAllPersons(allFactors, personConfig);
-
-// Add persons to city
-var city = new City(
-    factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 80000 }
-    ],
-    persons: persons)
-{
-    DisplayName = "City A",
-    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
-    Area = 100.0,
-    Capacity = 500000
-};
-```
-
-### Configuring Simulation Parameters
-
-You can also configure the simulation execution and model parameters:
-
-```csharp
-using dotMigrata.Logic.Models;
-using dotMigrata.Simulation.Models;
-
-// Configure model parameters
-var modelConfig = new StandardModelConfig
-{
-    CapacitySteepness = 5.0,
-    DistanceDecayLambda = 0.001,
-    MigrationProbabilitySteepness = 10.0,
-    MigrationProbabilityThreshold = 0.0,
-    FactorSmoothingAlpha = 0.2
-};
-
-// Configure simulation parameters
-var simConfig = new SimulationConfig
-{
-    MaxTicks = 500,
-    CheckStability = true,
-    StabilityThreshold = 100,  // Consider stable if <100 persons migrate
-    StabilityCheckInterval = 5,
-    MinTicksBeforeStabilityCheck = 20
-};
-
-// Create calculators with custom configuration
-var attractionCalc = new StandardAttractionCalculator(modelConfig);
-var migrationCalc = new StandardMigrationCalculator(modelConfig);
-
-// Create simulation engine with custom configuration
-var stages = new List<ISimulationStage>
-{
-    new MigrationDecisionStage(migrationCalc, attractionCalc),
-    new MigrationExecutionStage()
-};
-
-var engine = new SimulationEngine(stages, simConfig);
-engine.AddObserver(new ConsoleObserver(colored: true));
-
-// Run simulation
-var result = await engine.RunAsync(world);
-```
+- **XML snapshot system** with deterministic reproducibility
+- **Step-based tracking** for simulation replay
+- **Namespace-based format** distinguishing code concepts from containers
+- **Compact storage** supporting millions of persons
 
 ## Architecture
 
@@ -394,24 +127,17 @@ Person generation module:
 
 - `PersonGenerator` - Generates large populations with randomized attributes
 - `PersonGeneratorConfig` - Configuration for person generation (distributions, ranges, seeds)
+- `PersonCollection` - Flexible population specifications with Individual, Individuals, and Generator support
 
 ### Snapshot Layer (`/src/Snapshot`)
 
-Complete snapshot system for saving and restoring simulation states with PersonCollection-based architecture:
+Complete snapshot system for saving and restoring simulation states:
 
-- **XML Serialization** - Attribute-based XML format using `System.Xml.Serialization` with namespace support
-- **PersonCollection Storage** - Stores collection specifications (templates + generators) instead of individual persons
+- **XML Serialization** - Attribute-based XML format using `System.Xml.Serialization`
+- **PersonCollection Storage** - Stores collection specifications instead of individual persons
 - **Deterministic Reproducibility** - Uses random seeds to regenerate exact simulation states
 - **Namespace Design** - Distinguishes code concepts (`c:Person`, `c:City`) from snapshot containers
-- **Efficient Format** - Compact XML with attributes for simple values, elements for complex structures
-
-**Key Features:**
-
-- PersonCollections are permanent snapshot data (like FactorDefinitions)
-- Persons regenerated from specifications on load (immutable properties)
-- Step-based state tracking for simulation reproducibility
-- Collections "expanded" at simulation start (generators produce persons)
-- No individual person serialization (enables millions of persons)
+- **Efficient Format** - Compact XML supporting millions of persons
 
 ## Performance Characteristics
 
@@ -461,13 +187,69 @@ Domain models available for use and extension:
 - **`SimulationContext`** - Runtime simulation state
 - **`AttractionResult`**, **`MigrationFlow`** - Calculation results
 
-## Examples
+## Working with Snapshots
 
-See the `/examples` directory for complete working examples:
+The snapshot system enables deterministic simulation state management through XML serialization.
 
-- **`PersonBasedSimulationExample.cs`** - Complete person-based simulation with 230,000 persons across 3 cities
-- **`example-snapshot.xml`** - Example XML snapshot with PersonCollection architecture and namespace design
-- **`README.md`** - Detailed explanation of features and PersonCollection usage
+### Loading and Running a Simulation from Snapshot
+
+```csharp
+using dotMigrata.Snapshot.Serialization;
+
+// Load snapshot from file
+var snapshot = XmlSnapshotSerializer.DeserializeFromFile("path/to/snapshot.xml");
+
+if (snapshot?.World != null)
+{
+    // TODO: Convert snapshot to World object and run simulation
+    // Note: Currently requires manual conversion from WorldSnapshotXml to World
+    // This involves recreating FactorDefinitions, Cities, and PersonCollections
+}
+```
+
+### Exporting a Snapshot to File
+
+Snapshots are typically created as XML files following the schema format.
+See [example-snapshot.xml](examples/example-snapshot.xml) for a complete example.
+
+```csharp
+using dotMigrata.Snapshot.Models;
+using dotMigrata.Snapshot.Serialization;
+using dotMigrata.Snapshot.Enums;
+
+// Create a snapshot manually
+var snapshot = new WorldSnapshotXml
+{
+    Version = "1.0",
+    Status = SnapshotStatus.Seed,
+    CreatedAt = DateTime.UtcNow,
+    LastModifiedAt = DateTime.UtcNow,
+    CurrentStep = 0,
+    World = new WorldStateXml
+    {
+        DisplayName = "My Simulation",
+        FactorDefinitions = new List<FactorDefXml> { /* ... */ },
+        PersonCollections = new List<PersonCollectionXml> { /* ... */ },
+        Cities = new List<CityXml> { /* ... */ }
+    }
+};
+
+// Save to file
+XmlSnapshotSerializer.SerializeToFile(snapshot, "output-snapshot.xml");
+```
+
+**Key Points:**
+
+- Snapshots use PersonCollection specifications rather than individual person instances
+- Random seeds ensure deterministic reproducibility
+- See [API.md](API.md) for detailed snapshot schema and examples
+- See [examples/example-snapshot.xml](examples/example-snapshot.xml) for a complete working snapshot
+
+## Documentation
+
+- **[USAGE.md](USAGE.md)** - Detailed usage examples and code snippets
+- **[API.md](API.md)** - Complete API reference documentation
+- **[/examples](examples/)** - Working examples and sample snapshots
 
 ## Extensibility for REST API / Middleware
 
@@ -498,10 +280,9 @@ The library is designed to be consumed by middleware layers (console apps, web A
 ### Integration Points
 
 1. **Real-time Updates**: Use `ISimulationObserver` to stream events via SignalR/WebSocket
-2. **State Management**: Use `XmlSnapshotSerializer` to save and restore simulation states with PersonCollection
-   specifications
+2. **State Management**: Use `XmlSnapshotSerializer` to save and restore simulation states
 3. **Custom Stages**: Inject logging, metrics, or custom logic via `ISimulationStage`
-4. **Serialization**: XML snapshots with namespace-based format for API integration and deterministic reproducibility
+4. **Serialization**: XML snapshots with namespace-based format for API integration
 
 ## Contributing
 
