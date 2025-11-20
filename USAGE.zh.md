@@ -10,7 +10,6 @@
 - [自定义个体生成](#自定义个体生成)
 - [配置模拟参数](#配置模拟参数)
 - [使用快照](#使用快照)
-- [示例](#示例)
 
 ## 安装
 
@@ -19,14 +18,16 @@
 将库添加到您的 .NET 8.0/9.0/10.0 项目中:
 
 ```bash
-dotnet add reference /path/to/dotMigrata.csproj
-# 或者，发布到 NuGet 后：
-# dotnet add package GeoMigrata.Framework
+dotnet add package GeoMigrata.Framework
 ```
 
 ## 快速入门示例
 
-以下是一个简单示例：
+以下是分步指南帮助您开始使用 dotMigrata：
+
+### 步骤 1：定义因素
+
+因素代表城市的特征（如收入或污染），影响迁移决策。将它们定义为 `FactorDefinition` 对象，这些对象将在整个模拟中被引用。
 
 ```csharp
 using dotMigrata.Core.Entities;
@@ -40,49 +41,62 @@ using dotMigrata.Simulation.Models;
 using dotMigrata.Simulation.Pipeline;
 using static dotMigrata.Generator.AttributeValueBuilder;
 
-// 步骤 1：定义因素
+// 定义因素对象，这些对象将在整个模拟中被引用
 var incomeFactor = new FactorDefinition
 {
-    DisplayName = "收入",
+    DisplayName = "Income",
     Type = FactorType.Positive,
     MinValue = 20000,
-    MaxValue = 100000
+    MaxValue = 100000,
+    Transform = null  // 线性归一化
 };
 
 var pollutionFactor = new FactorDefinition
 {
-    DisplayName = "污染",
+    DisplayName = "Pollution",
     Type = FactorType.Negative,
     MinValue = 0,
-    MaxValue = 100
+    MaxValue = 100,
+    Transform = null  // 线性归一化
 };
 
 var allFactors = new[] { incomeFactor, pollutionFactor };
+```
 
-// 步骤 2：使用 PersonCollection 生成人群
+### 步骤 2：生成人口
+
+使用 `PersonCollection` 定义如何生成个体。注意我们直接引用 `FactorDefinition` 对象，而不是字符串。
+
+```csharp
 var collection = new PersonCollection();
 collection.Add(new GeneratorConfig
 {
     Count = 100000,
+    // 使用 FactorDefinition 引用（而非字符串）以确保类型安全
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        [incomeFactor] = Value().InRange(3, 8),
-        [pollutionFactor] = Value().InRange(-7, -3)
+        [incomeFactor] = Value().InRange(3, 8),        // 对收入的敏感度
+        [pollutionFactor] = Value().InRange(-7, -3)    // 对污染的负敏感度
     },
     MovingWillingness = Value().InRange(0.4, 0.7),
     RetentionRate = Value().InRange(0.3, 0.6),
-    Tags = ["城市居民"]
+    Tags = ["urban_resident"]
 });
+```
 
-// 步骤 3：创建带有因素值和人群的城市
+### 步骤 3：创建城市
+
+创建带有因素值的城市并分配生成的人口。同样，使用 `FactorDefinition` 对象引用。
+
+```csharp
 var cityA = new City(
     factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 50000 },
-        new FactorValue { Definition = pollutionFactor, Intensity = 30 }
+        new FactorValue { Definition = incomeFactor, Intensity = 50000 },    // 引用对象
+        new FactorValue { Definition = pollutionFactor, Intensity = 30 }      // 而非字符串
     ],
     persons: collection.GenerateAllPersons(allFactors))
 {
-    DisplayName = "城市 A",
+    DisplayName = "City A",
     Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
     Area = 100.0,
     Capacity = 1000000
@@ -93,34 +107,49 @@ var cityB = new City(
         new FactorValue { Definition = incomeFactor, Intensity = 40000 },
         new FactorValue { Definition = pollutionFactor, Intensity = 20 }
     ],
-    persons: []) // 初始为空
+    persons: [])  // 初始为空
 {
-    DisplayName = "城市 B",
+    DisplayName = "City B",
     Location = new Coordinate { Latitude = 24.5, Longitude = 118.1 },
     Area = 80.0,
     Capacity = 800000
 };
+```
 
-// 步骤 4：创建世界
+### 步骤 4：创建世界
+
+将城市和因素定义组合成一个世界。
+
+```csharp
 var world = new World([cityA, cityB], allFactors)
 {
-    DisplayName = "示例世界"
+    DisplayName = "Example World"
 };
+```
 
-// 步骤 5：创建模拟引擎
+### 步骤 5：配置模拟引擎
+
+使用计算器和观察者设置模拟管道。
+
+```csharp
 var attractionCalc = new StandardAttractionCalculator();
 var migrationCalc = new StandardMigrationCalculator();
 
-var stages = new List<ISimulationStage>
-{
+List<ISimulationStage> stages =
+[
     new MigrationDecisionStage(migrationCalc, attractionCalc),
     new MigrationExecutionStage()
-};
+];
 
 var engine = new SimulationEngine(stages, SimulationConfig.Default);
 engine.AddObserver(new ConsoleObserver(colored: true));
+```
 
-// 步骤 6：运行模拟
+### 步骤 6：运行模拟
+
+执行模拟并查看结果。
+
+```csharp
 var result = await engine.RunAsync(world);
 
 Console.WriteLine($"模拟在 {result.CurrentTick} 步后完成");
@@ -129,96 +158,105 @@ Console.WriteLine($"最终人口: {result.World.Population:N0} 人");
 
 ## PersonCollection 系统
 
-**PersonCollection** 系统提供对人口生成的精细控制，支持 Individual、Individuals（复制）和 Generator 规范：
+**PersonCollection** 系统提供对人口生成的精细控制。您可以添加单个个体、重复个体或使用带有规范的生成器。**重要：** 始终使用
+`FactorDefinition` 对象引用，而非字符串。
 
 ```csharp
+using dotMigrata.Core.Entities;
+using dotMigrata.Core.Enums;
+using dotMigrata.Core.Values;
 using dotMigrata.Generator;
+using static dotMigrata.Generator.AttributeValueBuilder;
 
-// 创建包含混合规范的 PersonCollection
-var collection = new PersonCollection { IdPrefix = "CITY" };
-
-// 1. 添加具有精确属性的特定个体
-collection.Add(new IndividualSpecification
-{
-    FactorSensitivities = new Dictionary<string, double>
-    {
-        ["收入"] = 8.5,
-        ["污染"] = -6.0,
-        ["房价"] = -7.0
-    },
-    MovingWillingness = 0.85,
-    RetentionRate = 0.15,
-    Tags = new[] { "高流动性", "富裕" }
-});
-
-// 2. 添加 10,000 个相同的个体（复制）
-collection.Add(new IndividualsSpecification
-{
-    Count = 10_000,
-    FactorSensitivities = new Dictionary<string, double>
-    {
-        ["收入"] = 5.0,
-        ["污染"] = -3.0
-    },
-    MovingWillingness = 0.5,
-    RetentionRate = 0.5,
-    Tags = new[] { "中产阶级" }
-});
-
-// 3. 生成 100,000 个具有多样属性的个体
-collection.Add(new GeneratorSpecification(seed: 42)
-{
-    Count = 100_000,
-    FactorSensitivities = new Dictionary<string, ValueSpecification>
-    {
-        // 收入敏感度的自定义范围
-        ["收入"] = ValueSpecification.InRange(3, 15),
-        // 固定值 - 所有个体都是 -5.0
-        ["污染"] = ValueSpecification.Fixed(-5.0),
-        // 带偏移的随机（scale 1.2 = 平均高 20%）
-        ["房价"] = ValueSpecification.Random().WithScale(1.2)
-    },
-    MovingWillingness = ValueSpecification.InRange(0.6, 0.9),
-    Tags = new[] { "年轻专业人士", "技术工作者" }
-});
-
-// 直接创建世界
+// 首先，定义您的因素对象（全引用架构）
 var incomeFactor = new FactorDefinition
 {
-    DisplayName = "收入",
+    DisplayName = "Income",
     Type = FactorType.Positive,
     MinValue = 30000,
-    MaxValue = 150000
+    MaxValue = 150000,
+    Transform = null
 };
 
 var pollutionFactor = new FactorDefinition
 {
-    DisplayName = "污染",
+    DisplayName = "Pollution",
     Type = FactorType.Negative,
     MinValue = 0,
-    MaxValue = 100
+    MaxValue = 100,
+    Transform = null
 };
 
 var housingFactor = new FactorDefinition
 {
-    DisplayName = "房价",
+    DisplayName = "Housing Cost",
     Type = FactorType.Negative,
     MinValue = 500,
-    MaxValue = 3000
+    MaxValue = 3000,
+    Transform = null
 };
 
-var allFactors = new[] { incomeFactor, pollutionFactor, housingFactor };
-var persons = collection.GenerateAllPersons(allFactors);
+FactorDefinition[] allFactors = [incomeFactor, pollutionFactor, housingFactor];
+
+// 创建包含混合规范的 PersonCollection
+var collection = new PersonCollection();
+
+// 1. 添加具有精确属性的特定个体
+var wealthyPerson = new Person(new Dictionary<FactorDefinition, double>
+{
+    [incomeFactor] = 8.5,      // 使用对象引用，而非字符串
+    [pollutionFactor] = -6.0,
+    [housingFactor] = -7.0
+})
+{
+    MovingWillingness = 0.85,
+    RetentionRate = 0.15,
+    Tags = ["high_mobility", "wealthy"]
+};
+collection.Add(wealthyPerson);
+
+// 2. 添加 10,000 个相同的个体（重复）
+var middleClassPerson = new Person(new Dictionary<FactorDefinition, double>
+{
+    [incomeFactor] = 5.0,
+    [pollutionFactor] = -3.0,
+    [housingFactor] = -4.0
+})
+{
+    MovingWillingness = 0.5,
+    RetentionRate = 0.5,
+    Tags = ["middle_class"]
+};
+collection.Add(middleClassPerson, count: 10_000);
+
+// 3. 使用生成器生成 100,000 个具有多样属性的个体
+collection.Add(new GeneratorConfig(seed: 42)
+{
+    Count = 100_000,
+    // 使用 FactorDefinition 引用（而非字符串）以确保类型安全
+    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
+    {
+        [incomeFactor] = Value().InRange(3, 15),  // 收入敏感度的自定义范围
+        [pollutionFactor] = Value().Of(-5.0)      // 固定值 - 所有个体都是 -5.0
+        // 注意：housingFactor 敏感度将使用默认范围和正态分布
+    },
+    MovingWillingness = Value().InRange(0.6, 0.9),
+    RetentionRate = Value().InRange(0.3, 0.6),
+    Tags = ["young_professional", "tech_worker"]
+});
+
+// 生成所有个体并在城市中使用
+IEnumerable<Person> persons = collection.GenerateAllPersons(allFactors);
 
 var city = new City(
     factorValues: [
         new FactorValue { Definition = incomeFactor, Intensity = 80000 },
         new FactorValue { Definition = pollutionFactor, Intensity = 30 },
-        new FactorValue { Definition = housingFactor, Intensity = 25000 }
+        new FactorValue { Definition = housingFactor, Intensity = 2500 }
     ],
     persons: persons)
 {
-    DisplayName = "城市 A",
+    DisplayName = "City A",
     Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
     Area = 100.0,
     Capacity = 500000
@@ -226,7 +264,7 @@ var city = new City(
 
 var world = new World([city], allFactors)
 {
-    DisplayName = "多群体世界"
+    DisplayName = "Multi-Cohort World"
 };
 
 // 按标签分析人口
@@ -238,46 +276,55 @@ var tagStats = world.AllPersons
 
 **PersonCollection 优势：**
 
-- 混合 Individual、Individuals 和 Generator 规范
+- 混合单个个体、重复个体和生成器
 - 支持标签以分类和分析人口
 - 通过固定值、自定义范围或偏移随机实现精确控制
 - 使用种子实现可重现的生成
 - 高效的重复处理
+- **全引用架构：** 使用 `FactorDefinition` 对象引用以确保类型安全
 
 ## 自定义个体生成
 
-如需更多控制个体属性，您可以配置个体生成器：
+如需更多控制个体属性，您可以使用自定义参数配置单个生成器：
 
 ```csharp
+using dotMigrata.Core.Entities;
+using dotMigrata.Core.Enums;
+using dotMigrata.Core.Values;
 using dotMigrata.Generator;
+using static dotMigrata.Generator.AttributeValueBuilder;
 
-// 使用自定义参数配置个体生成
-var personConfig = new PersonGeneratorConfig
+// 首先定义因素（全引用架构）
+var incomeFactor = new FactorDefinition
 {
-    MinMovingWillingness = 0.1,
-    MaxMovingWillingness = 0.9,
-    MinRetentionRate = 0.1,
-    MaxRetentionRate = 0.9,
-    MinSensitivity = -10.0,
-    MaxSensitivity = 10.0,
-    SensitivityStdDev = 3.0,  // 正态分布的标准差
-    RandomSeed = 42  // 用于可重现的结果
+    DisplayName = "Income",
+    Type = FactorType.Positive,
+    MinValue = 20000,
+    MaxValue = 100000,
+    Transform = null
 };
 
-// 创建 PersonCollection 并使用自定义配置
+FactorDefinition[] allFactors = [incomeFactor];
+
+// 创建带有自定义生成器配置的 PersonCollection
 var collection = new PersonCollection();
-collection.Add(new GeneratorConfig
+
+// 使用自定义种子和敏感度参数配置生成器
+collection.Add(new GeneratorConfig(seed: 42)
 {
     Count = 50000,
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        [incomeFactor] = Value().InRange(5, 9)
+        [incomeFactor] = Value().InRange(5, 9)  // 使用 FactorDefinition 引用
     },
     MovingWillingness = Value().InRange(0.4, 0.7),
-    RetentionRate = Value().InRange(0.3, 0.6)
+    RetentionRate = Value().InRange(0.3, 0.6),
+    // 高级生成器选项
+    DefaultSensitivityRange = new ValueRange(-10.0, 10.0),  // 未指定因素的默认范围
+    SensitivityStdDev = 3.0  // 正态分布的标准差
 });
 
-var persons = collection.GenerateAllPersons(allFactors, personConfig);
+IEnumerable<Person> persons = collection.GenerateAllPersons(allFactors);
 
 // 将人群添加到城市
 var city = new City(
@@ -286,7 +333,7 @@ var city = new City(
     ],
     persons: persons)
 {
-    DisplayName = "城市 A",
+    DisplayName = "City A",
     Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
     Area = 100.0,
     Capacity = 500000
@@ -295,14 +342,18 @@ var city = new City(
 
 ## 配置模拟参数
 
-您还可以配置模拟执行和模型参数：
+您可以使用现代 C# 语法配置模拟执行和模型参数：
 
 ```csharp
+using dotMigrata.Logic.Calculators;
 using dotMigrata.Logic.Models;
+using dotMigrata.Simulation.Engine;
+using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
+using dotMigrata.Simulation.Pipeline;
 
 // 配置模型参数
-var modelConfig = new StandardModelConfig
+StandardModelConfig modelConfig = new()
 {
     CapacitySteepness = 5.0,
     DistanceDecayLambda = 0.001,
@@ -312,7 +363,7 @@ var modelConfig = new StandardModelConfig
 };
 
 // 配置模拟参数
-var simConfig = new SimulationConfig
+SimulationConfig simConfig = new()
 {
     MaxTicks = 500,
     CheckStability = true,
@@ -321,16 +372,16 @@ var simConfig = new SimulationConfig
     MinTicksBeforeStabilityCheck = 20
 };
 
-// 使用自定义配置创建计算器和引擎
+// 使用自定义配置创建计算器
 var attractionCalc = new StandardAttractionCalculator(modelConfig);
 var migrationCalc = new StandardMigrationCalculator(modelConfig);
 
-// 创建模拟引擎
-var stages = new List<ISimulationStage>
-{
+// 使用自定义配置创建模拟引擎
+List<ISimulationStage> stages =
+[
     new MigrationDecisionStage(migrationCalc, attractionCalc),
     new MigrationExecutionStage()
-};
+];
 
 var engine = new SimulationEngine(stages, simConfig);
 engine.AddObserver(new ConsoleObserver(colored: true));
@@ -364,15 +415,15 @@ if (snapshot?.World != null)
 
 ### 创建并保存快照
 
-快照通常作为 XML 文件创建。以下是如何以编程方式创建快照：
+快照通常作为 XML 文件创建。以下是如何使用现代 C# 语法以编程方式创建快照：
 
 ```csharp
+using dotMigrata.Snapshot.Enums;
 using dotMigrata.Snapshot.Models;
 using dotMigrata.Snapshot.Serialization;
-using dotMigrata.Snapshot.Enums;
 
 // 创建快照结构
-var snapshot = new WorldSnapshotXml
+WorldSnapshotXml snapshot = new()
 {
     Version = "1.0",
     Status = SnapshotStatus.Seed,
@@ -384,12 +435,12 @@ var snapshot = new WorldSnapshotXml
         DisplayName = "我的模拟世界",
         
         // 定义因素
-        FactorDefinitions = new List<FactorDefXml>
-        {
+        FactorDefinitions =
+        [
             new FactorDefXml
             {
                 Id = "income",
-                DisplayName = "收入",
+                DisplayName = "Income",
                 Type = "Positive",
                 Min = 20000,
                 Max = 100000,
@@ -398,28 +449,28 @@ var snapshot = new WorldSnapshotXml
             new FactorDefXml
             {
                 Id = "pollution",
-                DisplayName = "污染",
+                DisplayName = "Pollution",
                 Type = "Negative",
                 Min = 0,
                 Max = 100,
                 Transform = "Linear"
             }
-        },
+        ],
         
         // 定义人口集合
-        PersonCollections = new List<PersonCollectionXml>
-        {
+        PersonCollections =
+        [
             new PersonCollectionXml
             {
                 Id = "initial_population",
-                Generators = new List<GeneratorXml>
-                {
+                Generators =
+                [
                     new GeneratorXml
                     {
                         Count = 100000,
                         Seed = 42,
-                        FactorSensitivities = new List<SensitivitySpecXml>
-                        {
+                        FactorSensitivities =
+                        [
                             new SensitivitySpecXml
                             {
                                 Id = "income",
@@ -430,7 +481,7 @@ var snapshot = new WorldSnapshotXml
                                 Id = "pollution",
                                 InRange = new RangeValueXml { Min = -7, Max = -3 }
                             }
-                        },
+                        ],
                         MovingWillingness = new ValueSpecXml
                         {
                             InRange = new RangeValueXml { Min = 0.4, Max = 0.7 }
@@ -439,48 +490,48 @@ var snapshot = new WorldSnapshotXml
                         {
                             InRange = new RangeValueXml { Min = 0.3, Max = 0.6 }
                         },
-                        Tags = "城市居民"
+                        Tags = "urban_resident"
                     }
-                }
+                ]
             }
-        },
+        ],
         
         // 定义城市
-        Cities = new List<CityXml>
-        {
+        Cities =
+        [
             new CityXml
             {
                 Id = "city_a",
-                DisplayName = "城市 A",
+                DisplayName = "City A",
                 Latitude = 26.0,
                 Longitude = 119.3,
                 Area = 100.0,
                 Capacity = 1000000,
-                FactorValues = new List<FactorValueXml>
-                {
+                FactorValues =
+                [
                     new FactorValueXml { Id = "income", Value = 50000 },
                     new FactorValueXml { Id = "pollution", Value = 30 }
-                },
-                PersonCollections = new List<CollectionRefXml>
-                {
+                ],
+                PersonCollections =
+                [
                     new CollectionRefXml { Id = "initial_population" }
-                }
+                ]
             },
             new CityXml
             {
                 Id = "city_b",
-                DisplayName = "城市 B",
+                DisplayName = "City B",
                 Latitude = 24.5,
                 Longitude = 118.1,
                 Area = 80.0,
                 Capacity = 800000,
-                FactorValues = new List<FactorValueXml>
-                {
+                FactorValues =
+                [
                     new FactorValueXml { Id = "income", Value = 40000 },
                     new FactorValueXml { Id = "pollution", Value = 20 }
-                }
+                ]
             }
-        }
+        ]
     }
 };
 
@@ -507,13 +558,3 @@ Console.WriteLine("快照已保存到 my-simulation-snapshot.xml");
 - **Steps**：可选的模拟步骤，用于可重现性
 
 完整的工作示例请参见 [examples/example-snapshot.xml](../examples/example-snapshot.xml)。
-
-## 示例
-
-查看 `/examples` 目录获取完整的工作示例：
-
-- **`PersonBasedSimulationExample.cs`** - 完整的基于个体的模拟，3 个城市共 230,000 人
-- **`example-snapshot.xml`** - 采用 PersonCollection 架构和命名空间设计的示例 XML 快照
-- **`README.md`** - 功能和 PersonCollection 用法的详细说明
-
-有关详细的 API 文档，请参阅 [API.md](API.md)。
