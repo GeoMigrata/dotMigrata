@@ -65,7 +65,7 @@ public record FactorDefinition
     /// Gets or initializes the optional transformation type for normalization.
     /// When null, linear normalization is used.
     /// </summary>
-    public required TransformType? Transform { get; init; }
+    public TransformType? Transform { get; init; }
 
     /// <summary>
     /// Normalizes a raw value to the 0-1 range using this factor's transformation.
