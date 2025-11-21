@@ -10,7 +10,6 @@ This guide provides detailed examples and usage instructions for dotMigrata.
 - [Custom Person Generation](#custom-person-generation)
 - [Configuring Simulation Parameters](#configuring-simulation-parameters)
 - [Working with Snapshots](#working-with-snapshots)
-- [Examples](#examples)
 
 ## Installation
 
@@ -19,14 +18,17 @@ This guide provides detailed examples and usage instructions for dotMigrata.
 Add the library to your .NET 8.0/9.0/10.0 project:
 
 ```bash
-dotnet add reference /path/to/dotMigrata.csproj
-# Or, once published to NuGet:
-# dotnet add package GeoMigrata.Framework
+dotnet add package GeoMigrata.Framework
 ```
 
 ## Quick Start Example
 
-Here's a simple example to get you started:
+Here's a step-by-step guide to get you started with dotMigrata:
+
+### Step 1: Define Factors
+
+Factors represent characteristics of cities (like income or pollution) that influence migration decisions. Define them
+as `FactorDefinition` objects that will be referenced throughout your simulation.
 
 ```csharp
 using dotMigrata.Core.Entities;
@@ -40,13 +42,14 @@ using dotMigrata.Simulation.Models;
 using dotMigrata.Simulation.Pipeline;
 using static dotMigrata.Generator.AttributeValueBuilder;
 
-// Step 1: Define factors
+// Define factor objects that will be referenced throughout the simulation
 var incomeFactor = new FactorDefinition
 {
     DisplayName = "Income",
     Type = FactorType.Positive,
     MinValue = 20000,
-    MaxValue = 100000
+    MaxValue = 100000,
+    Transform = null  // Linear normalization
 };
 
 var pollutionFactor = new FactorDefinition
@@ -54,31 +57,44 @@ var pollutionFactor = new FactorDefinition
     DisplayName = "Pollution",
     Type = FactorType.Negative,
     MinValue = 0,
-    MaxValue = 100
+    MaxValue = 100,
+    Transform = null  // Linear normalization
 };
 
 var allFactors = new[] { incomeFactor, pollutionFactor };
+```
 
-// Step 2: Generate persons using PersonCollection
+### Step 2: Generate Population
+
+Use `PersonCollection` to define how persons are generated. Notice how we reference the `FactorDefinition` objects
+directly, not strings.
+
+```csharp
 var collection = new PersonCollection();
 collection.Add(new GeneratorConfig
 {
     Count = 100000,
+    // Use FactorDefinition references (not strings) for type safety
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        [incomeFactor] = Value().InRange(3, 8),
-        [pollutionFactor] = Value().InRange(-7, -3)
+        [incomeFactor] = Value().InRange(3, 8),        // Sensitivity to income
+        [pollutionFactor] = Value().InRange(-7, -3)    // Negative sensitivity to pollution
     },
     MovingWillingness = Value().InRange(0.4, 0.7),
     RetentionRate = Value().InRange(0.3, 0.6),
     Tags = ["urban_resident"]
 });
+```
 
-// Step 3: Create cities with factor values and persons
+### Step 3: Create Cities
+
+Create cities with factor values and assign the generated population. Again, use `FactorDefinition` object references.
+
+```csharp
 var cityA = new City(
     factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 50000 },
-        new FactorValue { Definition = pollutionFactor, Intensity = 30 }
+        new FactorValue { Definition = incomeFactor, Intensity = 50000 },    // Reference the object
+        new FactorValue { Definition = pollutionFactor, Intensity = 30 }      // Not a string
     ],
     persons: collection.GenerateAllPersons(allFactors))
 {
@@ -93,34 +109,49 @@ var cityB = new City(
         new FactorValue { Definition = incomeFactor, Intensity = 40000 },
         new FactorValue { Definition = pollutionFactor, Intensity = 20 }
     ],
-    persons: []) // Empty initially
+    persons: [])  // Empty initially
 {
     DisplayName = "City B",
     Location = new Coordinate { Latitude = 24.5, Longitude = 118.1 },
     Area = 80.0,
     Capacity = 800000
 };
+```
 
-// Step 4: Create world
+### Step 4: Create World
+
+Combine cities and factor definitions into a world.
+
+```csharp
 var world = new World([cityA, cityB], allFactors)
 {
     DisplayName = "Example World"
 };
+```
 
-// Step 5: Create simulation engine
+### Step 5: Configure Simulation Engine
+
+Set up the simulation pipeline with calculators and observers.
+
+```csharp
 var attractionCalc = new StandardAttractionCalculator();
 var migrationCalc = new StandardMigrationCalculator();
 
-var stages = new List<ISimulationStage>
-{
+List<ISimulationStage> stages =
+[
     new MigrationDecisionStage(migrationCalc, attractionCalc),
     new MigrationExecutionStage()
-};
+];
 
 var engine = new SimulationEngine(stages, SimulationConfig.Default);
 engine.AddObserver(new ConsoleObserver(colored: true));
+```
 
-// Step 6: Run simulation
+### Step 6: Run Simulation
+
+Execute the simulation and view results.
+
+```csharp
 var result = await engine.RunAsync(world);
 
 Console.WriteLine($"Simulation completed after {result.CurrentTick} ticks");
@@ -129,62 +160,97 @@ Console.WriteLine($"Final population: {result.World.Population:N0} persons");
 
 ## PersonCollection System
 
-The **PersonCollection** system provides fine-grained control over population generation with support for Individual,
-Individuals (duplicates), and Generator specifications:
+The **PersonCollection** system provides fine-grained control over population generation. You can add individual
+persons,
+duplicates, or use generators with specifications. **Important:** Always use `FactorDefinition` object references, not
+strings.
 
 ```csharp
+using dotMigrata.Core.Entities;
+using dotMigrata.Core.Enums;
+using dotMigrata.Core.Values;
 using dotMigrata.Generator;
+using static dotMigrata.Generator.AttributeValueBuilder;
+
+// First, define your factor objects
+var incomeFactor = new FactorDefinition
+{
+    DisplayName = "Income",
+    Type = FactorType.Positive,
+    MinValue = 30000,
+    MaxValue = 150000,
+    Transform = null
+};
+
+var pollutionFactor = new FactorDefinition
+{
+    DisplayName = "Pollution",
+    Type = FactorType.Negative,
+    MinValue = 0,
+    MaxValue = 100,
+    Transform = null
+};
+
+var housingFactor = new FactorDefinition
+{
+    DisplayName = "Housing Cost",
+    Type = FactorType.Negative,
+    MinValue = 500,
+    MaxValue = 3000,
+    Transform = null
+};
+
+FactorDefinition[] allFactors = [incomeFactor, pollutionFactor, housingFactor];
 
 // Create a PersonCollection with mixed specifications
-var collection = new PersonCollection { IdPrefix = "CITY" };
+var collection = new PersonCollection();
 
-// 1. Add specific individuals with exact attributes
-collection.Add(new IndividualSpecification
+// 1. Add a specific individual with exact attributes
+var wealthyPerson = new Person(new Dictionary<FactorDefinition, double>
 {
-    FactorSensitivities = new Dictionary<string, double>
-    {
-        ["Income"] = 8.5,
-        ["Pollution"] = -6.0,
-        ["Housing Cost"] = -7.0
-    },
+    [incomeFactor] = 8.5,      // Use object reference, not string
+    [pollutionFactor] = -6.0,
+    [housingFactor] = -7.0
+})
+{
     MovingWillingness = 0.85,
     RetentionRate = 0.15,
-    Tags = new[] { "high_mobility", "wealthy" }
-});
+    Tags = ["high_mobility", "wealthy"]
+};
+collection.Add(wealthyPerson);
 
 // 2. Add 10,000 identical persons (duplicates)
-collection.Add(new IndividualsSpecification
+var middleClassPerson = new Person(new Dictionary<FactorDefinition, double>
 {
-    Count = 10_000,
-    FactorSensitivities = new Dictionary<string, double>
-    {
-        ["Income"] = 5.0,
-        ["Pollution"] = -3.0
-    },
+    [incomeFactor] = 5.0,
+    [pollutionFactor] = -3.0,
+    [housingFactor] = -4.0
+})
+{
     MovingWillingness = 0.5,
     RetentionRate = 0.5,
-    Tags = new[] { "middle_class" }
-});
+    Tags = ["middle_class"]
+};
+collection.Add(middleClassPerson, count: 10_000);
 
-// 3. Generate 100,000 persons with varied attributes
-collection.Add(new GeneratorSpecification(seed: 42)
+// 3. Generate 100,000 persons with varied attributes using a generator
+collection.Add(new GeneratorConfig(seed: 42)
 {
     Count = 100_000,
-    FactorSensitivities = new Dictionary<string, ValueSpecification>
+    // Use FactorDefinition references (not strings) for type safety
+    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        // Custom range for Income sensitivity
-        ["Income"] = ValueSpecification.InRange(3, 15),
-        // Fixed value - all persons get -5.0
-        ["Pollution"] = ValueSpecification.Fixed(-5.0),
-        // Random with bias (scale 1.2 = 20% higher on average)
-        ["Housing Cost"] = ValueSpecification.Random().WithScale(1.2)
+        [incomeFactor] = Value().InRange(3, 15),  // Custom range for Income sensitivity
+        [pollutionFactor] = Value().Of(-5.0)      // Fixed value - all persons get -5.0
+        // Note: housingFactor sensitivity will use default range with normal distribution
     },
-    MovingWillingness = ValueSpecification.InRange(0.6, 0.9),
-    Tags = new[] { "young_professional", "tech_worker" }
+    MovingWillingness = Value().InRange(0.6, 0.9),
+    RetentionRate = Value().InRange(0.3, 0.6),
+    Tags = ["young_professional", "tech_worker"]
 });
 
-// Use PersonCollection in city
-var persons = collection.GenerateAllPersons(allFactors);
+// Generate all persons and use in city
+IEnumerable<Person> persons = collection.GenerateAllPersons(allFactors);
 
 var city = new City(
     factorValues: [
@@ -214,46 +280,55 @@ var tagStats = world.AllPersons
 
 **PersonCollection Benefits:**
 
-- Mix Individual, Individuals, and Generator specifications
+- Mix individual persons, duplicates, and generators
 - Support for tags to categorize and analyze populations
 - Precise control with fixed values, custom ranges, or biased random
 - Reproducible generation with seeds
 - Efficient duplicate handling
+- **Full-reference architecture:** Uses `FactorDefinition` object references for type safety
 
 ## Custom Person Generation
 
-For more control over person attributes, you can configure the person generator:
+For more control over person attributes, you can configure individual generators with custom parameters:
 
 ```csharp
+using dotMigrata.Core.Entities;
+using dotMigrata.Core.Enums;
+using dotMigrata.Core.Values;
 using dotMigrata.Generator;
+using static dotMigrata.Generator.AttributeValueBuilder;
 
-// Configure person generation with custom parameters
-var personConfig = new PersonGeneratorConfig
+// Define factors first (full-reference architecture)
+var incomeFactor = new FactorDefinition
 {
-    MinMovingWillingness = 0.1,
-    MaxMovingWillingness = 0.9,
-    MinRetentionRate = 0.1,
-    MaxRetentionRate = 0.9,
-    MinSensitivity = -10.0,
-    MaxSensitivity = 10.0,
-    SensitivityStdDev = 3.0,  // Standard deviation for normal distribution
-    RandomSeed = 42  // For reproducible results
+    DisplayName = "Income",
+    Type = FactorType.Positive,
+    MinValue = 20000,
+    MaxValue = 100000,
+    Transform = null
 };
 
-// Create PersonCollection with custom configuration
+FactorDefinition[] allFactors = [incomeFactor];
+
+// Create PersonCollection with custom generator configuration
 var collection = new PersonCollection();
-collection.Add(new GeneratorConfig
+
+// Configure generator with custom seed and sensitivity parameters
+collection.Add(new GeneratorConfig(seed: 42)
 {
     Count = 50000,
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        [incomeFactor] = Value().InRange(5, 9)
+        [incomeFactor] = Value().InRange(5, 9)  // Use FactorDefinition reference
     },
     MovingWillingness = Value().InRange(0.4, 0.7),
-    RetentionRate = Value().InRange(0.3, 0.6)
+    RetentionRate = Value().InRange(0.3, 0.6),
+    // Advanced generator options
+    DefaultSensitivityRange = new ValueRange(-10.0, 10.0),  // Default range for unspecified factors
+    SensitivityStdDev = 3.0  // Standard deviation for normal distribution
 });
 
-var persons = collection.GenerateAllPersons(allFactors, personConfig);
+IEnumerable<Person> persons = collection.GenerateAllPersons(allFactors);
 
 // Add persons to city
 var city = new City(
@@ -271,14 +346,18 @@ var city = new City(
 
 ## Configuring Simulation Parameters
 
-You can also configure the simulation execution and model parameters:
+You can configure the simulation execution and model parameters using modern C# syntax:
 
 ```csharp
+using dotMigrata.Logic.Calculators;
 using dotMigrata.Logic.Models;
+using dotMigrata.Simulation.Engine;
+using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
+using dotMigrata.Simulation.Pipeline;
 
 // Configure model parameters
-var modelConfig = new StandardModelConfig
+StandardModelConfig modelConfig = new()
 {
     CapacitySteepness = 5.0,
     DistanceDecayLambda = 0.001,
@@ -288,7 +367,7 @@ var modelConfig = new StandardModelConfig
 };
 
 // Configure simulation parameters
-var simConfig = new SimulationConfig
+SimulationConfig simConfig = new()
 {
     MaxTicks = 500,
     CheckStability = true,
@@ -302,11 +381,11 @@ var attractionCalc = new StandardAttractionCalculator(modelConfig);
 var migrationCalc = new StandardMigrationCalculator(modelConfig);
 
 // Create simulation engine with custom configuration
-var stages = new List<ISimulationStage>
-{
+List<ISimulationStage> stages =
+[
     new MigrationDecisionStage(migrationCalc, attractionCalc),
     new MigrationExecutionStage()
-};
+];
 
 var engine = new SimulationEngine(stages, simConfig);
 engine.AddObserver(new ConsoleObserver(colored: true));
@@ -341,15 +420,15 @@ if (snapshot?.World != null)
 
 ### Creating and Saving a Snapshot
 
-Snapshots are typically created as XML files. Here's how to create a snapshot programmatically:
+Snapshots are typically created as XML files. Here's how to create a snapshot programmatically using modern C# syntax:
 
 ```csharp
+using dotMigrata.Snapshot.Enums;
 using dotMigrata.Snapshot.Models;
 using dotMigrata.Snapshot.Serialization;
-using dotMigrata.Snapshot.Enums;
 
 // Create snapshot structure
-var snapshot = new WorldSnapshotXml
+WorldSnapshotXml snapshot = new()
 {
     Version = "1.0",
     Status = SnapshotStatus.Seed,
@@ -361,8 +440,8 @@ var snapshot = new WorldSnapshotXml
         DisplayName = "My Simulation World",
         
         // Define factors
-        FactorDefinitions = new List<FactorDefXml>
-        {
+        FactorDefinitions =
+        [
             new FactorDefXml
             {
                 Id = "income",
@@ -381,22 +460,22 @@ var snapshot = new WorldSnapshotXml
                 Max = 100,
                 Transform = "Linear"
             }
-        },
+        ],
         
         // Define person collections
-        PersonCollections = new List<PersonCollectionXml>
-        {
+        PersonCollections =
+        [
             new PersonCollectionXml
             {
                 Id = "initial_population",
-                Generators = new List<GeneratorXml>
-                {
+                Generators =
+                [
                     new GeneratorXml
                     {
                         Count = 100000,
                         Seed = 42,
-                        FactorSensitivities = new List<SensitivitySpecXml>
-                        {
+                        FactorSensitivities =
+                        [
                             new SensitivitySpecXml
                             {
                                 Id = "income",
@@ -407,7 +486,7 @@ var snapshot = new WorldSnapshotXml
                                 Id = "pollution",
                                 InRange = new RangeValueXml { Min = -7, Max = -3 }
                             }
-                        },
+                        ],
                         MovingWillingness = new ValueSpecXml
                         {
                             InRange = new RangeValueXml { Min = 0.4, Max = 0.7 }
@@ -418,13 +497,13 @@ var snapshot = new WorldSnapshotXml
                         },
                         Tags = "urban_resident"
                     }
-                }
+                ]
             }
-        },
+        ],
         
         // Define cities
-        Cities = new List<CityXml>
-        {
+        Cities =
+        [
             new CityXml
             {
                 Id = "city_a",
@@ -433,15 +512,15 @@ var snapshot = new WorldSnapshotXml
                 Longitude = 119.3,
                 Area = 100.0,
                 Capacity = 1000000,
-                FactorValues = new List<FactorValueXml>
-                {
+                FactorValues =
+                [
                     new FactorValueXml { Id = "income", Value = 50000 },
                     new FactorValueXml { Id = "pollution", Value = 30 }
-                },
-                PersonCollections = new List<CollectionRefXml>
-                {
+                ],
+                PersonCollections =
+                [
                     new CollectionRefXml { Id = "initial_population" }
-                }
+                ]
             },
             new CityXml
             {
@@ -451,13 +530,13 @@ var snapshot = new WorldSnapshotXml
                 Longitude = 118.1,
                 Area = 80.0,
                 Capacity = 800000,
-                FactorValues = new List<FactorValueXml>
-                {
+                FactorValues =
+                [
                     new FactorValueXml { Id = "income", Value = 40000 },
                     new FactorValueXml { Id = "pollution", Value = 20 }
-                }
+                ]
             }
-        }
+        ]
     }
 };
 
@@ -484,13 +563,3 @@ A snapshot contains:
 - **Steps**: Optional simulation steps for reproducibility
 
 See [examples/example-snapshot.xml](../examples/example-snapshot.xml) for a complete working example.
-
-## Examples
-
-See the `/examples` directory for complete working examples:
-
-- **`PersonBasedSimulationExample.cs`** - Complete person-based simulation with 230,000 persons across 3 cities
-- **`example-snapshot.xml`** - Example XML snapshot with PersonCollection architecture and namespace design
-- **`README.md`** - Detailed explanation of features and PersonCollection usage
-
-For detailed API documentation, see [API.md](API.md).
