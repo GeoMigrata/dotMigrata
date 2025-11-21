@@ -1,5 +1,6 @@
 ﻿using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
+using System.Text;
 
 namespace dotMigrata.Simulation.Engine;
 
@@ -15,9 +16,23 @@ public sealed class ConsoleObserver : ISimulationObserver
     /// Initializes a new instance of the ConsoleObserver.
     /// </summary>
     /// <param name="colored">If true, outputs colored text. Default is false.</param>
-    public ConsoleObserver(bool colored = false)
+    /// <param name="useUtf8Encoding">If true, sets console encoding to UTF-8 for international character support. Default is true.</param>
+    public ConsoleObserver(bool colored = false, bool useUtf8Encoding = true)
     {
         _colored = colored;
+
+        if (!useUtf8Encoding) return;
+        try
+        {
+            // Set console encoding to UTF-8 to support international characters
+            Console.OutputEncoding = Encoding.UTF8;
+            Console.InputEncoding = Encoding.UTF8;
+        }
+        catch
+        {
+            // Ignore encoding errors in environments where console encoding cannot be set
+            // (e.g., some CI/CD environments or when output is redirected)
+        }
     }
 
     /// <inheritdoc />
