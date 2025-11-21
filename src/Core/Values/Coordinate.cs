@@ -36,10 +36,7 @@ public readonly record struct Coordinate
     /// </summary>
     /// <param name="other">Other coordinate to calculate distance to.</param>
     /// <returns>Distance in kilometers.</returns>
-    public double DistanceTo(Coordinate other)
-    {
-        return DistanceBetween(this, other);
-    }
+    public double DistanceTo(Coordinate other) => DistanceBetween(this, other);
 
     /// <summary>
     /// Computes the great-circle distance between two coordinates using the Haversine formula.
@@ -68,8 +65,5 @@ public readonly record struct Coordinate
         return earthRadiusKm * c;
     }
 
-    private static double DegreesToRadians(double degrees)
-    {
-        return degrees * Math.PI / 180.0;
-    }
+    private static double DegreesToRadians(double degrees) => degrees * Math.PI / 180.0;
 }
