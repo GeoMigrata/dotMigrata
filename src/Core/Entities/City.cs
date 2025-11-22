@@ -105,9 +105,11 @@ public class City
     /// Updates the intensity of an existing FactorValue for the specified factor definition.
     /// This keeps FactorValue immutable but allows controlled updates via City API.
     /// </summary>
+    /// <param name="factor">The factor definition.</param>
+    /// <param name="newIntensity">The new typed intensity value.</param>
     /// <exception cref="ArgumentNullException">Thrown when factor is null.</exception>
     /// <exception cref="ArgumentException">Thrown when factor has no matched value in this city.</exception>
-    public void UpdateFactorIntensity(FactorDefinition factor, double newIntensity)
+    public void UpdateFactorIntensity(FactorDefinition factor, IntensityValue newIntensity)
     {
         ArgumentNullException.ThrowIfNull(factor);
 

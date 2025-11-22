@@ -51,7 +51,7 @@ public class StandardMigrationCalculator : IMigrationCalculator
 
             // Calculate attraction difference modified by move willingness
             var attractionDiff = (destAttraction.AdjustedAttraction - originAttraction.AdjustedAttraction)
-                                 * person.MovingWillingness;
+                                 * person.MovingWillingness.Value;
 
             // Skip if below person's attraction threshold
             if (attractionDiff < person.AttractionThreshold)
@@ -78,7 +78,7 @@ public class StandardMigrationCalculator : IMigrationCalculator
 
         // Apply retention rate - person may decide to stay
         var retentionRoll = _random.NextDouble();
-        if (retentionRoll < person.RetentionRate)
+        if (retentionRoll < person.RetentionRate.Value)
             return null;
 
         // Make probabilistic migration decision

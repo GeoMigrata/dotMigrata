@@ -29,28 +29,16 @@ public sealed class Person
     /// <summary>
     /// Gets or sets the willingness to migrate (0-1).
     /// Higher values indicate greater willingness to move.
-    /// Default is 0.5.
+    /// Type-safe NormalizedValue ensures values are always in valid range.
     /// </summary>
-    public double MovingWillingness
-    {
-        get;
-        init => field = value is >= 0 and <= 1
-            ? value
-            : throw new ArgumentException("MovingWillingness must be between 0 and 1.", nameof(value));
-    }
+    public required NormalizedValue MovingWillingness { get; init; }
 
     /// <summary>
     /// Gets or sets the retention rate (0-1).
     /// Higher values indicate greater tendency to stay in current location.
-    /// Default is 0.5.
+    /// Type-safe NormalizedValue ensures values are always in valid range.
     /// </summary>
-    public double RetentionRate
-    {
-        get;
-        init => field = value is >= 0 and <= 1
-            ? value
-            : throw new ArgumentException("RetentionRate must be between 0 and 1.", nameof(value));
-    }
+    public required NormalizedValue RetentionRate { get; init; }
 
     /// <summary>
     /// Gets or sets the sensitivity scaling coefficient (A_G).
@@ -86,11 +74,12 @@ public sealed class Person
     /// Gets the sensitivity value for a specific factor.
     /// </summary>
     /// <param name="factor">The factor definition to query.</param>
-    /// <returns>The sensitivity value, or 0 if not defined.</returns>
-    public double GetSensitivity(FactorDefinition factor)
+    /// <returns>The sensitivity value, or neutral (0) if not defined.</returns>
+    public SensitivityValue GetSensitivity(FactorDefinition factor)
     {
         ArgumentNullException.ThrowIfNull(factor);
-        return _factorSensitivities.GetValueOrDefault(factor, 0.0);
+        var value = _factorSensitivities.GetValueOrDefault(factor, 0.0);
+        return SensitivityValue.FromRaw(value);
     }
 
     /// <summary>
@@ -98,9 +87,9 @@ public sealed class Person
     /// </summary>
     /// <param name="factor">The factor definition.</param>
     /// <param name="sensitivity">The new sensitivity value.</param>
-    public void UpdateSensitivity(FactorDefinition factor, double sensitivity)
+    public void UpdateSensitivity(FactorDefinition factor, SensitivityValue sensitivity)
     {
         ArgumentNullException.ThrowIfNull(factor);
-        _factorSensitivities[factor] = sensitivity;
+        _factorSensitivities[factor] = sensitivity.Value;
     }
 }

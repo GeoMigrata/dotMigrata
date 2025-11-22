@@ -24,8 +24,9 @@ public record FactorDefinition
     /// <summary>
     /// Gets or initializes the minimum value for normalization.
     /// Values below this will be clamped to this minimum.
+    /// Must be non-negative (>= 0).
     /// </summary>
-    /// <exception cref="ArgumentException">Thrown when the value is NaN or Infinity.</exception>
+    /// <exception cref="ArgumentException">Thrown when the value is NaN, Infinity, or negative.</exception>
     public required double MinValue
     {
         get => _range.Min;
@@ -33,6 +34,8 @@ public record FactorDefinition
         {
             if (double.IsNaN(value) || double.IsInfinity(value))
                 throw new ArgumentException("MinValue must be a valid number.", nameof(MinValue));
+            if (value < 0)
+                throw new ArgumentException("MinValue must be non-negative (>= 0).", nameof(MinValue));
             _range = new ValueRange(value, _range.Max);
         }
     }
@@ -40,9 +43,9 @@ public record FactorDefinition
     /// <summary>
     /// Gets or initializes the maximum value for normalization.
     /// Values above this will be clamped to this maximum.
-    /// Must be greater than MinValue.
+    /// Must be greater than MinValue and non-negative.
     /// </summary>
-    /// <exception cref="ArgumentException">Thrown when the value is NaN, Infinity, or not greater than MinValue.</exception>
+    /// <exception cref="ArgumentException">Thrown when the value is NaN, Infinity, not greater than MinValue, or negative.</exception>
     public required double MaxValue
     {
         get => _range.Max;
@@ -50,6 +53,8 @@ public record FactorDefinition
         {
             if (double.IsNaN(value) || double.IsInfinity(value))
                 throw new ArgumentException("MaxValue must be a valid number.", nameof(MaxValue));
+            if (value < 0)
+                throw new ArgumentException("MaxValue must be non-negative (>= 0).", nameof(MaxValue));
             if (value <= MinValue)
                 throw new ArgumentException("MaxValue must be greater than MinValue.", nameof(MaxValue));
             _range = new ValueRange(_range.Min, value);

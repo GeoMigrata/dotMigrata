@@ -13,19 +13,11 @@ public sealed record FactorValue
 
     /// <summary>
     /// Gets or sets the intensity value of the factor.
-    /// This is the raw value that will be normalized during calculations.
+    /// This is the typed value that will be normalized during calculations.
+    /// Must be non-negative (>= 0).
     /// </summary>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when the value is NaN or Infinity.</exception>
-    public required double Intensity
-    {
-        get;
-        set
-        {
-            if (double.IsNaN(value) || double.IsInfinity(value))
-                throw new ArgumentOutOfRangeException(nameof(Intensity), "Intensity must be a valid number.");
-            field = value;
-        }
-    }
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when the value is NaN, Infinity, or negative.</exception>
+    public required IntensityValue Intensity { get; set; }
 
     /// <summary>
     /// Normalizes the intensity value using the factor's normalization rules.
@@ -35,6 +27,6 @@ public sealed record FactorValue
     internal double Normalize(FactorDefinition fd)
     {
         ArgumentNullException.ThrowIfNull(fd);
-        return fd.Normalize(Intensity);
+        return fd.Normalize(Intensity.Value);
     }
 }
