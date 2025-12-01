@@ -56,33 +56,21 @@ public readonly record struct ValueRange(double Min, double Max)
     /// </summary>
     /// <param name="normalized">The normalized value (0-1).</param>
     /// <returns>The denormalized value in the original range.</returns>
-    public double Denormalize(double normalized)
-    {
-        return Min + normalized * Size;
-    }
-
+    public double Denormalize(double normalized) => Min + normalized * Size;
 
     /// <summary>
     /// Clamps a value to this range.
     /// </summary>
     /// <param name="value">The value to clamp.</param>
     /// <returns>The clamped value.</returns>
-    public double Clamp(double value)
-    {
-        return Math.Clamp(value, Min, Max);
-    }
-
+    public double Clamp(double value) => Math.Clamp(value, Min, Max);
 
     /// <summary>
     /// Checks if a value is within this range (inclusive).
     /// </summary>
     /// <param name="value">The value to check.</param>
     /// <returns>True if the value is within the range; otherwise, false.</returns>
-    public bool Contains(double value)
-    {
-        return value >= Min && value <= Max;
-    }
-
+    public bool Contains(double value) => value >= Min && value <= Max;
 
     private double NormalizeLogarithmic(double clamped, double range)
     {
