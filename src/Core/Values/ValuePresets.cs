@@ -12,25 +12,25 @@ public static class ValuePresets
     public static class Normalized
     {
         /// <summary>Zero (0.0)</summary>
-        public static readonly NormalizedValue Zero = NormalizedValue.FromRatio(0.0);
+        public static NormalizedValue Zero => NormalizedValue.Zero;
 
         /// <summary>Quarter (0.25)</summary>
         public static readonly NormalizedValue Quarter = NormalizedValue.FromRatio(0.25);
 
         /// <summary>Half (0.5)</summary>
-        public static readonly NormalizedValue Half = NormalizedValue.FromRatio(0.5);
+        public static NormalizedValue Half => NormalizedValue.Half;
 
         /// <summary>Three quarters (0.75)</summary>
         public static readonly NormalizedValue ThreeQuarters = NormalizedValue.FromRatio(0.75);
 
         /// <summary>Full (1.0)</summary>
-        public static readonly NormalizedValue Full = NormalizedValue.FromRatio(1.0);
+        public static NormalizedValue Full => NormalizedValue.One;
 
         /// <summary>Low willingness (0.3)</summary>
         public static readonly NormalizedValue Low = NormalizedValue.FromRatio(0.3);
 
         /// <summary>Medium willingness (0.5)</summary>
-        public static readonly NormalizedValue Medium = NormalizedValue.FromRatio(0.5);
+        public static NormalizedValue Medium => NormalizedValue.Half;
 
         /// <summary>High willingness (0.7)</summary>
         public static readonly NormalizedValue High = NormalizedValue.FromRatio(0.7);
@@ -45,7 +45,7 @@ public static class ValuePresets
     public static class Sensitivity
     {
         /// <summary>Neutral sensitivity (0.0)</summary>
-        public static readonly SensitivityValue Neutral = SensitivityValue.Neutral();
+        public static SensitivityValue Neutral => SensitivityValue.Zero;
 
         /// <summary>Low positive sensitivity (2.0)</summary>
         public static readonly SensitivityValue LowPositive = SensitivityValue.FromRaw(2.0);
@@ -66,6 +66,18 @@ public static class ValuePresets
         public static readonly SensitivityValue HighNegative = SensitivityValue.FromRaw(-8.0);
     }
 
+    /// <summary>
+    /// Intensity value presets for common values.
+    /// </summary>
+    public static class Intensity
+    {
+        /// <summary>Zero intensity (0.0)</summary>
+        public static IntensityValue Zero => IntensityValue.Zero;
+
+        /// <summary>Unit intensity (1.0)</summary>
+        public static IntensityValue One => IntensityValue.One;
+    }
+    
     /// <summary>
     /// Common person attribute presets to prevent zero migration scenarios.
     /// </summary>
@@ -91,10 +103,10 @@ public static class ValuePresets
         public static class ModeratelyMobile
         {
             /// <summary>Moving willingness for moderately mobile persons (0.5).</summary>
-            public static readonly NormalizedValue MovingWillingness = NormalizedValue.FromRatio(0.5);
+            public static NormalizedValue MovingWillingness => NormalizedValue.Half;
 
             /// <summary>Retention rate for moderately mobile persons (0.5).</summary>
-            public static readonly NormalizedValue RetentionRate = NormalizedValue.FromRatio(0.5);
+            public static NormalizedValue RetentionRate => NormalizedValue.Half;
         }
 
         /// <summary>

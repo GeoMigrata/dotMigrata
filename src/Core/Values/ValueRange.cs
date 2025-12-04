@@ -16,13 +16,20 @@ public readonly record struct ValueRange(double Min, double Max)
     public double Size => Max - Min;
 
     /// <summary>
-    /// Gets whether this range is valid (Min &lt; Max).
+    /// Gets whether this range is valid (Min &lt; Max and no NaN/Infinity).
     /// </summary>
     public bool IsValid => Min < Max
                            && !double.IsNaN(Min)
                            && !double.IsNaN(Max)
                            && !double.IsInfinity(Min)
                            && !double.IsInfinity(Max);
+
+    /// <summary>
+    /// Checks if a double value is valid (not NaN or Infinity).
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns>True if the value is a valid finite number; otherwise, false.</returns>
+    public static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
 
     /// <summary>
     /// Normalizes a value to the 0-1 range using the specified transformation.
