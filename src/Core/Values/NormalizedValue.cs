@@ -1,44 +1,47 @@
 ﻿namespace dotMigrata.Core.Values;
 
 /// <summary>
-/// Represents a normalized value in the 0-1 range.
-/// Used for ratios, percentages, and normalized intensities.
-/// Implements as a readonly record struct for zero-allocation overhead.
+/// Represents a normalized value in the 0-1 range. Used for ratios, percentages, and normalized intensities.
 /// </summary>
+/// <remarks>
+/// This type is implemented as a readonly record struct for zero-allocation overhead.
+/// </remarks>
 public readonly record struct NormalizedValue : IValue<double>, IRangedValue, INormalizable
 {
-    private static readonly ValueRange ValidRange = new(0.0, 1.0);
-
     /// <summary>
-    /// Minimum allowed value (0.0).
+    /// The minimum allowed value (0.0).
     /// </summary>
     public const double MinValueConst = 0.0;
 
     /// <summary>
-    /// Maximum allowed value (1.0).
+    /// The maximum allowed value (1.0).
     /// </summary>
     public const double MaxValueConst = 1.0;
 
+    private static readonly ValueRange ValidRange = new(0.0, 1.0);
+
     /// <summary>
-    /// A normalized value of zero (0.0).
+    /// A normalized value representing zero (0.0).
     /// </summary>
     public static readonly NormalizedValue Zero = new(0.0);
 
     /// <summary>
-    /// A normalized value of one (1.0).
+    /// A normalized value representing one (1.0).
     /// </summary>
     public static readonly NormalizedValue One = new(1.0);
 
     /// <summary>
-    /// A normalized value of half (0.5).
+    /// A normalized value representing half (0.5).
     /// </summary>
     public static readonly NormalizedValue Half = new(0.5);
 
     /// <summary>
-    /// Initializes a new instance of the NormalizedValue struct.
+    /// Initializes a new instance of the <see cref="NormalizedValue" /> struct.
     /// </summary>
-    /// <param name="value">The value to normalize. Must be between 0 and 1.</param>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when value is outside the 0-1 range or is NaN/Infinity.</exception>
+    /// <param name="value">The value to store. Must be between 0 and 1.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="value" /> is outside the 0-1 range, is NaN, or is Infinity.
+    /// </exception>
     private NormalizedValue(double value)
     {
         if (!IsValidValue(value))
@@ -49,67 +52,104 @@ public readonly record struct NormalizedValue : IValue<double>, IRangedValue, IN
     }
 
     /// <summary>
-    /// Checks if a value is valid for a NormalizedValue (0-1, not NaN, not Infinity).
+    /// Returns this instance, since <see cref="NormalizedValue" /> is already normalized.
     /// </summary>
-    /// <param name="value">The value to check.</param>
-    /// <returns>True if the value is valid; otherwise, false.</returns>
-    public static bool IsValidValue(double value) =>
-        !double.IsNaN(value) && !double.IsInfinity(value) && ValidRange.Contains(value);
+    /// <returns>This instance.</returns>
+    public NormalizedValue Normalize()
+    {
+        return this;
+    }
 
     /// <summary>
-    /// Gets the raw double value (0-1).
-    /// </summary>
-    public double Value { get; }
-
-    /// <summary>
-    /// Gets the minimum allowed value for normalized values.
+    /// Gets the minimum allowed value for this type.
     /// </summary>
     public double MinValue => MinValueConst;
 
     /// <summary>
-    /// Gets the maximum allowed value for normalized values.
+    /// Gets the maximum allowed value for this type.
     /// </summary>
     public double MaxValue => MaxValueConst;
 
     /// <summary>
-    /// Gets the valid range for normalized values (0-1).
+    /// Gets the valid range for this type (0-1).
     /// </summary>
     public ValueRange Range => ValidRange;
 
     /// <summary>
-    /// Validates that this value is within the 0-1 range.
-    /// </summary>
-    /// <returns>True if the value is valid; otherwise, false.</returns>
-    public bool IsValid() => IsValidValue(Value);
-
-    /// <summary>
-    /// Checks if a value is within the valid normalized range (0-1).
+    /// Determines whether the specified value is within the normalized range (0-1).
     /// </summary>
     /// <param name="value">The value to check.</param>
-    /// <returns>True if the value is within range; otherwise, false.</returns>
-    public bool Contains(double value) => ValidRange.Contains(value);
+    /// <returns>
+    /// <see langword="true" /> if the value is within range; otherwise, <see langword="false" />.
+    /// </returns>
+    public bool Contains(double value)
+    {
+        return ValidRange.Contains(value);
+    }
 
     /// <summary>
-    /// Clamps a value to the normalized range (0-1).
+    /// Clamps the specified value to the normalized range (0-1).
     /// </summary>
     /// <param name="value">The value to clamp.</param>
-    /// <returns>The clamped value.</returns>
-    public double Clamp(double value) => ValidRange.Clamp(value);
+    /// <returns>The value clamped to the range 0-1.</returns>
+    public double Clamp(double value)
+    {
+        return ValidRange.Clamp(value);
+    }
 
     /// <summary>
-    /// Creates a NormalizedValue from a ratio (0-1).
+    /// Gets the underlying double value in the range 0-1.
     /// </summary>
-    /// <param name="ratio">The ratio value between 0 and 1.</param>
-    /// <returns>A new NormalizedValue.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when ratio is outside the 0-1 range.</exception>
-    public static NormalizedValue FromRatio(double ratio) => new NormalizedValue(ratio);
+    public double Value { get; }
 
     /// <summary>
-    /// Tries to create a NormalizedValue from a ratio (0-1) without throwing an exception.
+    /// Determines whether this instance contains a valid value.
     /// </summary>
-    /// <param name="ratio">The ratio value between 0 and 1.</param>
-    /// <param name="result">When this method returns, contains the NormalizedValue if successful; otherwise, default.</param>
-    /// <returns>True if the value was created successfully; otherwise, false.</returns>
+    /// <returns>
+    /// <see langword="true" /> if the value is valid; otherwise, <see langword="false" />.
+    /// </returns>
+    public bool IsValid()
+    {
+        return IsValidValue(Value);
+    }
+
+    /// <summary>
+    /// Determines whether the specified value is valid for a <see cref="NormalizedValue" />.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns>
+    /// <see langword="true" /> if the value is between 0 and 1 and is not NaN or Infinity;
+    /// otherwise, <see langword="false" />.
+    /// </returns>
+    public static bool IsValidValue(double value)
+    {
+        return !double.IsNaN(value) && !double.IsInfinity(value) && ValidRange.Contains(value);
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="NormalizedValue" /> from the specified ratio.
+    /// </summary>
+    /// <param name="ratio">The ratio value, which must be between 0 and 1.</param>
+    /// <returns>A new <see cref="NormalizedValue" /> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="ratio" /> is outside the 0-1 range.
+    /// </exception>
+    public static NormalizedValue FromRatio(double ratio)
+    {
+        return new NormalizedValue(ratio);
+    }
+
+    /// <summary>
+    /// Attempts to create a <see cref="NormalizedValue" /> from the specified ratio without throwing an exception.
+    /// </summary>
+    /// <param name="ratio">The ratio value, which should be between 0 and 1.</param>
+    /// <param name="result">
+    /// When this method returns, contains the <see cref="NormalizedValue" /> if the conversion succeeded,
+    /// or the default value if the conversion failed.
+    /// </param>
+    /// <returns>
+    /// <see langword="true" /> if the value was created successfully; otherwise, <see langword="false" />.
+    /// </returns>
     public static bool TryFromRatio(double ratio, out NormalizedValue result)
     {
         if (IsValidValue(ratio))
@@ -123,10 +163,10 @@ public readonly record struct NormalizedValue : IValue<double>, IRangedValue, IN
     }
 
     /// <summary>
-    /// Creates a NormalizedValue from a ratio, clamping to the valid range.
+    /// Creates a new <see cref="NormalizedValue" /> from the specified ratio, clamping the value to the valid range.
     /// </summary>
     /// <param name="ratio">The ratio value to clamp.</param>
-    /// <returns>A new NormalizedValue clamped to 0-1.</returns>
+    /// <returns>A new <see cref="NormalizedValue" /> clamped to the range 0-1.</returns>
     public static NormalizedValue FromRatioClamped(double ratio)
     {
         if (double.IsNaN(ratio) || double.IsInfinity(ratio))
@@ -136,11 +176,13 @@ public readonly record struct NormalizedValue : IValue<double>, IRangedValue, IN
     }
 
     /// <summary>
-    /// Creates a NormalizedValue from a percentage (0-100).
+    /// Creates a new <see cref="NormalizedValue" /> from the specified percentage.
     /// </summary>
-    /// <param name="percentage">The percentage value between 0 and 100.</param>
-    /// <returns>A new NormalizedValue.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when percentage is outside the 0-100 range.</exception>
+    /// <param name="percentage">The percentage value, which must be between 0 and 100.</param>
+    /// <returns>A new <see cref="NormalizedValue" /> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="percentage" /> is outside the 0-100 range.
+    /// </exception>
     public static NormalizedValue FromPercentage(double percentage)
     {
         if (percentage is < 0 or > 100)
@@ -151,11 +193,16 @@ public readonly record struct NormalizedValue : IValue<double>, IRangedValue, IN
     }
 
     /// <summary>
-    /// Tries to create a NormalizedValue from a percentage (0-100) without throwing an exception.
+    /// Attempts to create a <see cref="NormalizedValue" /> from the specified percentage without throwing an exception.
     /// </summary>
-    /// <param name="percentage">The percentage value between 0 and 100.</param>
-    /// <param name="result">When this method returns, contains the NormalizedValue if successful; otherwise, default.</param>
-    /// <returns>True if the value was created successfully; otherwise, false.</returns>
+    /// <param name="percentage">The percentage value, which should be between 0 and 100.</param>
+    /// <param name="result">
+    /// When this method returns, contains the <see cref="NormalizedValue" /> if the conversion succeeded,
+    /// or the default value if the conversion failed.
+    /// </param>
+    /// <returns>
+    /// <see langword="true" /> if the value was created successfully; otherwise, <see langword="false" />.
+    /// </returns>
     public static bool TryFromPercentage(double percentage, out NormalizedValue result)
     {
         if (percentage is >= 0 and <= 100 && !double.IsNaN(percentage) && !double.IsInfinity(percentage))
@@ -169,67 +216,84 @@ public readonly record struct NormalizedValue : IValue<double>, IRangedValue, IN
     }
 
     /// <summary>
-    /// Returns itself since NormalizedValue is already normalized.
+    /// Converts this value to a percentage in the range 0-100.
     /// </summary>
-    /// <returns>This value.</returns>
-    public NormalizedValue Normalize() => this;
-
-    /// <summary>
-    /// Gets the value as a percentage (0-100).
-    /// </summary>
-    /// <returns>The value as a percentage.</returns>
-    public double ToPercentage() => Value * 100.0;
+    /// <returns>The value expressed as a percentage.</returns>
+    public double ToPercentage()
+    {
+        return Value * 100.0;
+    }
 
     /// <summary>
     /// Returns a string representation of the value.
     /// </summary>
-    public override string ToString() => $"{Value:F2}";
+    /// <returns>A string that represents the current value.</returns>
+    public override string ToString()
+    {
+        return $"{Value:F2}";
+    }
 
     /// <summary>
-    /// Implicitly converts a NormalizedValue to a double.
+    /// Defines an implicit conversion of a <see cref="NormalizedValue" /> to a <see cref="double" />.
     /// </summary>
-    /// <param name="value">The NormalizedValue to convert.</param>
-    public static implicit operator double(NormalizedValue value) => value.Value;
+    /// <param name="value">The <see cref="NormalizedValue" /> to convert.</param>
+    /// <returns>The underlying double value.</returns>
+    public static implicit operator double(NormalizedValue value)
+    {
+        return value.Value;
+    }
 
     /// <summary>
-    /// Explicitly converts a double to a NormalizedValue.
+    /// Defines an explicit conversion of a <see cref="double" /> to a <see cref="NormalizedValue" />.
     /// </summary>
-    /// <param name="value">The double value to convert (must be between 0 and 1).</param>
-    public static explicit operator NormalizedValue(double value) => FromRatio(value);
+    /// <param name="value">The double value to convert. Must be between 0 and 1.</param>
+    /// <returns>A new <see cref="NormalizedValue" /> instance.</returns>
+    public static explicit operator NormalizedValue(double value)
+    {
+        return FromRatio(value);
+    }
 
     /// <summary>
-    /// Multiplies a NormalizedValue by a scalar, clamping the result to 0-1.
+    /// Multiplies a <see cref="NormalizedValue" /> by a scalar, clamping the result to 0-1.
     /// </summary>
-    /// <param name="left">The NormalizedValue.</param>
+    /// <param name="left">The <see cref="NormalizedValue" /> operand.</param>
     /// <param name="right">The scalar multiplier.</param>
-    /// <returns>A new NormalizedValue with the clamped result.</returns>
-    public static NormalizedValue operator *(NormalizedValue left, double right) =>
-        FromRatioClamped(left.Value * right);
+    /// <returns>A new <see cref="NormalizedValue" /> with the clamped result.</returns>
+    public static NormalizedValue operator *(NormalizedValue left, double right)
+    {
+        return FromRatioClamped(left.Value * right);
+    }
 
     /// <summary>
-    /// Multiplies a scalar by a NormalizedValue, clamping the result to 0-1.
+    /// Multiplies a scalar by a <see cref="NormalizedValue" />, clamping the result to 0-1.
     /// </summary>
     /// <param name="left">The scalar multiplier.</param>
-    /// <param name="right">The NormalizedValue.</param>
-    /// <returns>A new NormalizedValue with the clamped result.</returns>
-    public static NormalizedValue operator *(double left, NormalizedValue right) =>
-        FromRatioClamped(left * right.Value);
+    /// <param name="right">The <see cref="NormalizedValue" /> operand.</param>
+    /// <returns>A new <see cref="NormalizedValue" /> with the clamped result.</returns>
+    public static NormalizedValue operator *(double left, NormalizedValue right)
+    {
+        return FromRatioClamped(left * right.Value);
+    }
 
     /// <summary>
-    /// Adds two NormalizedValues, clamping the result to 0-1.
+    /// Adds two <see cref="NormalizedValue" /> instances, clamping the result to 0-1.
     /// </summary>
-    /// <param name="left">The first NormalizedValue.</param>
-    /// <param name="right">The second NormalizedValue.</param>
-    /// <returns>A new NormalizedValue with the clamped result.</returns>
-    public static NormalizedValue operator +(NormalizedValue left, NormalizedValue right) =>
-        FromRatioClamped(left.Value + right.Value);
+    /// <param name="left">The first <see cref="NormalizedValue" />.</param>
+    /// <param name="right">The second <see cref="NormalizedValue" />.</param>
+    /// <returns>A new <see cref="NormalizedValue" /> with the clamped result.</returns>
+    public static NormalizedValue operator +(NormalizedValue left, NormalizedValue right)
+    {
+        return FromRatioClamped(left.Value + right.Value);
+    }
 
     /// <summary>
-    /// Subtracts one NormalizedValue from another, clamping the result to 0-1.
+    /// Subtracts one <see cref="NormalizedValue" /> from another, clamping the result to 0-1.
     /// </summary>
-    /// <param name="left">The first NormalizedValue.</param>
-    /// <param name="right">The second NormalizedValue.</param>
-    /// <returns>A new NormalizedValue with the clamped result.</returns>
-    public static NormalizedValue operator -(NormalizedValue left, NormalizedValue right) =>
-        FromRatioClamped(left.Value - right.Value);
+    /// <param name="left">The <see cref="NormalizedValue" /> to subtract from.</param>
+    /// <param name="right">The <see cref="NormalizedValue" /> to subtract.</param>
+    /// <returns>A new <see cref="NormalizedValue" /> with the clamped result.</returns>
+    public static NormalizedValue operator -(NormalizedValue left, NormalizedValue right)
+    {
+        return FromRatioClamped(left.Value - right.Value);
+    }
 }

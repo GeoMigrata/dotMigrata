@@ -131,21 +131,17 @@ public static class SnapshotConverter
 
             // Process person templates
             if (collection.Persons != null)
-            {
                 foreach (var templatePersons in collection.Persons.Select(template =>
                              ConvertPersonTemplate(template, factorLookup)))
                     persons.AddRange(templatePersons);
-            }
 
             // Process generators
             if (collection.Generators != null)
-            {
                 foreach (var generator in collection.Generators)
                 {
                     var generatedPersons = ConvertGenerator(generator, factorLookup, allFactors);
                     persons.AddRange(generatedPersons);
                 }
-            }
 
             result[collection.Id] = persons;
         }
@@ -185,15 +181,9 @@ public static class SnapshotConverter
         // Convert factor sensitivity specifications
         var factorSpecs = new Dictionary<FactorDefinition, ValueSpecification>();
         if (generator.FactorSensitivities != null)
-        {
             foreach (var spec in generator.FactorSensitivities)
-            {
                 if (factorLookup.TryGetValue(spec.Id, out var factor))
-                {
                     factorSpecs[factor] = ConvertSensitivitySpec(spec);
-                }
-            }
-        }
 
         var finalConfig = new GeneratorConfig(generator.SeedSpecified ? generator.Seed : Random.Shared.Next())
         {
@@ -276,12 +266,8 @@ public static class SnapshotConverter
             return result;
 
         foreach (var sensitivity in sensitivities)
-        {
             if (factorLookup.TryGetValue(sensitivity.Id, out var factor))
-            {
                 result[factor] = sensitivity.Value;
-            }
-        }
 
         return result;
     }
@@ -305,32 +291,20 @@ public static class SnapshotConverter
         // Convert factor values
         var factorValues = new List<FactorValue>();
         if (cityXml.FactorValues != null)
-        {
             foreach (var fv in cityXml.FactorValues)
-            {
                 if (factorLookup.TryGetValue(fv.Id, out var factor))
-                {
                     factorValues.Add(new FactorValue
                     {
                         Definition = factor,
                         Intensity = IntensityValue.FromRaw(fv.Value)
                     });
-                }
-            }
-        }
 
         // Collect persons from referenced collections
         var persons = new List<Person>();
         if (cityXml.PersonCollections != null)
-        {
             foreach (var collectionRef in cityXml.PersonCollections)
-            {
                 if (personCollections.TryGetValue(collectionRef.Id, out var collectionPersons))
-                {
                     persons.AddRange(collectionPersons);
-                }
-            }
-        }
 
         var city = new City(factorValues, persons)
         {

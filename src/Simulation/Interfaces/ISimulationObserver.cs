@@ -3,9 +3,11 @@
 namespace dotMigrata.Simulation.Interfaces;
 
 /// <summary>
-/// Observer interface for monitoring simulation progress and events.
-/// Implementations can react to simulation events for logging, visualization, or analysis.
+/// Defines methods for observing simulation progress and events.
 /// </summary>
+/// <remarks>
+/// Implementations can react to simulation events for logging, visualization, or analysis.
+/// </remarks>
 public interface ISimulationObserver
 {
     /// <summary>
@@ -37,7 +39,9 @@ public interface ISimulationObserver
     /// Called when the simulation completes or is terminated.
     /// </summary>
     /// <param name="context">The final simulation context.</param>
-    /// <param name="reason">The reason for termination (e.g., "MaxTicksReached", "Stabilized", "Stopped").</param>
+    /// <param name="reason">
+    /// The reason for termination (for example, "MaxTicksReached", "Stabilized", or "Stopped").
+    /// </param>
     void OnSimulationEnd(SimulationContext context, string reason);
 
     /// <summary>

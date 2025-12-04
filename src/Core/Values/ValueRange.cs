@@ -4,10 +4,12 @@ namespace dotMigrata.Core.Values;
 
 /// <summary>
 /// Represents a value range with minimum and maximum bounds.
-/// Provides normalization capabilities with various transformation types.
 /// </summary>
-/// <param name="Min">Minimum value of the range.</param>
-/// <param name="Max">Maximum value of the range.</param>
+/// <param name="Min">The minimum value of the range.</param>
+/// <param name="Max">The maximum value of the range.</param>
+/// <remarks>
+/// This type provides normalization capabilities with various transformation types.
+/// </remarks>
 public readonly record struct ValueRange(double Min, double Max)
 {
     /// <summary>
@@ -16,8 +18,12 @@ public readonly record struct ValueRange(double Min, double Max)
     public double Size => Max - Min;
 
     /// <summary>
-    /// Gets whether this range is valid (Min &lt; Max and no NaN/Infinity).
+    /// Gets a value indicating whether this range is valid.
     /// </summary>
+    /// <value>
+    /// <see langword="true" /> if Min is less than Max and neither value is NaN or Infinity;
+    /// otherwise, <see langword="false" />.
+    /// </value>
     public bool IsValid => Min < Max
                            && !double.IsNaN(Min)
                            && !double.IsNaN(Max)
@@ -25,19 +31,24 @@ public readonly record struct ValueRange(double Min, double Max)
                            && !double.IsInfinity(Max);
 
     /// <summary>
-    /// Checks if a double value is valid (not NaN or Infinity).
+    /// Determines whether the specified double value is finite (not NaN or Infinity).
     /// </summary>
     /// <param name="value">The value to check.</param>
-    /// <returns>True if the value is a valid finite number; otherwise, false.</returns>
-    public static bool IsFinite(double value) => !double.IsNaN(value) && !double.IsInfinity(value);
+    /// <returns>
+    /// <see langword="true" /> if the value is a valid finite number; otherwise, <see langword="false" />.
+    /// </returns>
+    public static bool IsFinite(double value)
+    {
+        return !double.IsNaN(value) && !double.IsInfinity(value);
+    }
 
     /// <summary>
-    /// Normalizes a value to the 0-1 range using the specified transformation.
+    /// Normalizes the specified value to the 0-1 range using the specified transformation.
     /// </summary>
     /// <param name="value">The value to normalize.</param>
-    /// <param name="transform">The transformation type to apply.</param>
+    /// <param name="transform">The transformation type to apply, or <see langword="null" /> for linear transformation.</param>
     /// <returns>A normalized value between 0 and 1.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the range is invalid.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when this range is invalid.</exception>
     public double Normalize(double value, TransformType? transform = null)
     {
         if (!IsValid)
@@ -61,23 +72,34 @@ public readonly record struct ValueRange(double Min, double Max)
     /// <summary>
     /// Denormalizes a 0-1 value back to the original range.
     /// </summary>
-    /// <param name="normalized">The normalized value (0-1).</param>
-    /// <returns>The denormalized value in the original range.</returns>
-    public double Denormalize(double normalized) => Min + normalized * Size;
+    /// <param name="normalized">The normalized value in the range 0-1.</param>
+    /// <returns>The denormalized value within this range.</returns>
+    public double Denormalize(double normalized)
+    {
+        return Min + normalized * Size;
+    }
 
     /// <summary>
-    /// Clamps a value to this range.
+    /// Clamps the specified value to this range.
     /// </summary>
     /// <param name="value">The value to clamp.</param>
-    /// <returns>The clamped value.</returns>
-    public double Clamp(double value) => Math.Clamp(value, Min, Max);
+    /// <returns>The value clamped to this range.</returns>
+    public double Clamp(double value)
+    {
+        return Math.Clamp(value, Min, Max);
+    }
 
     /// <summary>
-    /// Checks if a value is within this range (inclusive).
+    /// Determines whether the specified value is within this range (inclusive).
     /// </summary>
     /// <param name="value">The value to check.</param>
-    /// <returns>True if the value is within the range; otherwise, false.</returns>
-    public bool Contains(double value) => value >= Min && value <= Max;
+    /// <returns>
+    /// <see langword="true" /> if the value is within the range; otherwise, <see langword="false" />.
+    /// </returns>
+    public bool Contains(double value)
+    {
+        return value >= Min && value <= Max;
+    }
 
     private double NormalizeLogarithmic(double clamped, double range)
     {

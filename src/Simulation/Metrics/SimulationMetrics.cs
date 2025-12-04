@@ -1,6 +1,4 @@
-﻿using dotMigrata.Core.Entities;
-
-namespace dotMigrata.Simulation.Metrics;
+﻿namespace dotMigrata.Simulation.Metrics;
 
 /// <summary>
 /// Represents a snapshot of simulation metrics at a specific tick.
@@ -81,10 +79,7 @@ public sealed record SimulationMetrics
         if (totalSum == 0) return 0;
 
         double numerator = 0;
-        for (var i = 0; i < n; i++)
-        {
-            numerator += (2 * (i + 1) - n - 1) * sorted[i];
-        }
+        for (var i = 0; i < n; i++) numerator += (2 * (i + 1) - n - 1) * sorted[i];
 
         return numerator / (n * totalSum);
     }

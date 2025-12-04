@@ -15,14 +15,20 @@ public sealed class GeneratorConfig
     /// <summary>
     /// Initializes a new instance with a random seed.
     /// </summary>
-    public GeneratorConfig() => _random = new Random();
+    public GeneratorConfig()
+    {
+        _random = new Random();
+    }
 
 
     /// <summary>
     /// Initializes a new instance with a specific seed for reproducibility.
     /// </summary>
     /// <param name="seed">The random seed.</param>
-    public GeneratorConfig(int seed) => _random = new Random(seed);
+    public GeneratorConfig(int seed)
+    {
+        _random = new Random(seed);
+    }
 
 
     /// <summary>
@@ -164,7 +170,10 @@ public sealed class GeneratorConfig
         return generatedValue * spec.Scale;
     }
 
-    private double GenerateUniformRandom(double min, double max) => min + _random.NextDouble() * (max - min);
+    private double GenerateUniformRandom(double min, double max)
+    {
+        return min + _random.NextDouble() * (max - min);
+    }
 
     private double GenerateNormalRandom(double mean, double stdDev)
     {

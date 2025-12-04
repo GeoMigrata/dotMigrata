@@ -21,6 +21,18 @@ public sealed class MetricsCollector
     public SimulationMetrics? CurrentMetrics => _history.LastOrDefault();
 
     /// <summary>
+    /// Gets the average migration rate across all ticks.
+    /// </summary>
+    public double AverageMigrationRate => _history.Count > 0
+        ? _history.Average(m => m.MigrationRate)
+        : 0;
+
+    /// <summary>
+    /// Gets the total number of migrations across all ticks.
+    /// </summary>
+    public long TotalMigrations => _history.Sum(m => m.MigrationCount);
+
+    /// <summary>
     /// Collects metrics for the current simulation state.
     /// </summary>
     /// <param name="world">The world to collect metrics from.</param>
@@ -75,10 +87,7 @@ public sealed class MetricsCollector
         };
 
         // Update previous populations for next collection
-        foreach (var city in world.Cities)
-        {
-            _previousPopulations[city.DisplayName] = city.Population;
-        }
+        foreach (var city in world.Cities) _previousPopulations[city.DisplayName] = city.Population;
 
         _history.Add(metrics);
         return metrics;
@@ -92,18 +101,6 @@ public sealed class MetricsCollector
         _history.Clear();
         _previousPopulations.Clear();
     }
-
-    /// <summary>
-    /// Gets the average migration rate across all ticks.
-    /// </summary>
-    public double AverageMigrationRate => _history.Count > 0
-        ? _history.Average(m => m.MigrationRate)
-        : 0;
-
-    /// <summary>
-    /// Gets the total number of migrations across all ticks.
-    /// </summary>
-    public long TotalMigrations => _history.Sum(m => m.MigrationCount);
 
     /// <summary>
     /// Exports metrics to a CSV-formatted string.

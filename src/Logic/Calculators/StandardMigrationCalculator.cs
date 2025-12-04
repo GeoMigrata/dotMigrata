@@ -36,9 +36,9 @@ public class StandardMigrationCalculator : IMigrationCalculator
             // Use seed combined with thread ID for reproducible but different per-thread values
             var threadSeed = _seed.Value ^ Environment.CurrentManagedThreadId;
             return new Random(threadSeed);
-        }, trackAllValues: false);
+        }, false);
     }
-    
+
     private Random Random => _threadLocalRandom.Value!;
 
     /// <inheritdoc />

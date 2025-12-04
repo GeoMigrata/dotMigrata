@@ -4,9 +4,12 @@ using dotMigrata.Logic.Models;
 namespace dotMigrata.Logic.Interfaces;
 
 /// <summary>
-/// Interface for calculating city attraction for individual persons.
-/// Implementations determine how attractive a city is to a specific person based on city factors and person sensitivities.
+/// Defines methods for calculating city attraction for individual persons.
 /// </summary>
+/// <remarks>
+/// Implementations determine how attractive a city is to a specific person
+/// based on city factors and person sensitivities.
+/// </remarks>
 public interface IAttractionCalculator
 {
     /// <summary>
@@ -15,9 +18,12 @@ public interface IAttractionCalculator
     /// <param name="city">The city to evaluate.</param>
     /// <param name="person">The person for whom to calculate attraction.</param>
     /// <param name="originCity">
-    /// The city where the person currently resides (optional, for distance and comparison calculations).
+    /// The city where the person currently resides, or <see langword="null" /> if not applicable.
+    /// Used for distance and comparison calculations.
     /// </param>
-    /// <returns>An attraction result containing the calculated attraction score and any additional metadata.</returns>
+    /// <returns>
+    /// An <see cref="AttractionResult" /> containing the calculated attraction score and any additional metadata.
+    /// </returns>
     AttractionResult CalculateAttraction(City city, Person person, City? originCity = null);
 
     /// <summary>
@@ -25,8 +31,12 @@ public interface IAttractionCalculator
     /// </summary>
     /// <param name="cities">The cities to evaluate.</param>
     /// <param name="person">The person for whom to calculate attraction.</param>
-    /// <param name="originCity">The city where the person currently resides (optional).</param>
-    /// <returns>A dictionary mapping cities to their attraction results.</returns>
+    /// <param name="originCity">
+    /// The city where the person currently resides, or <see langword="null" /> if not applicable.
+    /// </param>
+    /// <returns>
+    /// A dictionary mapping each city to its <see cref="AttractionResult" />.
+    /// </returns>
     IDictionary<City, AttractionResult> CalculateAttractionForAllCities(
         IEnumerable<City> cities,
         Person person,

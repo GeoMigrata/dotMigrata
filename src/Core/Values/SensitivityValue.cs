@@ -2,20 +2,20 @@
 
 /// <summary>
 /// Represents a factor sensitivity value with a configurable range.
-/// Default range is -10 to +10, representing negative to positive sensitivity.
-/// Implements as a readonly record struct for zero-allocation overhead.
 /// </summary>
+/// <remarks>
+///     <para>The default range is -10 to +10, representing negative to positive sensitivity.</para>
+///     <para>This type is implemented as a readonly record struct for zero-allocation overhead.</para>
+/// </remarks>
 public readonly record struct SensitivityValue : IRangedValue, INormalizable
 {
-    private readonly ValueRange _range;
-
     /// <summary>
-    /// Default minimum sensitivity value.
+    /// The default minimum sensitivity value (-10.0).
     /// </summary>
     public const double DefaultMinValue = -10.0;
 
     /// <summary>
-    /// Default maximum sensitivity value.
+    /// The default maximum sensitivity value (+10.0).
     /// </summary>
     public const double DefaultMaxValue = 10.0;
 
@@ -26,12 +26,19 @@ public readonly record struct SensitivityValue : IRangedValue, INormalizable
     /// </summary>
     public static readonly SensitivityValue Zero = new(0.0, DefaultRange);
 
+    private readonly ValueRange _range;
+
     /// <summary>
-    /// Initializes a new instance of the SensitivityValue struct.
+    /// Initializes a new instance of the <see cref="SensitivityValue" /> struct.
     /// </summary>
     /// <param name="value">The sensitivity value.</param>
     /// <param name="range">The valid range for this sensitivity value.</param>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when value is outside the specified range or is NaN/Infinity.</exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="range" /> is invalid (Min ≥ Max).
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="value" /> is outside the specified range, is NaN, or is Infinity.
+    /// </exception>
     private SensitivityValue(double value, ValueRange range)
     {
         if (!range.IsValid)
@@ -46,75 +53,119 @@ public readonly record struct SensitivityValue : IRangedValue, INormalizable
     }
 
     /// <summary>
-    /// Checks if a value is valid for a SensitivityValue within the specified range.
+    /// Normalizes this sensitivity value to the 0-1 range based on its min/max bounds.
     /// </summary>
-    /// <param name="value">The value to check.</param>
-    /// <param name="range">The valid range.</param>
-    /// <returns>True if the value is valid; otherwise, false.</returns>
-    public static bool IsValidValue(double value, ValueRange range) =>
-        !double.IsNaN(value) && !double.IsInfinity(value) && range.Contains(value);
+    /// <returns>A <see cref="NormalizedValue" /> between 0 and 1.</returns>
+    public NormalizedValue Normalize()
+    {
+        var normalized = _range.Normalize(Value);
+        return NormalizedValue.FromRatio(normalized);
+    }
 
     /// <summary>
-    /// Checks if a value is valid for a SensitivityValue using the default range.
-    /// </summary>
-    /// <param name="value">The value to check.</param>
-    /// <returns>True if the value is valid; otherwise, false.</returns>
-    public static bool IsValidValue(double value) => IsValidValue(value, DefaultRange);
-
-    /// <summary>
-    /// Gets the raw sensitivity value.
+    /// Gets the underlying sensitivity value.
     /// </summary>
     public double Value { get; }
 
     /// <summary>
-    /// Gets the minimum allowed value for this sensitivity.
+    /// Gets the minimum allowed value for this instance.
     /// </summary>
     public double MinValue => _range.Min;
 
     /// <summary>
-    /// Gets the maximum allowed value for this sensitivity.
+    /// Gets the maximum allowed value for this instance.
     /// </summary>
     public double MaxValue => _range.Max;
 
     /// <summary>
-    /// Gets the valid range for this sensitivity.
+    /// Gets the valid range for this instance.
     /// </summary>
     public ValueRange Range => _range;
 
     /// <summary>
-    /// Validates that this value is within its range.
+    /// Determines whether this instance contains a valid value.
     /// </summary>
-    /// <returns>True if the value is valid; otherwise, false.</returns>
-    public bool IsValid() => IsValidValue(Value, _range);
+    /// <returns>
+    /// <see langword="true" /> if the value is valid; otherwise, <see langword="false" />.
+    /// </returns>
+    public bool IsValid()
+    {
+        return IsValidValue(Value, _range);
+    }
 
     /// <summary>
-    /// Checks if a value is within this sensitivity's range.
+    /// Determines whether the specified value is within this sensitivity's range.
     /// </summary>
     /// <param name="value">The value to check.</param>
-    /// <returns>True if the value is within range; otherwise, false.</returns>
-    public bool Contains(double value) => _range.Contains(value);
+    /// <returns>
+    /// <see langword="true" /> if the value is within range; otherwise, <see langword="false" />.
+    /// </returns>
+    public bool Contains(double value)
+    {
+        return _range.Contains(value);
+    }
 
     /// <summary>
-    /// Clamps a value to this sensitivity's range.
+    /// Clamps the specified value to this sensitivity's range.
     /// </summary>
     /// <param name="value">The value to clamp.</param>
-    /// <returns>The clamped value.</returns>
-    public double Clamp(double value) => _range.Clamp(value);
+    /// <returns>The value clamped to the valid range.</returns>
+    public double Clamp(double value)
+    {
+        return _range.Clamp(value);
+    }
 
     /// <summary>
-    /// Creates a SensitivityValue from a raw value using the default range (-10 to +10).
+    /// Determines whether the specified value is valid for a <see cref="SensitivityValue" /> within the specified range.
     /// </summary>
-    /// <param name="value">The sensitivity value.</param>
-    /// <returns>A new SensitivityValue.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when value is outside the default range.</exception>
-    public static SensitivityValue FromRaw(double value) => new(value, DefaultRange);
+    /// <param name="value">The value to check.</param>
+    /// <param name="range">The valid range.</param>
+    /// <returns>
+    /// <see langword="true" /> if the value is within range and is not NaN or Infinity;
+    /// otherwise, <see langword="false" />.
+    /// </returns>
+    public static bool IsValidValue(double value, ValueRange range)
+    {
+        return !double.IsNaN(value) && !double.IsInfinity(value) && range.Contains(value);
+    }
 
     /// <summary>
-    /// Tries to create a SensitivityValue from a raw value using the default range without throwing an exception.
+    /// Determines whether the specified value is valid for a <see cref="SensitivityValue" /> using the default range.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns>
+    /// <see langword="true" /> if the value is valid; otherwise, <see langword="false" />.
+    /// </returns>
+    public static bool IsValidValue(double value)
+    {
+        return IsValidValue(value, DefaultRange);
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="SensitivityValue" /> from the specified raw value using the default range (-10 to +10).
     /// </summary>
     /// <param name="value">The sensitivity value.</param>
-    /// <param name="result">When this method returns, contains the SensitivityValue if successful; otherwise, default.</param>
-    /// <returns>True if the value was created successfully; otherwise, false.</returns>
+    /// <returns>A new <see cref="SensitivityValue" /> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="value" /> is outside the default range.
+    /// </exception>
+    public static SensitivityValue FromRaw(double value)
+    {
+        return new SensitivityValue(value, DefaultRange);
+    }
+
+    /// <summary>
+    /// Attempts to create a <see cref="SensitivityValue" /> from the specified raw value using the default range without
+    /// throwing an exception.
+    /// </summary>
+    /// <param name="value">The sensitivity value.</param>
+    /// <param name="result">
+    /// When this method returns, contains the <see cref="SensitivityValue" /> if the conversion succeeded,
+    /// or the default value if the conversion failed.
+    /// </param>
+    /// <returns>
+    /// <see langword="true" /> if the value was created successfully; otherwise, <see langword="false" />.
+    /// </returns>
     public static bool TryFromRaw(double value, out SensitivityValue result)
     {
         if (IsValidValue(value))
@@ -128,10 +179,10 @@ public readonly record struct SensitivityValue : IRangedValue, INormalizable
     }
 
     /// <summary>
-    /// Creates a SensitivityValue from a raw value, clamping to the default range.
+    /// Creates a new <see cref="SensitivityValue" /> from the specified raw value, clamping to the default range.
     /// </summary>
     /// <param name="value">The sensitivity value to clamp.</param>
-    /// <returns>A new SensitivityValue clamped to the default range.</returns>
+    /// <returns>A new <see cref="SensitivityValue" /> clamped to the default range.</returns>
     public static SensitivityValue FromRawClamped(double value)
     {
         if (double.IsNaN(value) || double.IsInfinity(value))
@@ -141,24 +192,34 @@ public readonly record struct SensitivityValue : IRangedValue, INormalizable
     }
 
     /// <summary>
-    /// Creates a SensitivityValue from a raw value with a custom range.
+    /// Creates a new <see cref="SensitivityValue" /> from the specified raw value with a custom range.
     /// </summary>
     /// <param name="value">The sensitivity value.</param>
     /// <param name="minValue">The minimum allowed value.</param>
     /// <param name="maxValue">The maximum allowed value.</param>
-    /// <returns>A new SensitivityValue.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when value is outside the specified range.</exception>
-    public static SensitivityValue FromRaw(double value, double minValue, double maxValue) =>
-        new(value, new ValueRange(minValue, maxValue));
+    /// <returns>A new <see cref="SensitivityValue" /> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="value" /> is outside the specified range.
+    /// </exception>
+    public static SensitivityValue FromRaw(double value, double minValue, double maxValue)
+    {
+        return new SensitivityValue(value, new ValueRange(minValue, maxValue));
+    }
 
     /// <summary>
-    /// Tries to create a SensitivityValue from a raw value with a custom range without throwing an exception.
+    /// Attempts to create a <see cref="SensitivityValue" /> from the specified raw value with a custom range without throwing
+    /// an exception.
     /// </summary>
     /// <param name="value">The sensitivity value.</param>
     /// <param name="minValue">The minimum allowed value.</param>
     /// <param name="maxValue">The maximum allowed value.</param>
-    /// <param name="result">When this method returns, contains the SensitivityValue if successful; otherwise, default.</param>
-    /// <returns>True if the value was created successfully; otherwise, false.</returns>
+    /// <param name="result">
+    /// When this method returns, contains the <see cref="SensitivityValue" /> if the conversion succeeded,
+    /// or the default value if the conversion failed.
+    /// </param>
+    /// <returns>
+    /// <see langword="true" /> if the value was created successfully; otherwise, <see langword="false" />.
+    /// </returns>
     public static bool TryFromRaw(double value, double minValue, double maxValue, out SensitivityValue result)
     {
         var range = new ValueRange(minValue, maxValue);
@@ -173,48 +234,53 @@ public readonly record struct SensitivityValue : IRangedValue, INormalizable
     }
 
     /// <summary>
-    /// Creates a neutral sensitivity (0.0).
+    /// Creates a neutral sensitivity value (0.0).
     /// </summary>
-    /// <returns>A new SensitivityValue with value 0.</returns>
+    /// <returns>A <see cref="SensitivityValue" /> with value 0.</returns>
     /// <remarks>
-    /// Consider using <see cref="Zero"/> directly for better clarity.
+    /// Consider using <see cref="Zero" /> directly for clearer intent.
     /// </remarks>
     [Obsolete("Use SensitivityValue.Zero instead for clearer intent.")]
-    public static SensitivityValue Neutral() => Zero;
-
-    /// <summary>
-    /// Normalizes the sensitivity value to 0-1 range based on its min/max bounds.
-    /// </summary>
-    /// <returns>A normalized value between 0 and 1.</returns>
-    public NormalizedValue Normalize()
+    public static SensitivityValue Neutral()
     {
-        var normalized = _range.Normalize(Value);
-        return NormalizedValue.FromRatio(normalized);
+        return Zero;
     }
 
     /// <summary>
     /// Returns a string representation of the value.
     /// </summary>
-    public override string ToString() => $"{Value:F2}";
+    /// <returns>A string that represents the current value.</returns>
+    public override string ToString()
+    {
+        return $"{Value:F2}";
+    }
 
     /// <summary>
-    /// Implicitly converts a SensitivityValue to a double.
+    /// Defines an implicit conversion of a <see cref="SensitivityValue" /> to a <see cref="double" />.
     /// </summary>
-    /// <param name="value">The SensitivityValue to convert.</param>
-    public static implicit operator double(SensitivityValue value) => value.Value;
+    /// <param name="value">The <see cref="SensitivityValue" /> to convert.</param>
+    /// <returns>The underlying double value.</returns>
+    public static implicit operator double(SensitivityValue value)
+    {
+        return value.Value;
+    }
 
     /// <summary>
-    /// Explicitly converts a double to a SensitivityValue using the default range.
+    /// Defines an explicit conversion of a <see cref="double" /> to a <see cref="SensitivityValue" /> using the default range.
     /// </summary>
-    /// <param name="value">The double value to convert (must be within default range).</param>
-    public static explicit operator SensitivityValue(double value) => FromRaw(value);
+    /// <param name="value">The double value to convert. Must be within the default range.</param>
+    /// <returns>A new <see cref="SensitivityValue" /> instance.</returns>
+    public static explicit operator SensitivityValue(double value)
+    {
+        return FromRaw(value);
+    }
 
     /// <summary>
-    /// Adds two SensitivityValues, clamping the result to the first value's range.
+    /// Adds two <see cref="SensitivityValue" /> instances, clamping the result to the first value's range.
     /// </summary>
-    /// <param name="left">The first SensitivityValue (determines the result range).</param>
-    /// <param name="right">The second SensitivityValue.</param>
-    /// <returns>A new SensitivityValue with the clamped result using the left operand's range.</returns>
+    /// <param name="left">The first <see cref="SensitivityValue" /> (determines the result range).</param>
+    /// <param name="right">The second <see cref="SensitivityValue" />.</param>
+    /// <returns>A new <see cref="SensitivityValue" /> with the clamped result.</returns>
     /// <remarks>
     /// The result uses the left operand's range for clamping. When combining values with different ranges,
     /// ensure the left operand has the desired range.
@@ -226,11 +292,11 @@ public readonly record struct SensitivityValue : IRangedValue, INormalizable
     }
 
     /// <summary>
-    /// Subtracts one SensitivityValue from another, clamping the result to the first value's range.
+    /// Subtracts one <see cref="SensitivityValue" /> from another, clamping the result to the first value's range.
     /// </summary>
-    /// <param name="left">The first SensitivityValue (determines the result range).</param>
-    /// <param name="right">The second SensitivityValue.</param>
-    /// <returns>A new SensitivityValue with the clamped result using the left operand's range.</returns>
+    /// <param name="left">The <see cref="SensitivityValue" /> to subtract from (determines the result range).</param>
+    /// <param name="right">The <see cref="SensitivityValue" /> to subtract.</param>
+    /// <returns>A new <see cref="SensitivityValue" /> with the clamped result.</returns>
     /// <remarks>
     /// The result uses the left operand's range for clamping. When combining values with different ranges,
     /// ensure the left operand has the desired range.
@@ -242,11 +308,11 @@ public readonly record struct SensitivityValue : IRangedValue, INormalizable
     }
 
     /// <summary>
-    /// Multiplies a SensitivityValue by a scalar, clamping the result to the value's range.
+    /// Multiplies a <see cref="SensitivityValue" /> by a scalar, clamping the result to the value's range.
     /// </summary>
-    /// <param name="left">The SensitivityValue.</param>
+    /// <param name="left">The <see cref="SensitivityValue" /> operand.</param>
     /// <param name="right">The scalar multiplier.</param>
-    /// <returns>A new SensitivityValue with the clamped result.</returns>
+    /// <returns>A new <see cref="SensitivityValue" /> with the clamped result.</returns>
     public static SensitivityValue operator *(SensitivityValue left, double right)
     {
         var product = left.Value * right;
@@ -254,11 +320,11 @@ public readonly record struct SensitivityValue : IRangedValue, INormalizable
     }
 
     /// <summary>
-    /// Multiplies a scalar by a SensitivityValue, clamping the result to the value's range.
+    /// Multiplies a scalar by a <see cref="SensitivityValue" />, clamping the result to the value's range.
     /// </summary>
     /// <param name="left">The scalar multiplier.</param>
-    /// <param name="right">The SensitivityValue.</param>
-    /// <returns>A new SensitivityValue with the clamped result.</returns>
+    /// <param name="right">The <see cref="SensitivityValue" /> operand.</param>
+    /// <returns>A new <see cref="SensitivityValue" /> with the clamped result.</returns>
     public static SensitivityValue operator *(double left, SensitivityValue right)
     {
         var product = left * right.Value;
@@ -266,10 +332,10 @@ public readonly record struct SensitivityValue : IRangedValue, INormalizable
     }
 
     /// <summary>
-    /// Negates a SensitivityValue, clamping the result to the value's range.
+    /// Negates a <see cref="SensitivityValue" />, clamping the result to the value's range.
     /// </summary>
-    /// <param name="value">The SensitivityValue to negate.</param>
-    /// <returns>A new SensitivityValue with the negated value.</returns>
+    /// <param name="value">The <see cref="SensitivityValue" /> to negate.</param>
+    /// <returns>A new <see cref="SensitivityValue" /> with the negated value.</returns>
     public static SensitivityValue operator -(SensitivityValue value)
     {
         var negated = -value.Value;

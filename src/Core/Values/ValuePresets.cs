@@ -11,32 +11,32 @@ public static class ValuePresets
     /// </summary>
     public static class Normalized
     {
-        /// <summary>Zero (0.0)</summary>
-        public static NormalizedValue Zero => NormalizedValue.Zero;
-
         /// <summary>Quarter (0.25)</summary>
         public static readonly NormalizedValue Quarter = NormalizedValue.FromRatio(0.25);
-
-        /// <summary>Half (0.5)</summary>
-        public static NormalizedValue Half => NormalizedValue.Half;
 
         /// <summary>Three quarters (0.75)</summary>
         public static readonly NormalizedValue ThreeQuarters = NormalizedValue.FromRatio(0.75);
 
-        /// <summary>Full (1.0)</summary>
-        public static NormalizedValue Full => NormalizedValue.One;
-
         /// <summary>Low willingness (0.3)</summary>
         public static readonly NormalizedValue Low = NormalizedValue.FromRatio(0.3);
-
-        /// <summary>Medium willingness (0.5)</summary>
-        public static NormalizedValue Medium => NormalizedValue.Half;
 
         /// <summary>High willingness (0.7)</summary>
         public static readonly NormalizedValue High = NormalizedValue.FromRatio(0.7);
 
         /// <summary>Very high willingness (0.9)</summary>
         public static readonly NormalizedValue VeryHigh = NormalizedValue.FromRatio(0.9);
+
+        /// <summary>Zero (0.0)</summary>
+        public static NormalizedValue Zero => NormalizedValue.Zero;
+
+        /// <summary>Half (0.5)</summary>
+        public static NormalizedValue Half => NormalizedValue.Half;
+
+        /// <summary>Full (1.0)</summary>
+        public static NormalizedValue Full => NormalizedValue.One;
+
+        /// <summary>Medium willingness (0.5)</summary>
+        public static NormalizedValue Medium => NormalizedValue.Half;
     }
 
     /// <summary>
@@ -44,9 +44,6 @@ public static class ValuePresets
     /// </summary>
     public static class Sensitivity
     {
-        /// <summary>Neutral sensitivity (0.0)</summary>
-        public static SensitivityValue Neutral => SensitivityValue.Zero;
-
         /// <summary>Low positive sensitivity (2.0)</summary>
         public static readonly SensitivityValue LowPositive = SensitivityValue.FromRaw(2.0);
 
@@ -64,6 +61,9 @@ public static class ValuePresets
 
         /// <summary>High negative sensitivity (-8.0)</summary>
         public static readonly SensitivityValue HighNegative = SensitivityValue.FromRaw(-8.0);
+
+        /// <summary>Neutral sensitivity (0.0)</summary>
+        public static SensitivityValue Neutral => SensitivityValue.Zero;
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public static class ValuePresets
         /// <summary>Unit intensity (1.0)</summary>
         public static IntensityValue One => IntensityValue.One;
     }
-    
+
     /// <summary>
     /// Common person attribute presets to prevent zero migration scenarios.
     /// </summary>

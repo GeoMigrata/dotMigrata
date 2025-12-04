@@ -11,12 +11,16 @@ public class World
     private readonly List<FactorDefinition> _factorDefinitions;
 
     /// <summary>
-    /// Initializes a new instance of the World class.
+    /// Initializes a new instance of the <see cref="World" /> class.
     /// </summary>
     /// <param name="cities">The cities in the world.</param>
     /// <param name="factorDefinitions">The factor definitions used in the world.</param>
-    /// <exception cref="ArgumentNullException">Thrown when cities or factorDefinitions is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when cities or factorDefinitions is empty.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="cities" /> or <paramref name="factorDefinitions" /> is <see langword="null" />.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="cities" /> or <paramref name="factorDefinitions" /> is empty.
+    /// </exception>
     public World(
         IEnumerable<City> cities,
         IEnumerable<FactorDefinition> factorDefinitions)
@@ -64,7 +68,9 @@ public class World
     /// <summary>
     /// Validates that each city has values for all factor definitions.
     /// </summary>
-    /// <exception cref="InvalidOperationException">Thrown when validation fails.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when a city is missing values for one or more factor definitions.
+    /// </exception>
     private void ValidateWorldStructure()
     {
         // Validate that each city has values for all factor definitions

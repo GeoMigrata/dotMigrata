@@ -2,33 +2,39 @@
 
 /// <summary>
 /// Represents a raw intensity value for a factor with validation and normalization support.
-/// Wraps the raw value and provides type-safe operations.
-/// Intensity values must be non-negative (>= 0).
-/// Implements as a readonly record struct for zero-allocation overhead.
-/// Note: IntensityValue does not implement INormalizable because normalization requires a FactorDefinition.
 /// </summary>
+/// <remarks>
+///     <para>Intensity values must be non-negative (≥ 0).</para>
+///     <para>This type is implemented as a readonly record struct for zero-allocation overhead.</para>
+///     <para>
+///     This type does not implement <see cref="INormalizable" /> because normalization requires
+///     a <see cref="FactorDefinition" />.
+///     </para>
+/// </remarks>
 public readonly record struct IntensityValue : IValue<double>
 {
     /// <summary>
-    /// Minimum allowed intensity value (0.0 - intensities cannot be negative).
+    /// The minimum allowed intensity value (0.0). Intensities cannot be negative.
     /// </summary>
     public const double MinAllowedValue = 0.0;
 
     /// <summary>
-    /// An intensity value of zero (0.0).
+    /// An intensity value representing zero (0.0).
     /// </summary>
     public static readonly IntensityValue Zero = new(0.0);
 
     /// <summary>
-    /// An intensity value of one (1.0).
+    /// An intensity value representing one (1.0).
     /// </summary>
     public static readonly IntensityValue One = new(1.0);
 
     /// <summary>
-    /// Initializes a new instance of the IntensityValue struct.
+    /// Initializes a new instance of the <see cref="IntensityValue" /> struct.
     /// </summary>
     /// <param name="value">The intensity value. Must be non-negative.</param>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when value is NaN, Infinity, or negative.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="value" /> is NaN, Infinity, or negative.
+    /// </exception>
     private IntensityValue(double value)
     {
         if (!IsValidValue(value))
@@ -39,38 +45,58 @@ public readonly record struct IntensityValue : IValue<double>
     }
 
     /// <summary>
-    /// Checks if a value is valid for an IntensityValue (non-negative, not NaN, not Infinity).
-    /// </summary>
-    /// <param name="value">The value to check.</param>
-    /// <returns>True if the value is valid; otherwise, false.</returns>
-    public static bool IsValidValue(double value) =>
-        !double.IsNaN(value) && !double.IsInfinity(value) && value >= MinAllowedValue;
-
-    /// <summary>
-    /// Gets the raw intensity value.
+    /// Gets the underlying intensity value.
     /// </summary>
     public double Value { get; }
 
     /// <summary>
-    /// Validates that this intensity value is valid (non-negative, not NaN, not Infinity).
+    /// Determines whether this instance contains a valid value.
     /// </summary>
-    /// <returns>True if the value is valid; otherwise, false.</returns>
-    public bool IsValid() => IsValidValue(Value);
+    /// <returns>
+    /// <see langword="true" /> if the value is valid; otherwise, <see langword="false" />.
+    /// </returns>
+    public bool IsValid()
+    {
+        return IsValidValue(Value);
+    }
 
     /// <summary>
-    /// Creates an IntensityValue from a raw value.
+    /// Determines whether the specified value is valid for an <see cref="IntensityValue" />.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns>
+    /// <see langword="true" /> if the value is non-negative and is not NaN or Infinity;
+    /// otherwise, <see langword="false" />.
+    /// </returns>
+    public static bool IsValidValue(double value)
+    {
+        return !double.IsNaN(value) && !double.IsInfinity(value) && value >= MinAllowedValue;
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="IntensityValue" /> from the specified raw value.
     /// </summary>
     /// <param name="value">The raw intensity value. Must be non-negative.</param>
-    /// <returns>A new IntensityValue.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when value is NaN, Infinity, or negative.</exception>
-    public static IntensityValue FromRaw(double value) => new(value);
+    /// <returns>A new <see cref="IntensityValue" /> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="value" /> is NaN, Infinity, or negative.
+    /// </exception>
+    public static IntensityValue FromRaw(double value)
+    {
+        return new IntensityValue(value);
+    }
 
     /// <summary>
-    /// Tries to create an IntensityValue from a raw value without throwing an exception.
+    /// Attempts to create an <see cref="IntensityValue" /> from the specified raw value without throwing an exception.
     /// </summary>
     /// <param name="value">The raw intensity value.</param>
-    /// <param name="result">When this method returns, contains the IntensityValue if successful; otherwise, default.</param>
-    /// <returns>True if the value was created successfully; otherwise, false.</returns>
+    /// <param name="result">
+    /// When this method returns, contains the <see cref="IntensityValue" /> if the conversion succeeded,
+    /// or the default value if the conversion failed.
+    /// </param>
+    /// <returns>
+    /// <see langword="true" /> if the value was created successfully; otherwise, <see langword="false" />.
+    /// </returns>
     public static bool TryFromRaw(double value, out IntensityValue result)
     {
         if (IsValidValue(value))
@@ -84,10 +110,10 @@ public readonly record struct IntensityValue : IValue<double>
     }
 
     /// <summary>
-    /// Creates an IntensityValue from a raw value, clamping negative values to zero.
+    /// Creates a new <see cref="IntensityValue" /> from the specified raw value, clamping negative values to zero.
     /// </summary>
     /// <param name="value">The raw intensity value.</param>
-    /// <returns>A new IntensityValue with non-negative value.</returns>
+    /// <returns>A new <see cref="IntensityValue" /> with a non-negative value.</returns>
     public static IntensityValue FromRawClamped(double value)
     {
         if (double.IsNaN(value) || double.IsInfinity(value))
@@ -97,15 +123,19 @@ public readonly record struct IntensityValue : IValue<double>
     }
 
     /// <summary>
-    /// Creates an IntensityValue with validation against a factor definition's range.
+    /// Creates a new <see cref="IntensityValue" /> with validation against a factor definition's range.
     /// </summary>
     /// <param name="value">The raw intensity value. Must be non-negative.</param>
     /// <param name="factorDefinition">The factor definition to validate against.</param>
-    /// <returns>A new IntensityValue.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when factorDefinition is null.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when value is NaN, Infinity, or negative.</exception>
+    /// <returns>A new <see cref="IntensityValue" /> instance.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="factorDefinition" /> is <see langword="null" />.
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="value" /> is NaN, Infinity, or negative.
+    /// </exception>
     /// <remarks>
-    /// Note: This does not enforce the factor's min/max range, only validates that the value is non-negative.
+    /// This method does not enforce the factor's min/max range, only validates that the value is non-negative.
     /// Values outside the range will be clamped during normalization.
     /// </remarks>
     public static IntensityValue Create(double value, FactorDefinition factorDefinition)
@@ -115,11 +145,13 @@ public readonly record struct IntensityValue : IValue<double>
     }
 
     /// <summary>
-    /// Normalizes the intensity value using the provided factor definition.
+    /// Normalizes this intensity value using the specified factor definition.
     /// </summary>
     /// <param name="factorDefinition">The factor definition containing normalization rules.</param>
-    /// <returns>A normalized value between 0 and 1.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when factorDefinition is null.</exception>
+    /// <returns>A <see cref="NormalizedValue" /> between 0 and 1.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="factorDefinition" /> is <see langword="null" />.
+    /// </exception>
     public NormalizedValue Normalize(FactorDefinition factorDefinition)
     {
         ArgumentNullException.ThrowIfNull(factorDefinition);
@@ -128,11 +160,13 @@ public readonly record struct IntensityValue : IValue<double>
     }
 
     /// <summary>
-    /// Clamps the intensity value to the factor definition's range.
+    /// Clamps this intensity value to the specified factor definition's range.
     /// </summary>
     /// <param name="factorDefinition">The factor definition containing min/max bounds.</param>
-    /// <returns>A new IntensityValue clamped to the factor's range.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when factorDefinition is null.</exception>
+    /// <returns>A new <see cref="IntensityValue" /> clamped to the factor's range.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="factorDefinition" /> is <see langword="null" />.
+    /// </exception>
     public IntensityValue Clamp(FactorDefinition factorDefinition)
     {
         ArgumentNullException.ThrowIfNull(factorDefinition);
@@ -143,66 +177,88 @@ public readonly record struct IntensityValue : IValue<double>
     /// <summary>
     /// Returns a string representation of the value.
     /// </summary>
-    public override string ToString() => $"{Value:F2}";
+    /// <returns>A string that represents the current value.</returns>
+    public override string ToString()
+    {
+        return $"{Value:F2}";
+    }
 
     /// <summary>
-    /// Implicitly converts an IntensityValue to a double.
+    /// Defines an implicit conversion of an <see cref="IntensityValue" /> to a <see cref="double" />.
     /// </summary>
-    /// <param name="value">The IntensityValue to convert.</param>
-    public static implicit operator double(IntensityValue value) => value.Value;
+    /// <param name="value">The <see cref="IntensityValue" /> to convert.</param>
+    /// <returns>The underlying double value.</returns>
+    public static implicit operator double(IntensityValue value)
+    {
+        return value.Value;
+    }
 
     /// <summary>
-    /// Explicitly converts a double to an IntensityValue.
+    /// Defines an explicit conversion of a <see cref="double" /> to an <see cref="IntensityValue" />.
     /// </summary>
-    /// <param name="value">The double value to convert (must be non-negative).</param>
-    public static explicit operator IntensityValue(double value) => FromRaw(value);
+    /// <param name="value">The double value to convert. Must be non-negative.</param>
+    /// <returns>A new <see cref="IntensityValue" /> instance.</returns>
+    public static explicit operator IntensityValue(double value)
+    {
+        return FromRaw(value);
+    }
 
     /// <summary>
-    /// Adds two IntensityValues.
+    /// Adds two <see cref="IntensityValue" /> instances.
     /// </summary>
-    /// <param name="left">The first IntensityValue.</param>
-    /// <param name="right">The second IntensityValue.</param>
-    /// <returns>A new IntensityValue with the sum.</returns>
+    /// <param name="left">The first <see cref="IntensityValue" />.</param>
+    /// <param name="right">The second <see cref="IntensityValue" />.</param>
+    /// <returns>A new <see cref="IntensityValue" /> with the sum.</returns>
     /// <remarks>
     /// If the sum results in an invalid value (overflow), returns a clamped result.
     /// </remarks>
-    public static IntensityValue operator +(IntensityValue left, IntensityValue right) =>
-        FromRawClamped(left.Value + right.Value);
+    public static IntensityValue operator +(IntensityValue left, IntensityValue right)
+    {
+        return FromRawClamped(left.Value + right.Value);
+    }
 
     /// <summary>
-    /// Subtracts one IntensityValue from another, clamping the result to zero.
+    /// Subtracts one <see cref="IntensityValue" /> from another, clamping the result to zero.
     /// </summary>
-    /// <param name="left">The first IntensityValue.</param>
-    /// <param name="right">The second IntensityValue.</param>
-    /// <returns>A new IntensityValue with the clamped difference.</returns>
-    public static IntensityValue operator -(IntensityValue left, IntensityValue right) =>
-        FromRawClamped(left.Value - right.Value);
+    /// <param name="left">The <see cref="IntensityValue" /> to subtract from.</param>
+    /// <param name="right">The <see cref="IntensityValue" /> to subtract.</param>
+    /// <returns>A new <see cref="IntensityValue" /> with the clamped difference.</returns>
+    public static IntensityValue operator -(IntensityValue left, IntensityValue right)
+    {
+        return FromRawClamped(left.Value - right.Value);
+    }
 
     /// <summary>
-    /// Multiplies an IntensityValue by a scalar.
+    /// Multiplies an <see cref="IntensityValue" /> by a scalar.
     /// </summary>
-    /// <param name="left">The IntensityValue.</param>
-    /// <param name="right">The scalar multiplier (must result in non-negative value).</param>
-    /// <returns>A new IntensityValue with the clamped result.</returns>
-    public static IntensityValue operator *(IntensityValue left, double right) =>
-        FromRawClamped(left.Value * right);
+    /// <param name="left">The <see cref="IntensityValue" /> operand.</param>
+    /// <param name="right">The scalar multiplier.</param>
+    /// <returns>A new <see cref="IntensityValue" /> with the clamped result.</returns>
+    public static IntensityValue operator *(IntensityValue left, double right)
+    {
+        return FromRawClamped(left.Value * right);
+    }
 
     /// <summary>
-    /// Multiplies a scalar by an IntensityValue.
+    /// Multiplies a scalar by an <see cref="IntensityValue" />.
     /// </summary>
     /// <param name="left">The scalar multiplier.</param>
-    /// <param name="right">The IntensityValue.</param>
-    /// <returns>A new IntensityValue with the clamped result.</returns>
-    public static IntensityValue operator *(double left, IntensityValue right) =>
-        FromRawClamped(left * right.Value);
+    /// <param name="right">The <see cref="IntensityValue" /> operand.</param>
+    /// <returns>A new <see cref="IntensityValue" /> with the clamped result.</returns>
+    public static IntensityValue operator *(double left, IntensityValue right)
+    {
+        return FromRawClamped(left * right.Value);
+    }
 
     /// <summary>
-    /// Divides an IntensityValue by a scalar.
+    /// Divides an <see cref="IntensityValue" /> by a scalar.
     /// </summary>
-    /// <param name="left">The IntensityValue.</param>
-    /// <param name="right">The scalar divisor (must be non-zero).</param>
-    /// <returns>A new IntensityValue with the clamped result.</returns>
-    /// <exception cref="DivideByZeroException">Thrown when the divisor is zero.</exception>
+    /// <param name="left">The <see cref="IntensityValue" /> dividend.</param>
+    /// <param name="right">The scalar divisor. Must be non-zero.</param>
+    /// <returns>A new <see cref="IntensityValue" /> with the clamped result.</returns>
+    /// <exception cref="DivideByZeroException">
+    /// Thrown when <paramref name="right" /> is zero.
+    /// </exception>
     public static IntensityValue operator /(IntensityValue left, double right)
     {
         return right == 0

@@ -3,19 +3,24 @@
 namespace dotMigrata.Simulation.Builders;
 
 /// <summary>
-/// Builder for SimulationConfig with fluent API.
+/// Provides a fluent API for building <see cref="SimulationConfig" /> instances.
 /// </summary>
 public sealed class SimulationConfigBuilder
 {
-    private int _maxTicks = 1000;
     private bool _checkStability = true;
-    private int _stabilityThreshold = 10;
-    private int _stabilityCheckInterval = 1;
+    private int _maxTicks = 1000;
     private int _minTicksBeforeStabilityCheck = 10;
+    private int _stabilityCheckInterval = 1;
+    private int _stabilityThreshold = 10;
 
     /// <summary>
     /// Sets the maximum number of simulation ticks.
     /// </summary>
+    /// <param name="value">The maximum number of ticks. Must be positive.</param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="value" /> is not positive.
+    /// </exception>
     public SimulationConfigBuilder MaxTicks(int value)
     {
         _maxTicks = value > 0
@@ -27,6 +32,10 @@ public sealed class SimulationConfigBuilder
     /// <summary>
     /// Enables or disables stability checking.
     /// </summary>
+    /// <param name="value">
+    /// <see langword="true" /> to enable stability checking; otherwise, <see langword="false" />.
+    /// </param>
+    /// <returns>This builder for method chaining.</returns>
     public SimulationConfigBuilder CheckStability(bool value)
     {
         _checkStability = value;
@@ -36,6 +45,11 @@ public sealed class SimulationConfigBuilder
     /// <summary>
     /// Sets the threshold for considering the simulation stable.
     /// </summary>
+    /// <param name="value">The stability threshold. Must be non-negative.</param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="value" /> is negative.
+    /// </exception>
     public SimulationConfigBuilder StabilityThreshold(int value)
     {
         _stabilityThreshold = value >= 0
@@ -47,6 +61,11 @@ public sealed class SimulationConfigBuilder
     /// <summary>
     /// Sets how often to check for stability.
     /// </summary>
+    /// <param name="value">The interval in ticks. Must be positive.</param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="value" /> is not positive.
+    /// </exception>
     public SimulationConfigBuilder StabilityCheckInterval(int value)
     {
         _stabilityCheckInterval = value > 0
@@ -58,6 +77,11 @@ public sealed class SimulationConfigBuilder
     /// <summary>
     /// Sets the minimum ticks before checking stability.
     /// </summary>
+    /// <param name="value">The minimum number of ticks. Must be non-negative.</param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="value" /> is negative.
+    /// </exception>
     public SimulationConfigBuilder MinTicksBeforeStabilityCheck(int value)
     {
         _minTicksBeforeStabilityCheck = value >= 0
@@ -67,12 +91,15 @@ public sealed class SimulationConfigBuilder
         return this;
     }
 
-    internal SimulationConfig Build() => new()
+    internal SimulationConfig Build()
     {
-        MaxTicks = _maxTicks,
-        CheckStability = _checkStability,
-        StabilityThreshold = _stabilityThreshold,
-        StabilityCheckInterval = _stabilityCheckInterval,
-        MinTicksBeforeStabilityCheck = _minTicksBeforeStabilityCheck
-    };
+        return new SimulationConfig
+        {
+            MaxTicks = _maxTicks,
+            CheckStability = _checkStability,
+            StabilityThreshold = _stabilityThreshold,
+            StabilityCheckInterval = _stabilityCheckInterval,
+            MinTicksBeforeStabilityCheck = _minTicksBeforeStabilityCheck
+        };
+    }
 }

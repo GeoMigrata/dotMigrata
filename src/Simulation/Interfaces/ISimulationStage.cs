@@ -4,8 +4,10 @@ namespace dotMigrata.Simulation.Interfaces;
 
 /// <summary>
 /// Represents a single stage in the simulation pipeline.
-/// Stages are executed in sequence during each simulation tick.
 /// </summary>
+/// <remarks>
+/// Stages are executed in sequence during each simulation tick.
+/// </remarks>
 public interface ISimulationStage
 {
     /// <summary>
@@ -22,10 +24,16 @@ public interface ISimulationStage
 
     /// <summary>
     /// Determines whether this stage should be executed for the current tick.
-    /// Can be used to skip stages conditionally (e.g., feedback only every N ticks).
     /// </summary>
     /// <param name="context">The current simulation context.</param>
-    /// <returns>True if the stage should execute; false to skip.</returns>
+    /// <returns>
+    /// <see langword="true" /> if the stage should execute;
+    /// <see langword="false" /> to skip the stage.
+    /// </returns>
+    /// <remarks>
+    /// Can be used to skip stages conditionally (for example, feedback only every N ticks).
+    /// The default implementation returns <see langword="true" />.
+    /// </remarks>
     bool ShouldExecute(SimulationContext context)
     {
         return true;
