@@ -7,7 +7,7 @@ namespace dotMigrata.Snapshot.Models;
 /// </summary>
 /// <remarks>
 /// Creates one or more persons with identical attributes.
-/// Use <see cref="GeneratorXml"/> for randomized attribute generation.
+/// Use <see cref="GeneratorXml" /> for randomized attribute generation.
 /// </remarks>
 public class PersonTemplateXml
 {

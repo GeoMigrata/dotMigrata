@@ -7,12 +7,18 @@ namespace dotMigrata.Snapshot.Models;
 /// Root snapshot model with XML serialization support.
 /// </summary>
 /// <remarks>
-/// <para>Simplified XML format (v2.0) with cleaner structure:</para>
-/// <list type="bullet">
-/// <item><description>Single namespace for all elements</description></item>
-/// <item><description>Attribute-based configuration for scalar values</description></item>
-/// <item><description>Consistent naming conventions</description></item>
-/// </list>
+///     <para>Simplified XML format (v2.0) with cleaner structure:</para>
+///     <list type="bullet">
+///         <item>
+///             <description>Single namespace for all elements</description>
+///         </item>
+///         <item>
+///             <description>Attribute-based configuration for scalar values</description>
+///         </item>
+///         <item>
+///             <description>Consistent naming conventions</description>
+///         </item>
+///     </list>
 /// </remarks>
 [XmlRoot("Snapshot", Namespace = "http://geomigrata.pages.dev/snapshot")]
 public sealed class WorldSnapshotXml

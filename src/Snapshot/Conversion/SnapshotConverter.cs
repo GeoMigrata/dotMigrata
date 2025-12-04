@@ -8,18 +8,24 @@ using dotMigrata.Snapshot.Models;
 namespace dotMigrata.Snapshot.Conversion;
 
 /// <summary>
-/// Converts between World domain objects and WorldSnapshotXml serialization models.
-/// Provides bidirectional conversion for loading and saving simulation states.
+/// Converts between <see cref="World" /> domain objects and <see cref="WorldSnapshotXml" /> serialization models.
 /// </summary>
+/// <remarks>
+/// Provides bidirectional conversion for loading and saving simulation states using v2.0 XML format.
+/// </remarks>
 public static class SnapshotConverter
 {
     /// <summary>
-    /// Converts a WorldSnapshotXml to a World domain object.
+    /// Converts a <see cref="WorldSnapshotXml" /> to a <see cref="World" /> domain object.
     /// </summary>
     /// <param name="snapshot">The snapshot to convert.</param>
-    /// <returns>A World instance populated from the snapshot.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when snapshot is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when snapshot data is invalid.</exception>
+    /// <returns>A <see cref="World" /> instance populated from the snapshot.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="snapshot" /> is <see langword="null" />.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when snapshot data is invalid or incomplete.
+    /// </exception>
     public static World ToWorld(WorldSnapshotXml snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -31,7 +37,7 @@ public static class SnapshotConverter
 
         // Step 1: Convert factor definitions (must be done first as cities and persons reference them)
         var factorDefinitions = ConvertFactorDefinitions(worldState.FactorDefinitions);
-        var factorLookup = factorDefinitions.ToDictionary(GetFactorId, f => f);
+        var factorLookup = CreateFactorLookup(worldState.FactorDefinitions, factorDefinitions);
 
         // Step 2: Convert person collections to a lookup
         var personCollections = ConvertPersonCollections(
@@ -49,14 +55,18 @@ public static class SnapshotConverter
     }
 
     /// <summary>
-    /// Converts a World domain object to a WorldSnapshotXml.
-    /// Note: Person instances are not persisted individually; use PersonCollections for reproducibility.
+    /// Converts a <see cref="World" /> domain object to a <see cref="WorldSnapshotXml" />.
     /// </summary>
     /// <param name="world">The world to convert.</param>
-    /// <param name="status">The snapshot status. Default is Seed.</param>
-    /// <param name="currentStep">The current simulation step. Default is 0.</param>
-    /// <returns>A WorldSnapshotXml representing the world state.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when world is null.</exception>
+    /// <param name="status">The snapshot status. Default is <see cref="SnapshotStatus.Seed" />.</param>
+    /// <param name="currentStep">The current simulation tick. Default is 0.</param>
+    /// <returns>A <see cref="WorldSnapshotXml" /> representing the world state.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="world" /> is <see langword="null" />.
+    /// </exception>
+    /// <remarks>
+    /// Person instances are not persisted individually; use Population groups for reproducibility.
+    /// </remarks>
     public static WorldSnapshotXml ToSnapshot(
         World world,
         SnapshotStatus status = SnapshotStatus.Seed,
@@ -66,7 +76,7 @@ public static class SnapshotConverter
 
         return new WorldSnapshotXml
         {
-            Version = "1.0",
+            Version = "2.0",
             Id = Guid.NewGuid().ToString(),
             Status = status,
             CreatedAt = DateTime.UtcNow,
@@ -85,6 +95,22 @@ public static class SnapshotConverter
             throw new InvalidOperationException("Snapshot must contain at least one factor definition.");
 
         return definitions.Select(ConvertFactorDefinition).ToList();
+    }
+
+    /// <summary>
+    /// Creates a lookup dictionary mapping XML IDs to factor definitions.
+    /// </summary>
+    private static Dictionary<string, FactorDefinition> CreateFactorLookup(
+        List<FactorDefXml>? definitions,
+        List<FactorDefinition> factors)
+    {
+        if (definitions == null || definitions.Count != factors.Count)
+            throw new InvalidOperationException("Factor definition count mismatch.");
+
+        var lookup = new Dictionary<string, FactorDefinition>(StringComparer.OrdinalIgnoreCase);
+        for (var i = 0; i < definitions.Count; i++) lookup[definitions[i].Id] = factors[i];
+
+        return lookup;
     }
 
     private static FactorDefinition ConvertFactorDefinition(FactorDefXml def)
@@ -137,11 +163,9 @@ public static class SnapshotConverter
 
             // Process generators
             if (collection.Generators != null)
-                foreach (var generator in collection.Generators)
-                {
-                    var generatedPersons = ConvertGenerator(generator, factorLookup, allFactors);
+                foreach (var generatedPersons in collection.Generators.Select(generator =>
+                             ConvertGenerator(generator, factorLookup, allFactors)))
                     persons.AddRange(generatedPersons);
-                }
 
             result[collection.Id] = persons;
         }
@@ -211,46 +235,34 @@ public static class SnapshotConverter
         if (spec == null)
             return ValueSpecification.Fixed(defaultValue);
 
-        // Check for shorthand fixed value attribute
+        // Attribute-based format (v2.0)
         if (spec.ValueSpecified)
             return ValueSpecification.Fixed(spec.Value);
 
-        // Check for explicit Fixed element
-        if (spec.Fixed != null)
-            return ValueSpecification.Fixed(spec.Fixed.Value);
+        if (spec is { MinSpecified: true, MaxSpecified: true })
+            return ValueSpecification.InRange(spec.Min, spec.Max);
 
-        // Check for InRange element
-        if (spec.InRange != null)
-            return ValueSpecification.InRange(spec.InRange.Min, spec.InRange.Max);
-
-        // Check for Random element
-        if (spec.Random != null)
-            return Math.Abs(spec.Random.Scale - 1.0) < double.Epsilon
+        if (spec.ScaleSpecified)
+            return Math.Abs(spec.Scale - 1.0) < double.Epsilon
                 ? ValueSpecification.Random()
-                : ValueSpecification.RandomWithScale(spec.Random.Scale);
+                : ValueSpecification.RandomWithScale(spec.Scale);
 
         return ValueSpecification.Fixed(defaultValue);
     }
 
     private static ValueSpecification ConvertSensitivitySpec(SensitivitySpecXml spec)
     {
-        // Check for shorthand fixed value attribute
+        // Attribute-based format (v2.0)
         if (spec.ValueSpecified)
             return ValueSpecification.Fixed(spec.Value);
 
-        // Check for explicit Fixed element
-        if (spec.Fixed != null)
-            return ValueSpecification.Fixed(spec.Fixed.Value);
+        if (spec is { MinSpecified: true, MaxSpecified: true })
+            return ValueSpecification.InRange(spec.Min, spec.Max);
 
-        // Check for InRange element
-        if (spec.InRange != null)
-            return ValueSpecification.InRange(spec.InRange.Min, spec.InRange.Max);
-
-        // Check for Random element
-        if (spec.Random != null)
-            return Math.Abs(spec.Random.Scale - 1.0) < double.Epsilon
+        if (spec.ScaleSpecified)
+            return Math.Abs(spec.Scale - 1.0) < double.Epsilon
                 ? ValueSpecification.Random()
-                : ValueSpecification.RandomWithScale(spec.Random.Scale);
+                : ValueSpecification.RandomWithScale(spec.Scale);
 
         // Default: random with default range
         return ValueSpecification.Random();
@@ -323,11 +335,34 @@ public static class SnapshotConverter
 
     private static string GetFactorId(FactorDefinition factor)
     {
-        // Generate a deterministic ID from the display name (lowercase, underscores for spaces)
-        return factor.DisplayName.ToLowerInvariant().Replace(' ', '_').Replace(".", "");
+        // Generate a deterministic ID from the display name
+        // Sanitize to valid XML ID: lowercase, replace invalid chars with underscores
+        var id = factor.DisplayName.ToLowerInvariant();
+
+        // Replace common separators and punctuation with underscores
+        id = id.Replace(' ', '_')
+            .Replace('.', '_')
+            .Replace('-', '_')
+            .Replace('/', '_')
+            .Replace('\\', '_')
+            .Replace(':', '_')
+            .Replace(',', '_');
+
+        // Remove any remaining non-alphanumeric characters (except underscore)
+        id = new string(id.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
+
+        // Ensure ID doesn't start with a number (XML ID requirement)
+        if (id.Length > 0 && char.IsDigit(id[0]))
+            id = "_" + id;
+
+        // Collapse multiple underscores and trim
+        while (id.Contains("__"))
+            id = id.Replace("__", "_");
+
+        return id.Trim('_');
     }
 
-    private static List<string> ParseTags(string? tags)
+    private static IReadOnlyList<string> ParseTags(string? tags)
     {
         if (string.IsNullOrWhiteSpace(tags))
             return [];
@@ -347,7 +382,7 @@ public static class SnapshotConverter
             DisplayName = world.DisplayName,
             FactorDefinitions = world.FactorDefinitions.Select(ConvertToFactorDefXml).ToList(),
             Cities = world.Cities.Select(ConvertToCityXml).ToList(),
-            PersonCollections = [] // Note: PersonCollections are not reconstructed from live World
+            PersonCollections = [] // Note: Population groups are not reconstructed from live World
         };
     }
 
@@ -374,7 +409,7 @@ public static class SnapshotConverter
             Longitude = city.Location.Longitude,
             Area = city.Area,
             FactorValues = city.FactorValues.Select(ConvertToFactorValueXml).ToList(),
-            PersonCollections = [] // Note: Person collections are not reconstructed
+            PersonCollections = [] // Note: Population groups are not reconstructed
         };
 
         if (!city.Capacity.HasValue) return cityXml;

@@ -234,19 +234,6 @@ public readonly record struct SensitivityValue : IRangedValue, INormalizable
     }
 
     /// <summary>
-    /// Creates a neutral sensitivity value (0.0).
-    /// </summary>
-    /// <returns>A <see cref="SensitivityValue" /> with value 0.</returns>
-    /// <remarks>
-    /// Consider using <see cref="Zero" /> directly for clearer intent.
-    /// </remarks>
-    [Obsolete("Use SensitivityValue.Zero instead for clearer intent.")]
-    public static SensitivityValue Neutral()
-    {
-        return Zero;
-    }
-
-    /// <summary>
     /// Returns a string representation of the value.
     /// </summary>
     /// <returns>A string that represents the current value.</returns>

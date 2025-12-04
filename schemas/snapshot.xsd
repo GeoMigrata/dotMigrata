@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-        <!--
-          dotMigrata Snapshot Schema v2.0
-          
-          Simplified XML format with:
-          - Single namespace for all elements
-          - Attribute-based configuration for scalar values
-          - Shorter element names for reduced file size
-        -->
+<!--
+  dotMigrata Snapshot Schema v2.0
+  
+  Simplified XML format with:
+  - Single namespace for all elements
+  - Attribute-based configuration for scalar values
+  - Shorter element names for reduced file size
+-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns="http://geomigrata.pages.dev/snapshot"
            targetNamespace="http://geomigrata.pages.dev/snapshot"
