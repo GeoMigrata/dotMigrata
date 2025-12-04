@@ -111,4 +111,16 @@ public readonly record struct NormalizedValue : IValue<double>, IRangedValue
     /// Returns a string representation of the value.
     /// </summary>
     public override string ToString() => $"{Value:F2}";
+    
+    /// <summary>
+    /// Implicitly converts a NormalizedValue to a double.
+    /// </summary>
+    /// <param name="value">The NormalizedValue to convert.</param>
+    public static implicit operator double(NormalizedValue value) => value.Value;
+
+    /// <summary>
+    /// Explicitly converts a double to a NormalizedValue.
+    /// </summary>
+    /// <param name="value">The double value to convert (must be between 0 and 1).</param>
+    public static explicit operator NormalizedValue(double value) => FromRatio(value);
 }

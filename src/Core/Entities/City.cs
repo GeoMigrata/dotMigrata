@@ -5,13 +5,15 @@ namespace dotMigrata.Core.Entities;
 /// <summary>
 /// Represents a city with geographic location, factors, and individual persons.
 /// Uses reference-based person management with HashSet for O(1) operations.
+/// Implements IDisposable for proper cleanup of synchronization resources.
 /// </summary>
-public class City
+public class City : IDisposable
 {
     private readonly Dictionary<FactorDefinition, FactorValue> _factorLookup;
     private readonly List<FactorValue> _factorValues;
     private readonly HashSet<Person> _persons;
     private readonly ReaderWriterLockSlim _personsLock = new();
+    private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the City class.
@@ -180,5 +182,28 @@ public class City
             person.CurrentCity = null;
 
         return removed;
+    }
+
+    /// <summary>
+    /// Releases the resources used by this City.
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Releases the unmanaged resources used by this City and optionally releases managed resources.
+    /// </summary>
+    /// <param name="disposing">True to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+
+        if (disposing)
+            _personsLock.Dispose();
+
+        _disposed = true;
     }
 }

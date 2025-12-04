@@ -100,4 +100,16 @@ public readonly record struct IntensityValue : IValue<double>
     /// Returns a string representation of the value.
     /// </summary>
     public override string ToString() => $"{Value:F2}";
+    
+    /// <summary>
+    /// Implicitly converts an IntensityValue to a double.
+    /// </summary>
+    /// <param name="value">The IntensityValue to convert.</param>
+    public static implicit operator double(IntensityValue value) => value.Value;
+
+    /// <summary>
+    /// Explicitly converts a double to an IntensityValue.
+    /// </summary>
+    /// <param name="value">The double value to convert (must be non-negative).</param>
+    public static explicit operator IntensityValue(double value) => FromRaw(value);
 }

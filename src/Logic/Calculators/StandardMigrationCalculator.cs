@@ -9,21 +9,37 @@ namespace dotMigrata.Logic.Calculators;
 /// Standard migration calculator implementing optimized individual-based migration decisions.
 /// Calculates migration decisions based on attraction differences and individual willingness.
 /// Uses parallel processing for performance with large populations.
+/// Thread-safe implementation using ThreadLocal for random number generation.
 /// </summary>
 public class StandardMigrationCalculator : IMigrationCalculator
 {
     private readonly StandardModelConfig _config;
-    private readonly Random _random;
+    private readonly int? _seed;
+
+    // Thread-local random for thread-safe parallel processing
+    private readonly ThreadLocal<Random> _threadLocalRandom;
 
     /// <summary>
     /// Initializes a new instance of the StandardMigrationCalculator.
     /// </summary>
     /// <param name="config">Configuration parameters for the calculator. If null, uses default configuration.</param>
-    public StandardMigrationCalculator(StandardModelConfig? config = null)
+    /// <param name="seed">Optional seed for reproducible random number generation.</param>
+    public StandardMigrationCalculator(StandardModelConfig? config = null, int? seed = null)
     {
         _config = config ?? StandardModelConfig.Default;
-        _random = new Random();
+        _seed = seed;
+
+        // Create thread-local random with optional seeding for reproducibility
+        _threadLocalRandom = new ThreadLocal<Random>(() =>
+        {
+            if (!_seed.HasValue) return new Random();
+            // Use seed combined with thread ID for reproducible but different per-thread values
+            var threadSeed = _seed.Value ^ Environment.CurrentManagedThreadId;
+            return new Random(threadSeed);
+        }, trackAllValues: false);
     }
+    
+    private Random Random => _threadLocalRandom.Value!;
 
     /// <inheritdoc />
     public MigrationFlow? CalculateMigrationDecision(
@@ -77,12 +93,12 @@ public class StandardMigrationCalculator : IMigrationCalculator
             return null;
 
         // Apply retention rate - person may decide to stay
-        var retentionRoll = _random.NextDouble();
+        var retentionRoll = Random.NextDouble();
         if (retentionRoll < person.RetentionRate.Value)
             return null;
 
         // Make probabilistic migration decision
-        var migrationRoll = _random.NextDouble();
+        var migrationRoll = Random.NextDouble();
         if (migrationRoll > bestProbability)
             return null;
 

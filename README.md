@@ -194,45 +194,39 @@ The snapshot system enables deterministic simulation state management through XM
 ### Loading and Running a Simulation from Snapshot
 
 ```csharp
+using dotMigrata.Snapshot.Conversion;
 using dotMigrata.Snapshot.Serialization;
+using dotMigrata.Simulation.Builders;
 
-// Load snapshot from file
+// Load snapshot from file and convert to World
 var snapshot = XmlSnapshotSerializer.DeserializeFromFile("path/to/snapshot.xml");
+var world = SnapshotConverter.ToWorld(snapshot!);
 
-if (snapshot?.World != null)
-{
-    // TODO: Convert snapshot to World object and run simulation
-    // Note: Currently requires manual conversion from WorldSnapshotXml to World
-    // This involves recreating FactorDefinitions, Cities, and PersonCollections
-}
+// Create and run simulation using fluent builder
+var engine = SimulationBuilder.Create()
+    .WithConsoleOutput()
+    .WithRandomSeed(42)
+    .ConfigureSimulation(s => s.MaxTicks(100))
+    .Build();
+
+var result = await engine.RunAsync(world);
+Console.WriteLine($"Simulation completed in {result.CurrentTick} ticks");
 ```
 
 ### Exporting a Snapshot to File
 
-Snapshots are typically created as XML files following the schema format.
-See [example-snapshot.xml](examples/example-snapshot.xml) for a complete example.
+Convert a World back to snapshot format for persistence:
 
 ```csharp
-using dotMigrata.Snapshot.Models;
+using dotMigrata.Snapshot.Conversion;
 using dotMigrata.Snapshot.Serialization;
 using dotMigrata.Snapshot.Enums;
 
-// Create a snapshot manually
-var snapshot = new WorldSnapshotXml
-{
-    Version = "1.0",
-    Status = SnapshotStatus.Seed,
-    CreatedAt = DateTime.UtcNow,
-    LastModifiedAt = DateTime.UtcNow,
-    CurrentStep = 0,
-    World = new WorldStateXml
-    {
-        DisplayName = "My Simulation",
-        FactorDefinitions = new List<FactorDefXml> { /* ... */ },
-        PersonCollections = new List<PersonCollectionXml> { /* ... */ },
-        Cities = new List<CityXml> { /* ... */ }
-    }
-};
+// Export current simulation state to snapshot
+var snapshot = SnapshotConverter.ToSnapshot(
+    world, 
+    SnapshotStatus.Completed, 
+    currentStep: result.CurrentTick);
 
 // Save to file
 XmlSnapshotSerializer.SerializeToFile(snapshot, "output-snapshot.xml");
@@ -240,16 +234,50 @@ XmlSnapshotSerializer.SerializeToFile(snapshot, "output-snapshot.xml");
 
 **Key Points:**
 
+- Use `SnapshotConverter.ToWorld()` to load snapshots as runnable simulations
+- Use `SnapshotConverter.ToSnapshot()` to export simulation states
 - Snapshots use PersonCollection specifications rather than individual person instances
 - Random seeds ensure deterministic reproducibility
 - See [API.md](API.md) for detailed snapshot schema and examples
 - See [examples/example-snapshot.xml](examples/example-snapshot.xml) for a complete working snapshot
 
+## Simulation Metrics
+
+The framework includes comprehensive metrics collection for academic analysis:
+
+```csharp
+using dotMigrata.Simulation.Metrics;
+using dotMigrata.Simulation.Builders;
+
+// Create simulation with metrics collection
+var metricsObserver = new MetricsObserver();
+var engine = SimulationBuilder.Create()
+    .WithConsoleOutput()
+    .AddObserver(metricsObserver)
+    .Build();
+
+var result = await engine.RunAsync(world);
+
+// Access collected metrics
+var metrics = metricsObserver.Collector;
+Console.WriteLine($"Average migration rate: {metrics.AverageMigrationRate:P2}");
+Console.WriteLine($"Gini coefficient: {metrics.CurrentMetrics?.PopulationGiniCoefficient:F4}");
+
+// Export to CSV for analysis
+File.WriteAllText("simulation_metrics.csv", metrics.ExportToCsv());
+```
+
+**Available Metrics:**
+
+- Migration rates and counts per tick
+- Population distribution statistics (Gini, Entropy, CV)
+- Per-city metrics (incoming/outgoing migrations, capacity utilization)
+- Tag-based population analysis
+
 ## Documentation
 
 - **[USAGE.md](USAGE.md)** - Detailed usage examples and code snippets
 - **[API.md](API.md)** - Complete API reference documentation
-- **[/examples](examples/)** - Working examples and sample snapshots
 
 ## Extensibility for REST API / Middleware
 

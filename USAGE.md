@@ -545,6 +545,50 @@ XmlSnapshotSerializer.SerializeToFile(snapshot, "my-simulation-snapshot.xml");
 Console.WriteLine("Snapshot saved to my-simulation-snapshot.xml");
 ```
 
+### Converting Snapshots to World Objects
+
+Use `SnapshotConverter` to convert snapshots to runnable World objects:
+
+```csharp
+using dotMigrata.Snapshot.Conversion;
+using dotMigrata.Snapshot.Serialization;
+using dotMigrata.Simulation.Builders;
+
+// Load and convert snapshot
+var snapshot = XmlSnapshotSerializer.DeserializeFromFile("examples/example-snapshot.xml");
+var world = SnapshotConverter.ToWorld(snapshot!);
+
+// Create simulation with fluent builder
+var engine = SimulationBuilder.Create()
+    .WithConsoleOutput(colored: true)
+    .WithRandomSeed(42)
+    .ConfigureSimulation(s => s.MaxTicks(100).StabilityThreshold(50))
+    .ConfigureModel(m => m.CapacitySteepness(3.0))
+    .Build();
+
+// Run simulation
+var result = await engine.RunAsync(world);
+Console.WriteLine($"Final population: {result.World.Population:N0}");
+```
+
+### Exporting World to Snapshot
+
+Convert simulation results back to snapshot format:
+
+```csharp
+using dotMigrata.Snapshot.Conversion;
+using dotMigrata.Snapshot.Serialization;
+using dotMigrata.Snapshot.Enums;
+
+// After running simulation...
+var outputSnapshot = SnapshotConverter.ToSnapshot(
+    result.World,
+    SnapshotStatus.Completed,
+    currentStep: result.CurrentTick);
+
+XmlSnapshotSerializer.SerializeToFile(outputSnapshot, "simulation-result.xml");
+```
+
 ### Snapshot Benefits
 
 - **Deterministic Reproducibility**: Same seed + step count = exact same state
@@ -563,3 +607,62 @@ A snapshot contains:
 - **Steps**: Optional simulation steps for reproducibility
 
 See [examples/example-snapshot.xml](../examples/example-snapshot.xml) for a complete working example.
+
+## Simulation Metrics
+
+The framework provides comprehensive metrics collection for academic analysis:
+
+```csharp
+using dotMigrata.Simulation.Metrics;
+using dotMigrata.Simulation.Builders;
+
+// Create metrics observer
+var metricsObserver = new MetricsObserver();
+
+// Build simulation with metrics tracking
+var engine = SimulationBuilder.Create()
+    .WithConsoleOutput()
+    .AddObserver(metricsObserver)
+    .WithRandomSeed(42)
+    .Build();
+
+var result = await engine.RunAsync(world);
+
+// Access comprehensive metrics
+var collector = metricsObserver.Collector;
+Console.WriteLine($"Total ticks: {collector.History.Count}");
+Console.WriteLine($"Average migration rate: {collector.AverageMigrationRate:P2}");
+Console.WriteLine($"Total migrations: {collector.TotalMigrations:N0}");
+
+// Access per-tick statistics
+var finalMetrics = collector.CurrentMetrics;
+if (finalMetrics != null)
+{
+    Console.WriteLine($"Gini coefficient: {finalMetrics.PopulationGiniCoefficient:F4}");
+    Console.WriteLine($"Population entropy: {finalMetrics.PopulationEntropy:F4}");
+    Console.WriteLine($"Coefficient of variation: {finalMetrics.PopulationCoefficientOfVariation:F4}");
+}
+
+// Export to CSV for external analysis
+File.WriteAllText("simulation_metrics.csv", collector.ExportToCsv());
+```
+
+### Available Metrics
+
+**Per-tick metrics:**
+
+- Migration count and rate
+- Total population
+- Gini coefficient (population inequality)
+- Population entropy (distribution evenness)
+- Coefficient of variation
+
+**Per-city metrics:**
+
+- Population and capacity utilization
+- Incoming and outgoing migrations
+- Net migration and population change
+
+**Tag-based analysis:**
+
+- Population counts by tag for demographic tracking

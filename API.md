@@ -675,5 +675,142 @@ Represents an individual person's migration decision.
 ### SnapshotStatus
 
 - `Seed` - Initial state
-- `InProgress` - Simulation in progress
+- `Active` - Simulation in progress
+- `Stabilized` - Simulation stabilized
 - `Completed` - Simulation completed
+
+## Snapshot Conversion
+
+### SnapshotConverter
+
+Provides bidirectional conversion between World domain objects and XML snapshot models.
+
+**Methods:**
+
+```csharp
+static World ToWorld(WorldSnapshotXml snapshot)
+static WorldSnapshotXml ToSnapshot(World world, SnapshotStatus status = Seed, int currentStep = 0)
+```
+
+**Example:**
+
+```csharp
+using dotMigrata.Snapshot.Conversion;
+using dotMigrata.Snapshot.Serialization;
+
+// Load snapshot from file and convert to World
+var snapshot = XmlSnapshotSerializer.DeserializeFromFile("snapshot.xml");
+var world = SnapshotConverter.ToWorld(snapshot!);
+
+// Run simulation
+var result = await engine.RunAsync(world);
+
+// Export to snapshot
+var outputSnapshot = SnapshotConverter.ToSnapshot(result.World, SnapshotStatus.Completed, result.CurrentTick);
+XmlSnapshotSerializer.SerializeToFile(outputSnapshot, "output.xml");
+```
+
+## Simulation Builders
+
+### SimulationBuilder
+
+Fluent builder for creating and configuring simulation engines.
+
+**Methods:**
+
+```csharp
+static SimulationBuilder Create()
+SimulationBuilder UseDefaultMigrationStages()
+SimulationBuilder AddStage(ISimulationStage stage)
+SimulationBuilder AddObserver(ISimulationObserver observer)
+SimulationBuilder WithConsoleOutput(bool colored = true)
+SimulationBuilder WithSimulationConfig(SimulationConfig config)
+SimulationBuilder ConfigureSimulation(Action<SimulationConfigBuilder> configure)
+SimulationBuilder WithModelConfig(StandardModelConfig config)
+SimulationBuilder ConfigureModel(Action<ModelConfigBuilder> configure)
+SimulationBuilder WithAttractionCalculator(IAttractionCalculator calculator)
+SimulationBuilder WithMigrationCalculator(IMigrationCalculator calculator)
+SimulationBuilder WithRandomSeed(int seed)
+SimulationEngine Build()
+```
+
+**Example:**
+
+```csharp
+using dotMigrata.Simulation.Builders;
+using dotMigrata.Simulation.Metrics;
+
+// Create simulation engine with fluent API
+var engine = SimulationBuilder.Create()
+    .WithConsoleOutput(colored: true)
+    .WithRandomSeed(42)
+    .ConfigureSimulation(s => s
+        .MaxTicks(100)
+        .StabilityThreshold(50))
+    .ConfigureModel(m => m
+        .CapacitySteepness(3.0)
+        .DistanceDecayLambda(0.002))
+    .Build();
+
+var result = await engine.RunAsync(world);
+```
+
+## Simulation Metrics
+
+### MetricsCollector
+
+Collects and aggregates simulation metrics over time for academic analysis.
+
+**Properties:**
+
+- `History` (IReadOnlyList<SimulationMetrics>) - Complete metrics history
+- `CurrentMetrics` (SimulationMetrics?) - Most recent metrics snapshot
+- `AverageMigrationRate` (double) - Average migration rate across all ticks
+- `TotalMigrations` (long) - Total migrations across all ticks
+
+**Methods:**
+
+```csharp
+SimulationMetrics Collect(World world, int tick, ...)
+void Clear()
+string ExportToCsv()
+```
+
+### SimulationMetrics
+
+Snapshot of simulation metrics at a specific tick.
+
+**Properties:**
+
+- `Tick` (int) - Tick number
+- `TotalPopulation` (int) - Total population
+- `MigrationCount` (int) - Migrations this tick
+- `MigrationRate` (double) - Migrations per person
+- `CityMetrics` (IReadOnlyList<CityMetrics>) - Per-city metrics
+- `TagPopulations` (IReadOnlyDictionary<string, int>) - Population by tag
+- `PopulationGiniCoefficient` (double) - Population distribution inequality (0-1)
+- `PopulationEntropy` (double) - Population distribution evenness
+- `PopulationCoefficientOfVariation` (double) - Population std dev / mean
+
+### MetricsObserver
+
+Observer that automatically collects metrics at each tick.
+
+**Example:**
+
+```csharp
+using dotMigrata.Simulation.Metrics;
+
+var metricsObserver = new MetricsObserver();
+engine.AddObserver(metricsObserver);
+
+var result = await engine.RunAsync(world);
+
+// Access collected metrics
+var metrics = metricsObserver.Collector;
+Console.WriteLine($"Average migration rate: {metrics.AverageMigrationRate:P2}");
+Console.WriteLine($"Total migrations: {metrics.TotalMigrations}");
+
+// Export to CSV
+File.WriteAllText("metrics.csv", metrics.ExportToCsv());
+```

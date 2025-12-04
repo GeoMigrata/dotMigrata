@@ -90,7 +90,7 @@ public sealed class GeneratorConfig
     /// </summary>
     /// <param name="factorDefinitions">The factor definitions for the world.</param>
     /// <returns>Generated persons.</returns>
-    internal IEnumerable<Person> GeneratePersons(IEnumerable<FactorDefinition> factorDefinitions)
+    public IEnumerable<Person> GeneratePersons(IEnumerable<FactorDefinition> factorDefinitions)
     {
         var factors = factorDefinitions.ToList();
 

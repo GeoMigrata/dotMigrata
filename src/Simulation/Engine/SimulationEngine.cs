@@ -6,7 +6,7 @@ namespace dotMigrata.Simulation.Engine;
 
 /// <summary>
 /// Main simulation engine that orchestrates the execution of simulation stages.
-/// Implements a tick-based simulation loop with observer support.
+/// Implements a tick-based simulation loop with observer support and cancellation.
 /// </summary>
 public sealed class SimulationEngine
 {
@@ -53,8 +53,9 @@ public sealed class SimulationEngine
     /// Runs the simulation on the specified world.
     /// </summary>
     /// <param name="world">The world to simulate.</param>
+    /// <param name="cancellationToken">Optional cancellation token to cancel the simulation.</param>
     /// <returns>The final simulation context.</returns>
-    public async Task<SimulationContext> RunAsync(World world)
+    public async Task<SimulationContext> RunAsync(World world, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(world);
 
@@ -67,6 +68,13 @@ public sealed class SimulationEngine
         {
             for (var tick = 0; tick < _config.MaxTicks; tick++)
             {
+                // Check for cancellation
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    NotifyObservers(o => o.OnSimulationEnd(context, "Cancelled"));
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+
                 context.CurrentTick = tick;
 
                 // Notify observers of tick start
@@ -93,6 +101,11 @@ public sealed class SimulationEngine
             // Max ticks reached
             NotifyObservers(o => o.OnSimulationEnd(context, "MaxTicksReached"));
             return context;
+        }
+        catch (OperationCanceledException)
+        {
+            // Don't notify error for cancellation - already notified
+            throw;
         }
         catch (Exception ex)
         {

@@ -1,0 +1,423 @@
+﻿using dotMigrata.Core.Entities;
+using dotMigrata.Core.Enums;
+using dotMigrata.Core.Values;
+using dotMigrata.Generator;
+using dotMigrata.Snapshot.Enums;
+using dotMigrata.Snapshot.Models;
+
+namespace dotMigrata.Snapshot.Conversion;
+
+/// <summary>
+/// Converts between World domain objects and WorldSnapshotXml serialization models.
+/// Provides bidirectional conversion for loading and saving simulation states.
+/// </summary>
+public static class SnapshotConverter
+{
+    /// <summary>
+    /// Converts a WorldSnapshotXml to a World domain object.
+    /// </summary>
+    /// <param name="snapshot">The snapshot to convert.</param>
+    /// <returns>A World instance populated from the snapshot.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when snapshot is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when snapshot data is invalid.</exception>
+    public static World ToWorld(WorldSnapshotXml snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        if (snapshot.World == null)
+            throw new InvalidOperationException("Snapshot does not contain a World definition.");
+
+        var worldState = snapshot.World;
+
+        // Step 1: Convert factor definitions (must be done first as cities and persons reference them)
+        var factorDefinitions = ConvertFactorDefinitions(worldState.FactorDefinitions);
+        var factorLookup = factorDefinitions.ToDictionary(GetFactorId, f => f);
+
+        // Step 2: Convert person collections to a lookup
+        var personCollections = ConvertPersonCollections(
+            worldState.PersonCollections,
+            factorLookup,
+            factorDefinitions);
+
+        // Step 3: Convert cities with their factor values and persons
+        var cities = ConvertCities(worldState.Cities, factorLookup, personCollections);
+
+        return new World(cities, factorDefinitions)
+        {
+            DisplayName = worldState.DisplayName
+        };
+    }
+
+    /// <summary>
+    /// Converts a World domain object to a WorldSnapshotXml.
+    /// Note: Person instances are not persisted individually; use PersonCollections for reproducibility.
+    /// </summary>
+    /// <param name="world">The world to convert.</param>
+    /// <param name="status">The snapshot status. Default is Seed.</param>
+    /// <param name="currentStep">The current simulation step. Default is 0.</param>
+    /// <returns>A WorldSnapshotXml representing the world state.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when world is null.</exception>
+    public static WorldSnapshotXml ToSnapshot(
+        World world,
+        SnapshotStatus status = SnapshotStatus.Seed,
+        int currentStep = 0)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+
+        return new WorldSnapshotXml
+        {
+            Version = "1.0",
+            Id = Guid.NewGuid().ToString(),
+            Status = status,
+            CreatedAt = DateTime.UtcNow,
+            LastModifiedAt = DateTime.UtcNow,
+            CurrentStep = currentStep,
+            World = ConvertWorldState(world),
+            Steps = []
+        };
+    }
+
+    #region ToWorld Conversion Helpers
+
+    private static List<FactorDefinition> ConvertFactorDefinitions(List<FactorDefXml>? definitions)
+    {
+        if (definitions == null || definitions.Count == 0)
+            throw new InvalidOperationException("Snapshot must contain at least one factor definition.");
+
+        return definitions.Select(ConvertFactorDefinition).ToList();
+    }
+
+    private static FactorDefinition ConvertFactorDefinition(FactorDefXml def)
+    {
+        var factorType = def.Type.ToUpperInvariant() switch
+        {
+            "POSITIVE" => FactorType.Positive,
+            "NEGATIVE" => FactorType.Negative,
+            _ => throw new InvalidOperationException($"Unknown factor type: {def.Type}")
+        };
+
+        TransformType? transform = def.Transform?.ToUpperInvariant() switch
+        {
+            "LINEAR" => TransformType.Linear,
+            "LOG" => TransformType.Log,
+            "SIGMOID" => TransformType.Sigmoid,
+            null or "" => null,
+            _ => throw new InvalidOperationException($"Unknown transform type: {def.Transform}")
+        };
+
+        return new FactorDefinition
+        {
+            DisplayName = def.DisplayName,
+            Type = factorType,
+            MinValue = def.Min,
+            MaxValue = def.Max,
+            Transform = transform
+        };
+    }
+
+    private static Dictionary<string, List<Person>> ConvertPersonCollections(
+        List<PersonCollectionXml>? collections,
+        Dictionary<string, FactorDefinition> factorLookup,
+        List<FactorDefinition> allFactors)
+    {
+        var result = new Dictionary<string, List<Person>>();
+
+        if (collections == null)
+            return result;
+
+        foreach (var collection in collections)
+        {
+            var persons = new List<Person>();
+
+            // Process person templates
+            if (collection.Persons != null)
+            {
+                foreach (var templatePersons in collection.Persons.Select(template =>
+                             ConvertPersonTemplate(template, factorLookup)))
+                    persons.AddRange(templatePersons);
+            }
+
+            // Process generators
+            if (collection.Generators != null)
+            {
+                foreach (var generator in collection.Generators)
+                {
+                    var generatedPersons = ConvertGenerator(generator, factorLookup, allFactors);
+                    persons.AddRange(generatedPersons);
+                }
+            }
+
+            result[collection.Id] = persons;
+        }
+
+        return result;
+    }
+
+    private static IEnumerable<Person> ConvertPersonTemplate(
+        PersonTemplateXml template,
+        Dictionary<string, FactorDefinition> factorLookup)
+    {
+        var sensitivities = ConvertFactorSensitivities(template.FactorSensitivities, factorLookup);
+        var tags = ParseTags(template.Tags);
+
+        for (var i = 0; i < template.Count; i++)
+        {
+            // Create a copy of sensitivities for each person to ensure independence
+            var personSensitivities = new Dictionary<FactorDefinition, double>(sensitivities);
+
+            yield return new Person(personSensitivities)
+            {
+                MovingWillingness = NormalizedValue.FromRatio(template.MovingWillingness),
+                RetentionRate = NormalizedValue.FromRatio(template.RetentionRate),
+                SensitivityScaling = template.SensitivityScaling,
+                AttractionThreshold = template.AttractionThreshold,
+                MinimumAcceptableAttraction = template.MinimumAcceptableAttraction,
+                Tags = tags.ToList()
+            };
+        }
+    }
+
+    private static IEnumerable<Person> ConvertGenerator(
+        GeneratorXml generator,
+        Dictionary<string, FactorDefinition> factorLookup,
+        List<FactorDefinition> allFactors)
+    {
+        // Convert factor sensitivity specifications
+        var factorSpecs = new Dictionary<FactorDefinition, ValueSpecification>();
+        if (generator.FactorSensitivities != null)
+        {
+            foreach (var spec in generator.FactorSensitivities)
+            {
+                if (factorLookup.TryGetValue(spec.Id, out var factor))
+                {
+                    factorSpecs[factor] = ConvertSensitivitySpec(spec);
+                }
+            }
+        }
+
+        var finalConfig = new GeneratorConfig(generator.SeedSpecified ? generator.Seed : Random.Shared.Next())
+        {
+            Count = generator.Count,
+            FactorSensitivities = factorSpecs,
+            MovingWillingness = ConvertValueSpec(generator.MovingWillingness, 0.5),
+            RetentionRate = ConvertValueSpec(generator.RetentionRate, 0.5),
+            SensitivityScaling = generator.SensitivityScaling != null
+                ? ConvertValueSpec(generator.SensitivityScaling, 1.0)
+                : null,
+            AttractionThreshold = generator.AttractionThreshold != null
+                ? ConvertValueSpec(generator.AttractionThreshold, 0.0)
+                : null,
+            MinimumAcceptableAttraction = generator.MinimumAcceptableAttraction != null
+                ? ConvertValueSpec(generator.MinimumAcceptableAttraction, 0.0)
+                : null,
+            Tags = ParseTags(generator.Tags)
+        };
+
+        return finalConfig.GeneratePersons(allFactors);
+    }
+
+    private static ValueSpecification ConvertValueSpec(ValueSpecXml? spec, double defaultValue)
+    {
+        if (spec == null)
+            return ValueSpecification.Fixed(defaultValue);
+
+        // Check for shorthand fixed value attribute
+        if (spec.ValueSpecified)
+            return ValueSpecification.Fixed(spec.Value);
+
+        // Check for explicit Fixed element
+        if (spec.Fixed != null)
+            return ValueSpecification.Fixed(spec.Fixed.Value);
+
+        // Check for InRange element
+        if (spec.InRange != null)
+            return ValueSpecification.InRange(spec.InRange.Min, spec.InRange.Max);
+
+        // Check for Random element
+        if (spec.Random != null)
+            return Math.Abs(spec.Random.Scale - 1.0) < double.Epsilon
+                ? ValueSpecification.Random()
+                : ValueSpecification.RandomWithScale(spec.Random.Scale);
+
+        return ValueSpecification.Fixed(defaultValue);
+    }
+
+    private static ValueSpecification ConvertSensitivitySpec(SensitivitySpecXml spec)
+    {
+        // Check for shorthand fixed value attribute
+        if (spec.ValueSpecified)
+            return ValueSpecification.Fixed(spec.Value);
+
+        // Check for explicit Fixed element
+        if (spec.Fixed != null)
+            return ValueSpecification.Fixed(spec.Fixed.Value);
+
+        // Check for InRange element
+        if (spec.InRange != null)
+            return ValueSpecification.InRange(spec.InRange.Min, spec.InRange.Max);
+
+        // Check for Random element
+        if (spec.Random != null)
+            return Math.Abs(spec.Random.Scale - 1.0) < double.Epsilon
+                ? ValueSpecification.Random()
+                : ValueSpecification.RandomWithScale(spec.Random.Scale);
+
+        // Default: random with default range
+        return ValueSpecification.Random();
+    }
+
+    private static Dictionary<FactorDefinition, double> ConvertFactorSensitivities(
+        List<FactorSensitivityXml>? sensitivities,
+        Dictionary<string, FactorDefinition> factorLookup)
+    {
+        var result = new Dictionary<FactorDefinition, double>();
+
+        if (sensitivities == null)
+            return result;
+
+        foreach (var sensitivity in sensitivities)
+        {
+            if (factorLookup.TryGetValue(sensitivity.Id, out var factor))
+            {
+                result[factor] = sensitivity.Value;
+            }
+        }
+
+        return result;
+    }
+
+    private static List<City> ConvertCities(
+        List<CityXml>? cities,
+        Dictionary<string, FactorDefinition> factorLookup,
+        Dictionary<string, List<Person>> personCollections)
+    {
+        if (cities == null || cities.Count == 0)
+            throw new InvalidOperationException("Snapshot must contain at least one city.");
+
+        return cities.Select(c => ConvertCity(c, factorLookup, personCollections)).ToList();
+    }
+
+    private static City ConvertCity(
+        CityXml cityXml,
+        Dictionary<string, FactorDefinition> factorLookup,
+        Dictionary<string, List<Person>> personCollections)
+    {
+        // Convert factor values
+        var factorValues = new List<FactorValue>();
+        if (cityXml.FactorValues != null)
+        {
+            foreach (var fv in cityXml.FactorValues)
+            {
+                if (factorLookup.TryGetValue(fv.Id, out var factor))
+                {
+                    factorValues.Add(new FactorValue
+                    {
+                        Definition = factor,
+                        Intensity = IntensityValue.FromRaw(fv.Value)
+                    });
+                }
+            }
+        }
+
+        // Collect persons from referenced collections
+        var persons = new List<Person>();
+        if (cityXml.PersonCollections != null)
+        {
+            foreach (var collectionRef in cityXml.PersonCollections)
+            {
+                if (personCollections.TryGetValue(collectionRef.Id, out var collectionPersons))
+                {
+                    persons.AddRange(collectionPersons);
+                }
+            }
+        }
+
+        var city = new City(factorValues, persons)
+        {
+            DisplayName = cityXml.DisplayName,
+            Location = new Coordinate
+            {
+                Latitude = cityXml.Latitude,
+                Longitude = cityXml.Longitude
+            },
+            Area = cityXml.Area,
+            Capacity = cityXml.CapacitySpecified ? cityXml.Capacity : null
+        };
+
+        return city;
+    }
+
+    private static string GetFactorId(FactorDefinition factor)
+    {
+        // Generate a deterministic ID from the display name (lowercase, underscores for spaces)
+        return factor.DisplayName.ToLowerInvariant().Replace(' ', '_').Replace(".", "");
+    }
+
+    private static List<string> ParseTags(string? tags)
+    {
+        if (string.IsNullOrWhiteSpace(tags))
+            return [];
+
+        return tags.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+    }
+
+    #endregion
+
+    #region ToSnapshot Conversion Helpers
+
+    private static WorldStateXml ConvertWorldState(World world)
+    {
+        return new WorldStateXml
+        {
+            DisplayName = world.DisplayName,
+            FactorDefinitions = world.FactorDefinitions.Select(ConvertToFactorDefXml).ToList(),
+            Cities = world.Cities.Select(ConvertToCityXml).ToList(),
+            PersonCollections = [] // Note: PersonCollections are not reconstructed from live World
+        };
+    }
+
+    private static FactorDefXml ConvertToFactorDefXml(FactorDefinition factor)
+    {
+        return new FactorDefXml
+        {
+            Id = GetFactorId(factor),
+            DisplayName = factor.DisplayName,
+            Type = factor.Type.ToString(),
+            Min = factor.MinValue,
+            Max = factor.MaxValue,
+            Transform = factor.Transform?.ToString()
+        };
+    }
+
+    private static CityXml ConvertToCityXml(City city)
+    {
+        var cityXml = new CityXml
+        {
+            Id = city.DisplayName.ToLowerInvariant().Replace(' ', '_'),
+            DisplayName = city.DisplayName,
+            Latitude = city.Location.Latitude,
+            Longitude = city.Location.Longitude,
+            Area = city.Area,
+            FactorValues = city.FactorValues.Select(ConvertToFactorValueXml).ToList(),
+            PersonCollections = [] // Note: Person collections are not reconstructed
+        };
+
+        if (!city.Capacity.HasValue) return cityXml;
+        cityXml.Capacity = city.Capacity.Value;
+        cityXml.CapacitySpecified = true;
+
+        return cityXml;
+    }
+
+    private static FactorValueXml ConvertToFactorValueXml(FactorValue fv)
+    {
+        return new FactorValueXml
+        {
+            Id = GetFactorId(fv.Definition),
+            Value = fv.Intensity.Value
+        };
+    }
+
+    #endregion
+}

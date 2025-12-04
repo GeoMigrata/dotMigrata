@@ -128,4 +128,16 @@ public readonly record struct SensitivityValue : IRangedValue, INormalizable
     /// Returns a string representation of the value.
     /// </summary>
     public override string ToString() => $"{_value:F2}";
+    
+    /// <summary>
+    /// Implicitly converts a SensitivityValue to a double.
+    /// </summary>
+    /// <param name="value">The SensitivityValue to convert.</param>
+    public static implicit operator double(SensitivityValue value) => value.Value;
+
+    /// <summary>
+    /// Explicitly converts a double to a SensitivityValue using the default range.
+    /// </summary>
+    /// <param name="value">The double value to convert (must be within default range).</param>
+    public static explicit operator SensitivityValue(double value) => FromRaw(value);
 }
