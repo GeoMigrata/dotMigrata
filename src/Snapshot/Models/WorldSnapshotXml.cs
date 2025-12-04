@@ -5,57 +5,64 @@ namespace dotMigrata.Snapshot.Models;
 
 /// <summary>
 /// Root snapshot model with XML serialization support.
-/// Uses namespaces to distinguish code concepts from snapshot containers.
 /// </summary>
+/// <remarks>
+/// <para>Simplified XML format (v2.0) with cleaner structure:</para>
+/// <list type="bullet">
+/// <item><description>Single namespace for all elements</description></item>
+/// <item><description>Attribute-based configuration for scalar values</description></item>
+/// <item><description>Consistent naming conventions</description></item>
+/// </list>
+/// </remarks>
 [XmlRoot("Snapshot", Namespace = "http://geomigrata.pages.dev/snapshot")]
 public sealed class WorldSnapshotXml
 {
     /// <summary>
-    /// Snapshot format version for compatibility tracking.
+    /// Gets the snapshot format version for compatibility tracking.
     /// </summary>
     [XmlAttribute("Version")]
-    public string Version { get; init; } = "1.0";
+    public string Version { get; init; } = "2.0";
 
     /// <summary>
-    /// Unique identifier for this snapshot.
+    /// Gets the unique identifier for this snapshot.
     /// </summary>
     [XmlAttribute("Id")]
     public string Id { get; init; } = Guid.NewGuid().ToString();
 
     /// <summary>
-    /// Current status of the snapshot (Seed, Active, Stabilized, Completed).
+    /// Gets the current status of the snapshot.
     /// </summary>
     [XmlAttribute("Status")]
     public SnapshotStatus Status { get; init; }
 
     /// <summary>
-    /// Timestamp when the snapshot was first created.
+    /// Gets the timestamp when the snapshot was first created.
     /// </summary>
     [XmlAttribute("CreatedAt")]
     public DateTime CreatedAt { get; init; }
 
     /// <summary>
-    /// Timestamp when the snapshot was last modified.
+    /// Gets the timestamp when the snapshot was last modified.
     /// </summary>
     [XmlAttribute("LastModifiedAt")]
     public DateTime LastModifiedAt { get; init; }
 
     /// <summary>
-    /// Current simulation step count.
+    /// Gets the current simulation tick count.
     /// </summary>
-    [XmlAttribute("CurrentStep")]
+    [XmlAttribute("Tick")]
     public int CurrentStep { get; init; }
 
     /// <summary>
-    /// World state containing cities, factors, and person collections.
+    /// Gets the world state containing cities, factors, and population.
     /// </summary>
     [XmlElement("World")]
     public WorldStateXml? World { get; init; }
 
     /// <summary>
-    /// Simulation steps for reproducibility (deterministic re-execution).
+    /// Gets the simulation steps for reproducibility (deterministic re-execution).
     /// </summary>
-    [XmlArray("Steps")]
+    [XmlArray("History")]
     [XmlArrayItem("Step")]
     public List<SimulationStepXml>? Steps { get; init; }
 }

@@ -3,46 +3,63 @@
 namespace dotMigrata.Snapshot.Models;
 
 /// <summary>
-/// City with code namespace (c:City).
-/// Maps to City class in code.
+/// City definition with geographic and simulation attributes.
 /// </summary>
 public class CityXml
 {
-    /// <summary>Gets or sets the unique identifier for the city.</summary>
+    /// <summary>
+    /// Gets or sets the unique identifier for this city.
+    /// </summary>
     [XmlAttribute("Id")]
     public string Id { get; set; } = string.Empty;
 
-    /// <summary>Gets or sets the display name of the city.</summary>
-    [XmlAttribute("DisplayName")]
+    /// <summary>
+    /// Gets or sets the human-readable display name.
+    /// </summary>
+    [XmlAttribute("Name")]
     public string DisplayName { get; set; } = string.Empty;
 
-    /// <summary>Gets or sets the latitude coordinate.</summary>
-    [XmlAttribute("Latitude")]
+    /// <summary>
+    /// Gets or sets the latitude coordinate (-90 to 90).
+    /// </summary>
+    [XmlAttribute("Lat")]
     public double Latitude { get; set; }
 
-    /// <summary>Gets or sets the longitude coordinate.</summary>
-    [XmlAttribute("Longitude")]
+    /// <summary>
+    /// Gets or sets the longitude coordinate (-180 to 180).
+    /// </summary>
+    [XmlAttribute("Lon")]
     public double Longitude { get; set; }
 
-    /// <summary>Gets or sets the area in square kilometers.</summary>
+    /// <summary>
+    /// Gets or sets the area in square kilometers.
+    /// </summary>
     [XmlAttribute("Area")]
     public double Area { get; set; }
 
-    /// <summary>Gets or sets the maximum population capacity.</summary>
+    /// <summary>
+    /// Gets or sets the maximum population capacity.
+    /// </summary>
     [XmlAttribute("Capacity")]
     public int Capacity { get; set; }
 
-    /// <summary>Gets or sets whether capacity is specified.</summary>
+    /// <summary>
+    /// Gets or sets whether capacity is explicitly specified.
+    /// </summary>
     [XmlIgnore]
     public bool CapacitySpecified { get; set; }
 
-    /// <summary>Gets or sets the factor values for this city.</summary>
-    [XmlArray("FactorValues")]
-    [XmlArrayItem("FactorValue")]
+    /// <summary>
+    /// Gets or sets the factor values (city characteristics).
+    /// </summary>
+    [XmlArray("Factors")]
+    [XmlArrayItem("F")]
     public List<FactorValueXml>? FactorValues { get; set; }
 
-    /// <summary>Gets or sets the person collection references.</summary>
-    [XmlArray("PersonCollections")]
-    [XmlArrayItem("CollectionRef")]
+    /// <summary>
+    /// Gets or sets the population group references.
+    /// </summary>
+    [XmlArray("Population")]
+    [XmlArrayItem("Ref")]
     public List<CollectionRefXml>? PersonCollections { get; set; }
 }

@@ -5,24 +5,35 @@ namespace dotMigrata.Snapshot.Models;
 /// <summary>
 /// World state within snapshot.
 /// </summary>
+/// <remarks>
+/// Contains all simulation data: factor definitions, population templates, and cities.
+/// </remarks>
 public class WorldStateXml
 {
-    /// <summary>Gets or sets the display name of the world.</summary>
-    [XmlAttribute("DisplayName")]
+    /// <summary>
+    /// Gets or sets the display name of the world.
+    /// </summary>
+    [XmlAttribute("Name")]
     public string DisplayName { get; set; } = string.Empty;
 
-    /// <summary>Gets or sets the factor definitions in the world.</summary>
-    [XmlArray("FactorDefinitions")]
-    [XmlArrayItem("FactorDefinition", Namespace = "http://geomigrata.pages.dev/code")]
+    /// <summary>
+    /// Gets or sets the factor definitions used in this world.
+    /// </summary>
+    [XmlArray("Factors")]
+    [XmlArrayItem("Factor")]
     public List<FactorDefXml>? FactorDefinitions { get; set; }
 
-    /// <summary>Gets or sets the person collections in the world.</summary>
-    [XmlArray("PersonCollections")]
-    [XmlArrayItem("PersonCollection")]
+    /// <summary>
+    /// Gets or sets the population templates (person collections) in this world.
+    /// </summary>
+    [XmlArray("Population")]
+    [XmlArrayItem("Group")]
     public List<PersonCollectionXml>? PersonCollections { get; set; }
 
-    /// <summary>Gets or sets the cities in the world.</summary>
+    /// <summary>
+    /// Gets or sets the cities in this world.
+    /// </summary>
     [XmlArray("Cities")]
-    [XmlArrayItem("City", Namespace = "http://geomigrata.pages.dev/code")]
+    [XmlArrayItem("City")]
     public List<CityXml>? Cities { get; set; }
 }

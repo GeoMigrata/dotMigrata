@@ -132,11 +132,21 @@ public sealed class GeneratorConfig
 
     private double GenerateFactorSensitivity(FactorDefinition factor)
     {
-        if (FactorSensitivities.TryGetValue(factor, out var spec)) return GenerateValue(spec, true);
+        if (FactorSensitivities.TryGetValue(factor, out var spec))
+        {
+            // Handle specs that have scale but no range - use default sensitivity range
+            if (spec is not { IsFixed: false, HasRange: false }) return GenerateValue(spec, true);
+            var (min, max) = (DefaultSensitivityRange.Min, DefaultSensitivityRange.Max);
+            var mean = (min + max) / 2;
+            var stdDev = (max - min) / 6;
+            var value = GenerateNormalRandom(mean, stdDev);
+            value = Math.Clamp(value, min, max);
+            return value * spec.Scale;
+        }
 
         // Use normal distribution for sensitivities by default
-        var value = GenerateNormalRandom(0, SensitivityStdDev);
-        return DefaultSensitivityRange.Clamp(value);
+        var defaultValue = GenerateNormalRandom(0, SensitivityStdDev);
+        return DefaultSensitivityRange.Clamp(defaultValue);
     }
 
     private double GenerateValue(ValueSpecification spec, bool useNormalDistribution = false)
