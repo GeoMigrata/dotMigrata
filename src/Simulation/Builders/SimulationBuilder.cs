@@ -78,7 +78,7 @@ public sealed class SimulationBuilder
     }
 
     /// <summary>
-    /// Adds a console observer for debugging output.
+    /// Adds a console observer for basic simulation output.
     /// </summary>
     /// <param name="colored">
     /// <see langword="true" /> to use colored output; otherwise, <see langword="false" />.
@@ -87,6 +87,25 @@ public sealed class SimulationBuilder
     public SimulationBuilder WithConsoleOutput(bool colored = true)
     {
         _observers.Add(new ConsoleObserver(colored));
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a debug observer for comprehensive simulation debugging output.
+    /// Shows detailed information about migration decisions, attraction scores, and population dynamics.
+    /// </summary>
+    /// <param name="colored">
+    /// <see langword="true" /> to use colored output; otherwise, <see langword="false" />.
+    /// </param>
+    /// <param name="showPersonDetails">
+    /// <see langword="true" /> to show individual person details during migration; otherwise, <see langword="false" />.
+    /// </param>
+    /// <param name="maxPersonsToShow">Maximum number of persons to show details for per tick. Default is 10.</param>
+    /// <returns>This builder for method chaining.</returns>
+    public SimulationBuilder WithDebugOutput(bool colored = true, bool showPersonDetails = true,
+        int maxPersonsToShow = 10)
+    {
+        _observers.Add(new DebugObserver(colored, showPersonDetails, maxPersonsToShow));
         return this;
     }
 

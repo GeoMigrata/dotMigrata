@@ -1,4 +1,6 @@
-﻿namespace dotMigrata.Core.Values;
+﻿using System.Globalization;
+
+namespace dotMigrata.Core.Values;
 
 /// <summary>
 /// Represents a normalized value in the 0-1 range. Used for ratios, percentages, and normalized intensities.
@@ -230,7 +232,7 @@ public readonly record struct NormalizedValue : IValue<double>, IRangedValue, IN
     /// <returns>A string that represents the current value.</returns>
     public override string ToString()
     {
-        return $"{Value:F2}";
+        return Value.ToString("F2", CultureInfo.InvariantCulture);
     }
 
     /// <summary>

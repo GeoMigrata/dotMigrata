@@ -1,4 +1,6 @@
-﻿namespace dotMigrata.Core.Values;
+﻿using System.Globalization;
+
+namespace dotMigrata.Core.Values;
 
 /// <summary>
 /// Represents a raw intensity value for a factor with validation and normalization support.
@@ -180,7 +182,7 @@ public readonly record struct IntensityValue : IValue<double>
     /// <returns>A string that represents the current value.</returns>
     public override string ToString()
     {
-        return $"{Value:F2}";
+        return Value.ToString("F2", CultureInfo.InvariantCulture);
     }
 
     /// <summary>
