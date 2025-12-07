@@ -19,10 +19,26 @@ public sealed class SimulationEngine
     /// </summary>
     /// <param name="stages">The ordered list of stages to execute in each tick.</param>
     /// <param name="config">Configuration for simulation behavior. If null, uses default configuration.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="stages" /> is <see langword="null" />.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <paramref name="stages" /> is empty.
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="config" /> contains invalid values.
+    /// </exception>
     public SimulationEngine(IEnumerable<ISimulationStage> stages, SimulationConfig? config = null)
     {
-        _stages = stages.ToList() ?? throw new ArgumentNullException(nameof(stages));
-        _config = config ?? SimulationConfig.Default;
+        var stageList = stages.ToList() ?? throw new ArgumentNullException(nameof(stages));
+
+        if (stageList.Count == 0)
+            throw new ArgumentException("At least one simulation stage is required.", nameof(stages));
+
+        var effectiveConfig = (config ?? SimulationConfig.Default).Validate();
+
+        _stages = stageList;
+        _config = effectiveConfig;
         _observers = [];
 
         if (_stages.Count == 0)

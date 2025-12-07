@@ -225,7 +225,8 @@ public sealed class SimulationBuilder
             ? _stages
             : CreateDefaultStages();
 
-        var engine = new SimulationEngine(stages, _simulationConfig);
+        var validatedConfig = _simulationConfig.Validate();
+        var engine = new SimulationEngine(stages, validatedConfig);
 
         foreach (var observer in _observers) engine.AddObserver(observer);
 

@@ -8,45 +8,82 @@ public sealed record SimulationConfig
     /// <summary>
     /// Gets the default configuration instance.
     /// </summary>
-    public static SimulationConfig Default { get; } = new()
-    {
-        MaxTicks = 1000,
-        CheckStability = true,
-        StabilityThreshold = 10,
-        StabilityCheckInterval = 1,
-        MinTicksBeforeStabilityCheck = 10
-    };
+    public static SimulationConfig Default { get; } = new();
 
     /// <summary>
     /// Gets or initializes the maximum number of ticks to simulate.
-    /// Default: 1000
     /// </summary>
-    public required int MaxTicks { get; init; }
+    /// <value>
+    /// Must be greater than 0. The default value is 1000.
+    /// </value>
+    public int MaxTicks { get; init; } = 1000;
 
     /// <summary>
     /// Gets or initializes whether to check for simulation stability.
     /// If true, simulation will stop when the system stabilizes.
-    /// Default: true
     /// </summary>
-    public required bool CheckStability { get; init; }
+    /// <value>
+    /// The default value is <see langword="true"/>.
+    /// </value>
+    public bool CheckStability { get; init; } = true;
 
     /// <summary>
     /// Gets or initializes the threshold for considering the simulation stable.
     /// If total population change is below this value, the simulation is considered stable.
-    /// Default: 10
     /// </summary>
-    public required int StabilityThreshold { get; init; }
+    /// <value>
+    /// Must be greater than or equal to 0. The default value is 10.
+    /// </value>
+    public int StabilityThreshold { get; init; } = 10;
 
     /// <summary>
     /// Gets or initializes how often (in ticks) to check for stability.
-    /// Default: 1 (check every tick)
     /// </summary>
-    public required int StabilityCheckInterval { get; init; }
+    /// <value>
+    /// Must be greater than 0. The default value is 1 (check every tick).
+    /// </value>
+    public int StabilityCheckInterval { get; init; } = 1;
 
     /// <summary>
     /// Gets or initializes the minimum number of ticks before checking for stability.
     /// Prevents premature termination during initial settling.
-    /// Default: 10
     /// </summary>
-    public required int MinTicksBeforeStabilityCheck { get; init; }
+    /// <value>
+    /// Must be greater than or equal to 0 and less than <see cref="MaxTicks"/>.
+    /// The default value is 10.
+    /// </value>
+    public int MinTicksBeforeStabilityCheck { get; init; } = 10;
+
+    /// <summary>
+    /// Validates the configuration and throws if it is invalid.
+    /// </summary>
+    /// <returns>
+    /// The validated configuration instance.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when any configuration value is outside of its allowed range.
+    /// </exception>
+    public SimulationConfig Validate()
+    {
+        if (MaxTicks <= 0)
+            throw new ArgumentOutOfRangeException(nameof(MaxTicks), MaxTicks, "MaxTicks must be greater than 0.");
+
+        if (StabilityThreshold < 0)
+            throw new ArgumentOutOfRangeException(nameof(StabilityThreshold), StabilityThreshold,
+                "StabilityThreshold must be greater than or equal to 0.");
+
+        if (StabilityCheckInterval <= 0)
+            throw new ArgumentOutOfRangeException(nameof(StabilityCheckInterval), StabilityCheckInterval,
+                "StabilityCheckInterval must be greater than 0.");
+
+        if (MinTicksBeforeStabilityCheck < 0)
+            throw new ArgumentOutOfRangeException(nameof(MinTicksBeforeStabilityCheck), MinTicksBeforeStabilityCheck,
+                "MinTicksBeforeStabilityCheck must be greater than or equal to 0.");
+
+        if (CheckStability && MinTicksBeforeStabilityCheck >= MaxTicks)
+            throw new ArgumentOutOfRangeException(nameof(MinTicksBeforeStabilityCheck), MinTicksBeforeStabilityCheck,
+                "MinTicksBeforeStabilityCheck must be less than MaxTicks when stability checks are enabled.");
+
+        return this;
+    }
 }
