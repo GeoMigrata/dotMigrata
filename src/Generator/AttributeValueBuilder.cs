@@ -26,7 +26,7 @@ public static class AttributeValueBuilder
         /// </summary>
         /// <param name="value">The fixed value.</param>
         /// <returns>A value specification with the fixed value.</returns>
-        public static ValueSpecification Fixed(double value) => ValueSpecification.Fixed(value);
+        public ValueSpecification Fixed(double value) => ValueSpecification.Fixed(value);
 
         /// <summary>
         /// Creates a ranged value specification for this attribute.
@@ -34,7 +34,7 @@ public static class AttributeValueBuilder
         /// <param name="min">The inclusive minimum value.</param>
         /// <param name="max">The inclusive maximum value. Must be greater than or equal to <paramref name="min"/>.</param>
         /// <returns>A value specification with the specified range.</returns>
-        public static ValueSpecification InRange(double min, double max) => ValueSpecification.InRange(min, max);
+        public ValueSpecification InRange(double min, double max) => ValueSpecification.InRange(min, max);
 
         /// <summary>
         /// Creates an approximate value specification for this attribute using a normal distribution.
@@ -42,7 +42,7 @@ public static class AttributeValueBuilder
         /// <param name="mean">The mean value.</param>
         /// <param name="standardDeviation">The standard deviation. Must be positive.</param>
         /// <returns>A value specification representing an approximate value.</returns>
-        public static ValueSpecification Approximately(double mean, double standardDeviation) =>
+        public ValueSpecification Approximately(double mean, double standardDeviation) =>
             ValueSpecification.Approximately(mean, standardDeviation);
 
         /// <summary>
@@ -50,6 +50,6 @@ public static class AttributeValueBuilder
         /// </summary>
         /// <param name="scale">The scale factor to apply to the random value. Must be non-negative. Defaults to 1.0.</param>
         /// <returns>A value specification representing a random value.</returns>
-        public static ValueSpecification Random(double scale = 1.0) => ValueSpecification.RandomWithScale(scale);
+        public ValueSpecification Random(double scale = 1.0) => ValueSpecification.RandomWithScale(scale);
     }
 }

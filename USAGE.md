@@ -77,11 +77,11 @@ collection.Add(new GeneratorConfig
     // Use FactorDefinition references (not strings) for type safety
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        [incomeFactor] = Value().InRange(3, 8),        // Sensitivity to income
-        [pollutionFactor] = Value().InRange(-7, -3)    // Negative sensitivity to pollution
+        [incomeFactor] = Attribute("IncomeSensitivity").InRange(3, 8),        // Sensitivity to income
+        [pollutionFactor] = Attribute("PollutionSensitivity").InRange(-7, -3)    // Negative sensitivity to pollution
     },
-    MovingWillingness = Value().InRange(0.4, 0.7),
-    RetentionRate = Value().InRange(0.3, 0.6),
+    MovingWillingness = Attribute("MovingWillingness").InRange(0.4, 0.7),
+    RetentionRate = Attribute("RetentionRate").InRange(0.3, 0.6),
     Tags = ["urban_resident"]
 });
 ```
@@ -240,12 +240,12 @@ collection.Add(new GeneratorConfig(seed: 42)
     // Use FactorDefinition references (not strings) for type safety
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        [incomeFactor] = Value().InRange(3, 15),  // Custom range for Income sensitivity
-        [pollutionFactor] = Value().Of(-5.0)      // Fixed value - all persons get -5.0
+        [incomeFactor] = Attribute("IncomeSensitivity").InRange(3, 15),  // Custom range for Income sensitivity
+        [pollutionFactor] = Attribute("PollutionSensitivity").Fixed(-5.0)      // Fixed value - all persons get -5.0
         // Note: housingFactor sensitivity will use default range with normal distribution
     },
-    MovingWillingness = Value().InRange(0.6, 0.9),
-    RetentionRate = Value().InRange(0.3, 0.6),
+    MovingWillingness = Attribute("MovingWillingness").InRange(0.6, 0.9),
+    RetentionRate = Attribute("RetentionRate").InRange(0.3, 0.6),
     Tags = ["young_professional", "tech_worker"]
 });
 
@@ -319,10 +319,10 @@ collection.Add(new GeneratorConfig(seed: 42)
     Count = 50000,
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        [incomeFactor] = Value().InRange(5, 9)  // Use FactorDefinition reference
+        [incomeFactor] = Attribute("IncomeSensitivity").InRange(5, 9)  // Use FactorDefinition reference
     },
-    MovingWillingness = Value().InRange(0.4, 0.7),
-    RetentionRate = Value().InRange(0.3, 0.6),
+    MovingWillingness = Attribute("MovingWillingness").InRange(0.4, 0.7),
+    RetentionRate = Attribute("RetentionRate").InRange(0.3, 0.6),
     // Advanced generator options
     DefaultSensitivityRange = new ValueRange(-10.0, 10.0),  // Default range for unspecified factors
     SensitivityStdDev = 3.0  // Standard deviation for normal distribution
