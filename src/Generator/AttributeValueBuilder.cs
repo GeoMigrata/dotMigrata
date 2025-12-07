@@ -1,77 +1,55 @@
 ﻿namespace dotMigrata.Generator;
 
 /// <summary>
-/// Fluent builder for specifying person attribute values with semantic API.
-/// Provides natural language-style API for clearer and more readable specifications.
+/// Provides a fluent, strongly-typed way to define value specifications for person attributes.
 /// </summary>
-public sealed class AttributeValueBuilder
+public static class AttributeValueBuilder
 {
-    private double? _fixedValue;
-    private (double Min, double Max)? _range;
-    private double _scale = 1.0;
+    /// <summary>
+    /// Creates a builder for a named attribute.
+    /// </summary>
+    /// <param name="name">The attribute name. Must not be null or empty.</param>
+    /// <returns>An attribute value builder for the specified attribute.</returns>
+    public static AttributeSpec Attribute(string name) =>
+        string.IsNullOrWhiteSpace(name)
+            ? throw new ArgumentException("Attribute name must not be null or empty. ", nameof(name))
+            : new AttributeSpec(name);
 
     /// <summary>
-    /// Starts building a value specification.
+    /// Represents a named attribute for which a value specification can be created.
     /// </summary>
-    /// <returns>A new builder instance.</returns>
-    public static AttributeValueBuilder Value()
+    /// <param name="Name">The attribute name.</param>
+    public readonly record struct AttributeSpec(string Name)
     {
-        return new AttributeValueBuilder();
-    }
+        /// <summary>
+        /// Creates a fixed value specification for this attribute.
+        /// </summary>
+        /// <param name="value">The fixed value.</param>
+        /// <returns>A value specification with the fixed value.</returns>
+        public static ValueSpecification Fixed(double value) => ValueSpecification.Fixed(value);
 
-    /// <summary>
-    /// Specifies a fixed value.
-    /// </summary>
-    /// <param name="value">The exact value to use.</param>
-    /// <returns>The built value specification.</returns>
-    public ValueSpecification Of(double value)
-    {
-        _fixedValue = value;
-        return Build();
-    }
+        /// <summary>
+        /// Creates a ranged value specification for this attribute.
+        /// </summary>
+        /// <param name="min">The inclusive minimum value.</param>
+        /// <param name="max">The inclusive maximum value. Must be greater than or equal to <paramref name="min"/>.</param>
+        /// <returns>A value specification with the specified range.</returns>
+        public static ValueSpecification InRange(double min, double max) => ValueSpecification.InRange(min, max);
 
-    /// <summary>
-    /// Specifies a value within a range.
-    /// </summary>
-    /// <param name="min">Minimum value (inclusive).</param>
-    /// <param name="max">Maximum value (inclusive).</param>
-    /// <returns>The built value specification.</returns>
-    public ValueSpecification InRange(double min, double max)
-    {
-        if (min >= max)
-            throw new ArgumentException("Min must be less than max.");
-        _range = (min, max);
-        return Build();
-    }
+        /// <summary>
+        /// Creates an approximate value specification for this attribute using a normal distribution.
+        /// </summary>
+        /// <param name="mean">The mean value.</param>
+        /// <param name="standardDeviation">The standard deviation. Must be positive.</param>
+        /// <returns>A value specification representing an approximate value.</returns>
+        public static ValueSpecification Approximately(double mean, double standardDeviation) =>
+            ValueSpecification.Approximately(mean, standardDeviation);
 
-    /// <summary>
-    /// Specifies an approximate value with scaling/bias.
-    /// </summary>
-    /// <param name="target">The approximate target value.</param>
-    /// <param name="scale">Scale factor for variation. Default is 1.0.</param>
-    /// <returns>The built value specification.</returns>
-    public ValueSpecification Approximately(double target, double scale = 1.0)
-    {
-        _fixedValue = target;
-        _scale = scale;
-        return Build();
-    }
-
-    private ValueSpecification Build()
-    {
-        if (_fixedValue.HasValue && !_range.HasValue)
-            // Fixed value (possibly with scale for BeApproximately)
-            return Math.Abs(_scale - 1.0) < double.Epsilon
-                ? ValueSpecification.Fixed(_fixedValue.Value)
-                : ValueSpecification.Fixed(_fixedValue.Value).WithScale(_scale);
-
-        if (!_range.HasValue) return ValueSpecification.Random().WithScale(_scale);
-        // Range specification
-        var spec = ValueSpecification.InRange(_range.Value.Min, _range.Value.Max);
-        if (Math.Abs(_scale - 1.0) > double.Epsilon)
-            spec = spec.WithScale(_scale);
-        return spec;
-
-        // Random with scale
+        /// <summary>
+        /// Creates a random value specification for this attribute using the default range and an optional scale.
+        /// </summary>
+        /// <param name="scale">The scale factor to apply to the random value. Must be non-negative. Defaults to 1.0.</param>
+        /// <returns>A value specification representing a random value.</returns>
+        public static ValueSpecification Random(double scale = 1.0) => ValueSpecification.RandomWithScale(scale);
     }
 }

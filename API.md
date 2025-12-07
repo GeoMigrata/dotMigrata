@@ -253,58 +253,6 @@ ValueSpecification.Random().WithScale(1.5)
 ValueSpecification.InRange(0.2, 0.8).WithScale(0.5)
 ```
 
-## Generator (Legacy)
-
-### PersonGenerator
-
-Generates persons with randomized attributes and factor sensitivities.
-
-**Constructor:**
-
-```csharp
-new PersonGenerator(PersonGeneratorConfig? config = null)
-```
-
-**Methods:**
-
-```csharp
-IEnumerable<Person> GeneratePersons(
-    int count,
-    IEnumerable<FactorDefinition> factorDefinitions,
-    string idPrefix = "P")
-
-Person GeneratePerson(
-    string id,
-    IEnumerable<FactorDefinition> factorDefinitions)
-
-void GenerateAndDistributePersons(
-    int totalCount,
-    IEnumerable<FactorDefinition> factorDefinitions,
-    IDictionary<City, int> cityDistribution,
-    string idPrefix = "P")
-```
-
-### PersonGeneratorConfig
-
-Configuration for person generation.
-
-**Properties:**
-
-- `MinMovingWillingness` (double, 0-1) - Default: 0.1
-- `MaxMovingWillingness` (double, 0-1) - Default: 0.9
-- `MinRetentionRate` (double, 0-1) - Default: 0.1
-- `MaxRetentionRate` (double, 0-1) - Default: 0.9
-- `MinSensitivity` (double) - Default: -10.0
-- `MaxSensitivity` (double) - Default: 10.0
-- `SensitivityStdDev` (double) - Default: 3.0
-- `MinSensitivityScaling` (double) - Default: 0.5
-- `MaxSensitivityScaling` (double) - Default: 2.0
-- `RandomSeed` (int?) - For reproducible generation, default: null
-
-**Static:**
-
-- `Default` - Default configuration instance
-
 ## Configuration
 
 ### SimulationConfig
