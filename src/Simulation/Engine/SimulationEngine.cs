@@ -25,7 +25,7 @@ public sealed class SimulationEngine
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="stages" /> is empty.
     /// </exception>
-    /// <exception cref="ArgumentOutOfRangeException">
+    /// <exception cref="SimulationConfigurationException">
     /// Thrown when <paramref name="config" /> contains invalid values.
     /// </exception>
     public SimulationEngine(IEnumerable<ISimulationStage> stages, SimulationConfig? config = null)
@@ -123,10 +123,17 @@ public sealed class SimulationEngine
             // Don't notify error for cancellation - already notified
             throw;
         }
-        catch (Exception ex)
+        catch (SimulationException ex)
         {
             NotifyObservers(o => o.OnError(context, ex));
             throw;
+        }
+        catch (Exception ex)
+        {
+            var wrapped =
+                new SimulationRuntimeException("An unexpected error occurred during simulation execution.", ex);
+            NotifyObservers(o => o.OnError(context, wrapped));
+            throw wrapped;
         }
     }
 

@@ -214,6 +214,9 @@ public sealed class SimulationBuilder
     /// Builds the configured simulation engine.
     /// </summary>
     /// <returns>A configured <see cref="SimulationEngine" /> instance.</returns>
+    /// <exception cref="SimulationConfigurationException">
+    /// Thrown when the configured <see cref="SimulationConfig" /> is invalid.
+    /// </exception>
     public SimulationEngine Build()
     {
         // Create default calculators if not provided

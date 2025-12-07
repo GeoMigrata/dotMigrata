@@ -11,9 +11,9 @@ namespace dotMigrata.Simulation.Engine;
 public sealed class DebugObserver : ISimulationObserver
 {
     private readonly bool _colored;
-    private readonly bool _showPersonDetails;
-    private readonly int _maxPersonsToShow;
     private readonly Dictionary<string, int> _initialPopulations = new();
+    private readonly int _maxPersonsToShow;
+    private readonly bool _showPersonDetails;
     private int _totalMigrationsThisTick;
 
     /// <summary>
@@ -51,10 +51,7 @@ public sealed class DebugObserver : ISimulationObserver
 
         // Store initial populations for tracking
         _initialPopulations.Clear();
-        foreach (var city in context.World.Cities)
-        {
-            _initialPopulations[city.DisplayName] = city.Population;
-        }
+        foreach (var city in context.World.Cities) _initialPopulations[city.DisplayName] = city.Population;
 
         // World details
         WriteLabel("World Name: ");
@@ -133,9 +130,9 @@ public sealed class DebugObserver : ISimulationObserver
     {
         _totalMigrationsThisTick = 0;
         SetColor(ConsoleColor.Yellow);
-        WriteLine($"┌─────────────────────────────────────────────────────────────────┐");
+        WriteLine("┌─────────────────────────────────────────────────────────────────┐");
         WriteLine($"│  TICK {context.CurrentTick,-3}                                                      │");
-        WriteLine($"└─────────────────────────────────────────────────────────────────┘");
+        WriteLine("└─────────────────────────────────────────────────────────────────┘");
         ResetColor();
     }
 
@@ -143,7 +140,7 @@ public sealed class DebugObserver : ISimulationObserver
     public void OnStageComplete(string stageName, SimulationContext context)
     {
         SetColor(ConsoleColor.DarkMagenta);
-        Write($"  ► Stage Complete: ");
+        Write("  ► Stage Complete: ");
         SetColor(ConsoleColor.White);
         Write(stageName);
 
@@ -168,6 +165,127 @@ public sealed class DebugObserver : ISimulationObserver
 
         ResetColor();
         WriteLine();
+    }
+
+    /// <inheritdoc />
+    public void OnTickComplete(SimulationContext context)
+    {
+        WriteLine();
+        WriteLabel("  Tick Summary: ");
+
+        if (_totalMigrationsThisTick > 0)
+        {
+            SetColor(ConsoleColor.Green);
+            Write($"{_totalMigrationsThisTick:N0} migrations");
+        }
+        else
+        {
+            SetColor(ConsoleColor.DarkGray);
+            Write("No migrations");
+        }
+
+        ResetColor();
+        WriteLine();
+
+        // Show current city populations with change from initial
+        WriteLabel("  City Populations: ");
+        WriteLine();
+        foreach (var city in context.World.Cities.OrderByDescending(c => c.Population))
+        {
+            var initial = _initialPopulations.GetValueOrDefault(city.DisplayName, city.Population);
+            var change = city.Population - initial;
+            var changeStr = change > 0 ? $"+{change}" : change.ToString();
+            var changeColor = change > 0 ? ConsoleColor.Green : change < 0 ? ConsoleColor.Red : ConsoleColor.DarkGray;
+
+            SetColor(ConsoleColor.Cyan);
+            Write($"    {city.DisplayName}: ");
+            SetColor(ConsoleColor.White);
+            Write($"{city.Population:N0}");
+            SetColor(changeColor);
+            WriteLine($" ({changeStr})");
+        }
+
+        ResetColor();
+        WriteLine();
+    }
+
+    /// <inheritdoc />
+    public void OnSimulationEnd(SimulationContext context, string reason)
+    {
+        WriteLine();
+        SetColor(ConsoleColor.Magenta);
+        WriteLine("╔════════════════════════════════════════════════════════════════╗");
+        WriteLine("║                    DEBUG MODE - SIMULATION END                 ║");
+        WriteLine("╚════════════════════════════════════════════════════════════════╝");
+        ResetColor();
+        WriteLine();
+
+        WriteLabel("Termination Reason: ");
+        WriteValue(reason);
+        WriteLine();
+
+        WriteLabel("Total Ticks: ");
+        WriteValue($"{context.CurrentTick}");
+        WriteLine();
+
+        WriteLabel("Stabilized: ");
+        WriteValue(context.IsStabilized ? "Yes" : "No");
+        WriteLine();
+
+        WriteLabel("Final Population: ");
+        WriteValue($"{context.World.Population:N0}");
+        WriteLine();
+        WriteLine();
+
+        // Final population analysis
+        SetColor(ConsoleColor.Yellow);
+        WriteLine("Final Population Distribution:");
+        ResetColor();
+
+        var totalChange = 0;
+        foreach (var city in context.World.Cities.OrderByDescending(c => c.Population))
+        {
+            var initial = _initialPopulations.GetValueOrDefault(city.DisplayName, city.Population);
+            var final = city.Population;
+            var change = final - initial;
+            totalChange += Math.Abs(change);
+            var changeStr = change >= 0 ? $"+{change:N0}" : $"{change:N0}";
+            var changeColor = change > 0 ? ConsoleColor.Green : change < 0 ? ConsoleColor.Red : ConsoleColor.DarkGray;
+
+            SetColor(ConsoleColor.Cyan);
+            Write($"  {city.DisplayName,-20} ");
+            SetColor(ConsoleColor.White);
+            Write($"{final,8:N0}");
+            SetColor(ConsoleColor.DarkGray);
+            Write($" (was {initial,8:N0}) ");
+            SetColor(changeColor);
+            WriteLine($" {changeStr,8}");
+        }
+
+        WriteLine();
+        WriteLabel("Total Migrations: ");
+        WriteValue($"~{totalChange / 2:N0}");
+        WriteLine();
+
+        SetColor(ConsoleColor.Green);
+        WriteLine("═══════════════════════════════════════════════════════════════════");
+        ResetColor();
+    }
+
+    /// <inheritdoc />
+    public void OnError(SimulationContext context, Exception exception)
+    {
+        SetColor(ConsoleColor.Red);
+        WriteLine("╔════════════════════════════════════════════════════════════════╗");
+        WriteLine("║                    DEBUG MODE - ERROR                          ║");
+        WriteLine("╚════════════════════════════════════════════════════════════════╝");
+        WriteLine();
+        WriteLine($"Tick: {context.CurrentTick}");
+        WriteLine($"Error: {exception.Message}");
+        WriteLine();
+        WriteLine("Stack Trace:");
+        WriteLine(exception.StackTrace ?? "(no stack trace)");
+        ResetColor();
     }
 
     private void ShowMigrationDetails(SimulationContext context)
@@ -229,127 +347,6 @@ public sealed class DebugObserver : ISimulationObserver
             SetColor(ConsoleColor.DarkGray);
             WriteLine($"      ... and {flowGroups.Count - 5} more migration routes");
         }
-    }
-
-    /// <inheritdoc />
-    public void OnTickComplete(SimulationContext context)
-    {
-        WriteLine();
-        WriteLabel("  Tick Summary: ");
-
-        if (_totalMigrationsThisTick > 0)
-        {
-            SetColor(ConsoleColor.Green);
-            Write($"{_totalMigrationsThisTick:N0} migrations");
-        }
-        else
-        {
-            SetColor(ConsoleColor.DarkGray);
-            Write("No migrations");
-        }
-
-        ResetColor();
-        WriteLine();
-
-        // Show current city populations with change from initial
-        WriteLabel("  City Populations: ");
-        WriteLine();
-        foreach (var city in context.World.Cities.OrderByDescending(c => c.Population))
-        {
-            var initial = _initialPopulations.GetValueOrDefault(city.DisplayName, city.Population);
-            var change = city.Population - initial;
-            var changeStr = change > 0 ? $"+{change}" : change.ToString();
-            var changeColor = change > 0 ? ConsoleColor.Green : (change < 0 ? ConsoleColor.Red : ConsoleColor.DarkGray);
-
-            SetColor(ConsoleColor.Cyan);
-            Write($"    {city.DisplayName}: ");
-            SetColor(ConsoleColor.White);
-            Write($"{city.Population:N0}");
-            SetColor(changeColor);
-            WriteLine($" ({changeStr})");
-        }
-
-        ResetColor();
-        WriteLine();
-    }
-
-    /// <inheritdoc />
-    public void OnSimulationEnd(SimulationContext context, string reason)
-    {
-        WriteLine();
-        SetColor(ConsoleColor.Magenta);
-        WriteLine("╔════════════════════════════════════════════════════════════════╗");
-        WriteLine("║                    DEBUG MODE - SIMULATION END                 ║");
-        WriteLine("╚════════════════════════════════════════════════════════════════╝");
-        ResetColor();
-        WriteLine();
-
-        WriteLabel("Termination Reason: ");
-        WriteValue(reason);
-        WriteLine();
-
-        WriteLabel("Total Ticks: ");
-        WriteValue($"{context.CurrentTick}");
-        WriteLine();
-
-        WriteLabel("Stabilized: ");
-        WriteValue(context.IsStabilized ? "Yes" : "No");
-        WriteLine();
-
-        WriteLabel("Final Population: ");
-        WriteValue($"{context.World.Population:N0}");
-        WriteLine();
-        WriteLine();
-
-        // Final population analysis
-        SetColor(ConsoleColor.Yellow);
-        WriteLine("Final Population Distribution:");
-        ResetColor();
-
-        var totalChange = 0;
-        foreach (var city in context.World.Cities.OrderByDescending(c => c.Population))
-        {
-            var initial = _initialPopulations.GetValueOrDefault(city.DisplayName, city.Population);
-            var final = city.Population;
-            var change = final - initial;
-            totalChange += Math.Abs(change);
-            var changeStr = change >= 0 ? $"+{change:N0}" : $"{change:N0}";
-            var changeColor = change > 0 ? ConsoleColor.Green : (change < 0 ? ConsoleColor.Red : ConsoleColor.DarkGray);
-
-            SetColor(ConsoleColor.Cyan);
-            Write($"  {city.DisplayName,-20} ");
-            SetColor(ConsoleColor.White);
-            Write($"{final,8:N0}");
-            SetColor(ConsoleColor.DarkGray);
-            Write($" (was {initial,8:N0}) ");
-            SetColor(changeColor);
-            WriteLine($" {changeStr,8}");
-        }
-
-        WriteLine();
-        WriteLabel("Total Migrations: ");
-        WriteValue($"~{totalChange / 2:N0}");
-        WriteLine();
-
-        SetColor(ConsoleColor.Green);
-        WriteLine("═══════════════════════════════════════════════════════════════════");
-        ResetColor();
-    }
-
-    /// <inheritdoc />
-    public void OnError(SimulationContext context, Exception exception)
-    {
-        SetColor(ConsoleColor.Red);
-        WriteLine("╔════════════════════════════════════════════════════════════════╗");
-        WriteLine("║                    DEBUG MODE - ERROR                          ║");
-        WriteLine("╚════════════════════════════════════════════════════════════════╝");
-        WriteLine();
-        WriteLine($"Tick: {context.CurrentTick}");
-        WriteLine($"Error: {exception.Message}");
-        WriteLine();
-        WriteLine("Stack Trace:");
-        WriteLine(exception.StackTrace ?? "(no stack trace)");
-        ResetColor();
     }
 
     private void SetColor(ConsoleColor color)
