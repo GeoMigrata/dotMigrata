@@ -1,4 +1,4 @@
-﻿# Usage Guide
+﻿﻿# Usage Guide
 
 This guide provides detailed examples and usage instructions for dotMigrata.
 
@@ -80,8 +80,9 @@ collection.Add(new GeneratorConfig
         [incomeFactor] = Attribute("IncomeSensitivity").InRange(3, 8),        // Sensitivity to income
         [pollutionFactor] = Attribute("PollutionSensitivity").InRange(-7, -3)    // Negative sensitivity to pollution
     },
-    MovingWillingness = Attribute("MovingWillingness").InRange(0.4, 0.7),
-    RetentionRate = Attribute("RetentionRate").InRange(0.3, 0.6),
+    // Use named attribute methods for person behavioral properties
+    MovingWillingness = MovingWillingness().InRange(0.4, 0.7),
+    RetentionRate = RetentionRate().InRange(0.3, 0.6),
     Tags = ["urban_resident"]
 });
 ```
@@ -156,6 +157,38 @@ var result = await engine.RunAsync(world);
 
 Console.WriteLine($"Simulation completed after {result.CurrentTick} ticks");
 Console.WriteLine($"Final population: {result.World.Population:N0} persons");
+```
+
+## Value Specifications
+
+The framework provides several ways to specify values for person attributes:
+
+### Fixed Values
+
+```csharp
+using static dotMigrata.Generator.AttributeValueBuilder;
+
+MovingWillingness().Fixed(0.75)  // All persons get exactly 0.75
+```
+
+### Range Values (Uniform Distribution)
+
+```csharp
+MovingWillingness().InRange(0.4, 0.8)  // Uniformly distributed between 0.4 and 0.8
+```
+
+### Approximate Values (Normal Distribution)
+
+```csharp
+// Values sampled from normal distribution with mean=0.6, stddev=0.15
+MovingWillingness().Approximately(mean: 0.6, standardDeviation: 0.15)
+```
+
+### Random with Scale
+
+```csharp
+// Scale > 1.0 biases toward higher values, < 1.0 toward lower values
+MovingWillingness().Random(scale: 1.5)
 ```
 
 ## PersonCollection System
@@ -244,8 +277,9 @@ collection.Add(new GeneratorConfig(seed: 42)
         [pollutionFactor] = Attribute("PollutionSensitivity").Fixed(-5.0)      // Fixed value - all persons get -5.0
         // Note: housingFactor sensitivity will use default range with normal distribution
     },
-    MovingWillingness = Attribute("MovingWillingness").InRange(0.6, 0.9),
-    RetentionRate = Attribute("RetentionRate").InRange(0.3, 0.6),
+    // Use named attribute methods for common person properties
+    MovingWillingness = MovingWillingness().InRange(0.6, 0.9),
+    RetentionRate = RetentionRate().InRange(0.3, 0.6),
     Tags = ["young_professional", "tech_worker"]
 });
 
@@ -321,8 +355,9 @@ collection.Add(new GeneratorConfig(seed: 42)
     {
         [incomeFactor] = Attribute("IncomeSensitivity").InRange(5, 9)  // Use FactorDefinition reference
     },
-    MovingWillingness = Attribute("MovingWillingness").InRange(0.4, 0.7),
-    RetentionRate = Attribute("RetentionRate").InRange(0.3, 0.6),
+    // Use named attribute methods for common person properties
+    MovingWillingness = MovingWillingness().InRange(0.4, 0.7),
+    RetentionRate = RetentionRate().InRange(0.3, 0.6),
     // Advanced generator options
     DefaultSensitivityRange = new ValueRange(-10.0, 10.0),  // Default range for unspecified factors
     SensitivityStdDev = 3.0  // Standard deviation for normal distribution
