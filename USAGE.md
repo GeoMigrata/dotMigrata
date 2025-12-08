@@ -246,8 +246,8 @@ var wealthyPerson = new Person(new Dictionary<FactorDefinition, double>
     [housingFactor] = -7.0
 })
 {
-    MovingWillingness = 0.85,
-    RetentionRate = 0.15,
+    MovingWillingness = NormalizedValue.FromRatio(0.85),
+    RetentionRate = NormalizedValue.FromRatio(0.15),
     Tags = ["high_mobility", "wealthy"]
 };
 collection.Add(wealthyPerson);
@@ -260,8 +260,8 @@ var middleClassPerson = new Person(new Dictionary<FactorDefinition, double>
     [housingFactor] = -4.0
 })
 {
-    MovingWillingness = 0.5,
-    RetentionRate = 0.5,
+    MovingWillingness = NormalizedValue.FromRatio(0.5),
+    RetentionRate = NormalizedValue.FromRatio(0.5),
     Tags = ["middle_class"]
 };
 collection.Add(middleClassPerson, count: 10_000);

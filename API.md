@@ -1,4 +1,4 @@
-﻿# API Reference
+﻿﻿# API Reference
 
 This document provides a comprehensive reference for the public API of dotMigrata.
 
@@ -40,21 +40,20 @@ Represents a city with geographic location, factors, and individual persons.
 
 **Properties:**
 
-- `DisplayName` (string) - Display name
-- `Area` (double) - Area in square kilometers
-- `Location` (Coordinate) - Geographic coordinates
-- `Capacity` (int?) - Maximum population capacity (optional)
+- `DisplayName` (string, required) - Display name
+- `Area` (double, init) - Area in square kilometers (must be > 0)
+- `Location` (Coordinate, required) - Geographic coordinates
+- `Capacity` (int?, init) - Maximum population capacity (optional, null or 0 means no limit)
 - `FactorValues` (IReadOnlyList<FactorValue>) - Factor values for this city
-- `Persons` (IReadOnlyCollection<Person>) - Persons residing in this city
+- `Persons` (IReadOnlyList<Person>) - Persons residing in this city (returns snapshot)
 - `Population` (int) - Total population (count of persons)
 
 **Methods:**
 
-- `UpdateFactorIntensity(FactorDefinition, double)` - Updates a factor's intensity
+- `UpdateFactorIntensity(FactorDefinition, IntensityValue)` - Updates a factor's intensity
 - `TryGetFactorValue(FactorDefinition, out FactorValue?)` - Gets a factor value
-- `AddPerson(Person)` - Adds a person to this city
-- `RemovePerson(Person)` - Removes a person from this city
-- `TryGetPerson(string, out Person?)` - Gets a person by ID
+- `AddPerson(Person)` - Adds a person to this city (thread-safe)
+- `RemovePerson(Person)` - Removes a person from this city (thread-safe, returns bool)
 
 ### Person
 
@@ -62,26 +61,29 @@ Represents an individual person with unique attributes and migration preferences
 
 **Properties:**
 
-- `Id` (string) - Unique identifier
 - `CurrentCity` (City?) - Current city where the person resides
-- `MovingWillingness` (double, 0-1) - Willingness to migrate
-- `RetentionRate` (double, 0-1) - Tendency to stay in current location
-- `SensitivityScaling` (double) - Attraction scaling coefficient
-- `AttractionThreshold` (double) - Minimum attraction difference for migration
-- `MinimumAcceptableAttraction` (double) - Minimum destination attraction
+- `MovingWillingness` (NormalizedValue) - Willingness to migrate (0-1 range, required)
+- `RetentionRate` (NormalizedValue) - Tendency to stay in current location (0-1 range, required)
+- `SensitivityScaling` (double) - Attraction scaling coefficient (default: 1.0)
+- `AttractionThreshold` (double) - Minimum attraction difference for migration (default: 0.0)
+- `MinimumAcceptableAttraction` (double) - Minimum destination attraction (default: 0.0)
 - `FactorSensitivities` (IReadOnlyDictionary<FactorDefinition, double>) - Factor sensitivities
 - `Tags` (IReadOnlyList<string>) - Tags for categorization and statistical analysis
 
 **Constructor:**
 
 ```csharp
-new Person(string id, IDictionary<FactorDefinition, double> factorSensitivities)
+new Person(IDictionary<FactorDefinition, double> factorSensitivities)
+{
+    MovingWillingness = NormalizedValue.FromRatio(0.5),
+    RetentionRate = NormalizedValue.FromRatio(0.3)
+}
 ```
 
 **Methods:**
 
-- `GetSensitivity(FactorDefinition)` - Gets sensitivity value for a factor
-- `UpdateSensitivity(FactorDefinition, double)` - Updates sensitivity for a factor
+- `GetSensitivity(FactorDefinition)` - Gets sensitivity value for a factor (returns SensitivityValue)
+- `UpdateSensitivity(FactorDefinition, SensitivityValue)` - Updates sensitivity for a factor
 
 ### FactorDefinition
 
@@ -209,13 +211,15 @@ new GeneratorSpecification(int seed) // Pseudo-random with seed
 
 ### ValueSpecification
 
-Represents a value specification for attributes (fixed, ranged, or biased).
+Represents a value specification for attributes. Can be a fixed value, a random range, or an approximate value using
+normal distribution.
 
 **Static Factory Methods:**
 
 ```csharp
 static ValueSpecification Fixed(double value)
 static ValueSpecification InRange(double min, double max)
+static ValueSpecification Approximately(double mean, double standardDeviation)
 static ValueSpecification Random()
 static ValueSpecification RandomWithScale(double scale)
 ```
@@ -230,8 +234,11 @@ ValueSpecification WithScale(double scale)
 
 - `IsFixed` (bool) - Whether this is a fixed value
 - `HasRange` (bool) - Whether this has a custom range
+- `IsApproximate` (bool) - Whether this is an approximate value using normal distribution
 - `FixedValue` (double?) - The fixed value if applicable
 - `Range` ((double Min, double Max)?) - The range if applicable
+- `Mean` (double?) - The mean value for approximate specifications
+- `StandardDeviation` (double?) - The standard deviation for approximate specifications
 - `Scale` (double) - The scale factor
 
 **Examples:**
@@ -240,8 +247,11 @@ ValueSpecification WithScale(double scale)
 // Fixed value - all persons get 5.0
 ValueSpecification.Fixed(5.0)
 
-// Random in range 0.3 to 0.8
+// Random in range 0.3 to 0.8 (uniform distribution)
 ValueSpecification.InRange(0.3, 0.8)
+
+// Approximate value using normal distribution
+ValueSpecification.Approximately(mean: 0.5, standardDeviation: 0.1)
 
 // Random with default range
 ValueSpecification.Random()
@@ -719,6 +729,7 @@ MovingWillingness().Fixed(0.75)                      // Fixed value
 MovingWillingness().InRange(0.4, 0.8)                // Uniform distribution
 MovingWillingness().Approximately(0.6, 0.15)         // Normal distribution
 Age().Random(scale: 1.5)                             // Random with scale
+
 // Available named methods:
 Age(), Income(), Education(), RiskPreference(), 
 MovingWillingness(), RetentionRate(), SensitivityScaling(), AttractionThreshold()
@@ -778,26 +789,27 @@ catch (WorldValidationException ex)
 
 ### Simulation Lifecycle Hooks
 
-Implement `ISimulationStageLifecycle` to receive simulation start/end notifications:
+The `ISimulationStageLifecycle` interface is available for future extension. Note: SimulationEngine does not currently
+invoke these methods automatically. This interface is designed for custom implementations:
 
 ```csharp
 public class MyCustomStage : ISimulationStage, ISimulationStageLifecycle
 {
     public string Name => "MyStage";
-
+    
     public void OnSimulationStart(SimulationContext context)
     {
-        // Called once when simulation starts
+        // Custom initialization logic
     }
-
+    
     public void OnSimulationEnd(SimulationContext context)
     {
-        // Called once when simulation ends
+        // Custom cleanup logic
     }
-
+    
     public Task ExecuteAsync(SimulationContext context)
     {
-        // Called each tick
+        // Called each tick by SimulationEngine
         return Task.CompletedTask;
     }
 }
@@ -805,7 +817,9 @@ public class MyCustomStage : ISimulationStage, ISimulationStageLifecycle
 
 ### Custom Stability Criteria
 
-Implement `IStabilityCriteria` for custom stability detection:
+The `IStabilityCriteria` interface and `DefaultStabilityCriteria` implementation are available for future extension.
+Note: SimulationEngine currently uses built-in stability checking. The interface is designed for custom stability
+detection strategies:
 
 ```csharp
 public class MyStabilityCriteria : IStabilityCriteria
@@ -815,17 +829,17 @@ public class MyStabilityCriteria : IStabilityCriteria
         // Determine when to check stability
         return context.CurrentTick % 10 == 0;
     }
-
+    
     public bool IsStable(SimulationContext context, SimulationConfig config)
     {
         // Determine if simulation is stable
         return /* your logic */;
     }
 }
-
-// Use with SimulationEngine
-var engine = new SimulationEngine(stages, config, new MyStabilityCriteria());
 ```
+
+**Note:** To use custom stability criteria, you would need to extend `SimulationEngine` or create a custom
+implementation.
 
 ### Snapshot Validation
 
@@ -834,13 +848,19 @@ Version 3.0 adds methods for snapshot validation:
 ```csharp
 // Non-throwing deserialization
 if (XmlSnapshotSerializer.TryDeserializeFromFile(path, out var snapshot, out var error))
+{
     Console.WriteLine("Snapshot loaded successfully");
+}
 else
+{
     Console.WriteLine($"Failed to load snapshot: {error}");
+}
 
 // Quick validation
 if (XmlSnapshotSerializer.ValidateSnapshot(path))
+{
     Console.WriteLine("Snapshot is valid");
+}
 ```
 
 ## Simulation Metrics
