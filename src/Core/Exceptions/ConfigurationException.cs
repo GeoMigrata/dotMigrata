@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents errors that occur due to invalid configuration values or settings.
 /// </summary>
-public sealed class ConfigurationException : GeoMigrataException
+public sealed class ConfigurationException : DotMigrataException
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ConfigurationException"/> class.

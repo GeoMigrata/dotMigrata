@@ -750,7 +750,7 @@ var config = new StandardModelConfig
 
 Version 3.0 provides a comprehensive exception hierarchy:
 
-- `GeoMigrataException` - Base exception for all framework exceptions
+- `DotMigrataException` - Base exception for all framework exceptions
 - `ConfigurationException` - Invalid configuration values
 - `GeneratorSpecificationException` - Invalid generator specifications
 - `WorldValidationException` - World structure validation errors (includes city name and missing factors)

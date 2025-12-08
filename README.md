@@ -16,7 +16,7 @@ city dynamics over time.
 
 **Version 3.0** brings major improvements to the framework:
 
-- **Enhanced Exception System**: Comprehensive exception hierarchy with `GeoMigrataException`, `ConfigurationException`,
+- **Enhanced Exception System**: Comprehensive exception hierarchy with `DotMigrataException`, `ConfigurationException`,
   `GeneratorSpecificationException`, `WorldValidationException`, and `SnapshotException` for better error handling
 - **Improved Value Specifications**: Named attribute methods like `Age()`, `Income()`, `MovingWillingness()` for
   clearer, more expressive code

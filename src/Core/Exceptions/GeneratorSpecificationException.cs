@@ -4,7 +4,7 @@
 /// Represents errors that occur due to invalid generator specifications,
 /// such as invalid value ranges or distribution parameters.
 /// </summary>
-public sealed class GeneratorSpecificationException : GeoMigrataException
+public sealed class GeneratorSpecificationException : DotMigrataException
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="GeneratorSpecificationException"/> class.

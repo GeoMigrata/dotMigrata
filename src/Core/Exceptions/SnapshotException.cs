@@ -4,7 +4,7 @@
 /// Represents errors that occur during snapshot operations, such as
 /// serialization, deserialization, or validation failures.
 /// </summary>
-public sealed class SnapshotException : GeoMigrataException
+public sealed class SnapshotException : DotMigrataException
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="SnapshotException"/> class.
