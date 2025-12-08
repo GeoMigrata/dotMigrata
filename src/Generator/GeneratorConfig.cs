@@ -15,21 +15,14 @@ public sealed class GeneratorConfig
     /// <summary>
     /// Initializes a new instance with a random seed.
     /// </summary>
-    public GeneratorConfig()
-    {
-        _random = new Random();
-    }
+    public GeneratorConfig() => _random = new Random();
 
 
     /// <summary>
     /// Initializes a new instance with a specific seed for reproducibility.
     /// </summary>
     /// <param name="seed">The random seed.</param>
-    public GeneratorConfig(int seed)
-    {
-        _random = new Random(seed);
-    }
-
+    public GeneratorConfig(int seed) => _random = new Random(seed);
 
     /// <summary>
     /// Gets or sets the number of persons to generate.
@@ -151,10 +144,15 @@ public sealed class GeneratorConfig
 
     private double GenerateValue(ValueSpecification spec, bool useNormalDistribution = false)
     {
-        if (spec.IsFixed) return spec.FixedValue!.Value;
+        if (spec.IsFixed)
+            return spec.FixedValue!.Value;
 
         double generatedValue;
-        if (spec.HasRange)
+
+        // Handle Approximately specifications (normal distribution with explicit mean/stddev)
+        if (spec.IsApproximate)
+            generatedValue = GenerateNormalRandom(spec.Mean!.Value, spec.StandardDeviation!.Value);
+        else if (spec.HasRange)
         {
             var (min, max) = spec.Range!.Value;
             if (useNormalDistribution)
@@ -165,25 +163,18 @@ public sealed class GeneratorConfig
                 generatedValue = Math.Clamp(generatedValue, min, max);
             }
             else
-            {
                 generatedValue = GenerateUniformRandom(min, max);
-            }
         }
         else
-        {
             throw new InvalidOperationException(
-                "Value specification must have either a fixed value or a range. " +
+                "Value specification must have either a fixed value, a range, or approximate distribution. " +
                 "Random generation with default ranges is not supported for required attributes.");
-        }
 
         // Apply scale
         return generatedValue * spec.Scale;
     }
 
-    private double GenerateUniformRandom(double min, double max)
-    {
-        return min + _random.NextDouble() * (max - min);
-    }
+    private double GenerateUniformRandom(double min, double max) => min + _random.NextDouble() * (max - min);
 
     private double GenerateNormalRandom(double mean, double stdDev)
     {

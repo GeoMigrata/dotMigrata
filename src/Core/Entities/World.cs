@@ -1,4 +1,5 @@
 ﻿using dotMigrata.Core.Values;
+using dotMigrata.Core.Exceptions;
 
 namespace dotMigrata.Core.Entities;
 
@@ -68,7 +69,7 @@ public class World
     /// <summary>
     /// Validates that each city has values for all factor definitions.
     /// </summary>
-    /// <exception cref="InvalidOperationException">
+    /// <exception cref="WorldValidationException">
     /// Thrown when a city is missing values for one or more factor definitions.
     /// </exception>
     private void ValidateWorldStructure()
@@ -79,10 +80,10 @@ public class World
             var cityFactors = city.FactorValues.Select(fv => fv.Definition).ToHashSet();
             var missingFactors = _factorDefinitions.Where(fd => !cityFactors.Contains(fd)).ToList();
 
-            if (missingFactors.Count <= 0) continue;
-            var missingNames = string.Join(", ", missingFactors.Select(f => f.DisplayName));
-            throw new InvalidOperationException(
-                $"City '{city.DisplayName}' is missing values for factors: {missingNames}");
+            if (missingFactors.Count > 0)
+                throw new WorldValidationException(
+                    city.DisplayName,
+                    missingFactors.Select(f => f.DisplayName));
         }
     }
 }
