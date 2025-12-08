@@ -14,7 +14,6 @@ namespace dotMigrata.Logic.Calculators;
 public class StandardMigrationCalculator : IMigrationCalculator
 {
     private readonly StandardModelConfig _config;
-    private readonly int? _seed;
 
     // Thread-local random for thread-safe parallel processing
     private readonly ThreadLocal<Random> _threadLocalRandom;
@@ -24,17 +23,18 @@ public class StandardMigrationCalculator : IMigrationCalculator
     /// </summary>
     /// <param name="config">Configuration parameters for the calculator. If null, uses default configuration.</param>
     /// <param name="seed">Optional seed for reproducible random number generation.</param>
+    /// <exception cref="Core.Exceptions.ConfigurationException">Thrown when the configuration is invalid.</exception>
     public StandardMigrationCalculator(StandardModelConfig? config = null, int? seed = null)
     {
-        _config = config ?? StandardModelConfig.Default;
-        _seed = seed;
+        _config = config ?? StandardModelConfig.Default.Validate();
+        var seed1 = seed;
 
         // Create thread-local random with optional seeding for reproducibility
         _threadLocalRandom = new ThreadLocal<Random>(() =>
         {
-            if (!_seed.HasValue) return new Random();
+            if (!seed1.HasValue) return new Random();
             // Use seed combined with thread ID for reproducible but different per-thread values
-            var threadSeed = _seed.Value ^ Environment.CurrentManagedThreadId;
+            var threadSeed = seed1.Value ^ Environment.CurrentManagedThreadId;
             return new Random(threadSeed);
         }, false);
     }
@@ -55,7 +55,7 @@ public class StandardMigrationCalculator : IMigrationCalculator
         if (!attractionResults.TryGetValue(originCity, out var originAttraction))
             return null;
 
-        // Find best destination city
+        // Find the best destination city
         City? bestDestination = null;
         var bestProbability = 0.0;
         var destinations = destinationCities.Where(c => c != originCity).ToList();
@@ -119,9 +119,20 @@ public class StandardMigrationCalculator : IMigrationCalculator
     {
         var allPersons = world.AllPersons.ToList();
 
-        // Process persons in parallel for performance
-        var flows = allPersons
-            .AsParallel()
+        // Configure parallel or sequential processing based on config
+        IEnumerable<Person> query = allPersons;
+
+        if (_config.UseParallelProcessing)
+        {
+            var parallel = allPersons.AsParallel();
+            if (_config.MaxDegreeOfParallelism.HasValue)
+                parallel = parallel.WithDegreeOfParallelism(_config.MaxDegreeOfParallelism.Value);
+
+            query = parallel;
+        }
+
+        // Process persons (parallel or sequential)
+        var flows = query
             .Select(person =>
             {
                 // Calculate attractions for all cities for this person

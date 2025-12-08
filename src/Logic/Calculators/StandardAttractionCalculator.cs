@@ -18,10 +18,9 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
     /// Initializes a new instance of the StandardAttractionCalculator.
     /// </summary>
     /// <param name="config">Configuration parameters for the calculator. If null, uses default configuration.</param>
-    public StandardAttractionCalculator(StandardModelConfig? config = null)
-    {
-        _config = config ?? StandardModelConfig.Default;
-    }
+    /// <exception cref="Core.Exceptions.ConfigurationException">Thrown when the configuration is invalid.</exception>
+    public StandardAttractionCalculator(StandardModelConfig? config = null) =>
+        _config = (config ?? StandardModelConfig.Default).Validate();
 
 
     /// <inheritdoc />
@@ -56,11 +55,9 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
         IEnumerable<City> cities,
         Person person,
         City? originCity = null)
-    {
-        return cities.ToDictionary(
+        => cities.ToDictionary(
             city => city,
             city => CalculateAttraction(city, person, originCity));
-    }
 
     /// <summary>
     /// Calculates the base attraction score from the factor system for an individual person.
