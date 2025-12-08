@@ -703,6 +703,146 @@ var engine = SimulationBuilder.Create()
 var result = await engine.RunAsync(world);
 ```
 
+## Version 3.0 Features
+
+### Value Specifications
+
+Version 3.0 introduces named attribute methods for clearer value specifications:
+
+**Named Attribute Methods:**
+
+```csharp
+using static dotMigrata.Generator.AttributeValueBuilder;
+
+// Use named methods for common attributes
+MovingWillingness().Fixed(0.75)                      // Fixed value
+MovingWillingness().InRange(0.4, 0.8)                // Uniform distribution
+MovingWillingness().Approximately(0.6, 0.15)         // Normal distribution
+Age().Random(scale: 1.5)                             // Random with scale
+// Available named methods:
+Age(), Income(), Education(), RiskPreference(), 
+MovingWillingness(), RetentionRate(), SensitivityScaling(), AttractionThreshold()
+
+// Generic method for custom attributes
+Attribute("CustomAttribute").InRange(0, 100)
+```
+
+### Configuration Validation
+
+All configuration objects now support strict validation:
+
+**StandardModelConfig:**
+
+```csharp
+var config = new StandardModelConfig
+{
+    CapacitySteepness = 5.0,              // Must be > 0
+    DistanceDecayLambda = 0.001,          // Must be >= 0
+    MigrationProbabilitySteepness = 10.0, // Must be > 0
+    MigrationProbabilityThreshold = 0.0,
+    FactorSmoothingAlpha = 0.2,           // Must be in [0, 1]
+    UseParallelProcessing = true,          // Enable/disable parallelism
+    MaxDegreeOfParallelism = null          // Optional parallelism limit
+}.Validate();  // Throws ConfigurationException if invalid
+```
+
+### Enhanced Exception System
+
+Version 3.0 provides a comprehensive exception hierarchy:
+
+- `GeoMigrataException` - Base exception for all framework exceptions
+- `ConfigurationException` - Invalid configuration values
+- `GeneratorSpecificationException` - Invalid generator specifications
+- `WorldValidationException` - World structure validation errors (includes city name and missing factors)
+- `SnapshotException` - Snapshot serialization/deserialization errors (includes file path)
+
+**Example:**
+
+```csharp
+try
+{
+    var world = new World([city1, city2], [factor1, factor2])
+    {
+        DisplayName = "My World"
+    };
+}
+catch (WorldValidationException ex)
+{
+    Console.WriteLine($"City '{ex.CityName}' is missing factors:");
+    foreach (var factor in ex.MissingFactorNames)
+    {
+        Console.WriteLine($"  - {factor}");
+    }
+}
+```
+
+### Simulation Lifecycle Hooks
+
+Implement `ISimulationStageLifecycle` to receive simulation start/end notifications:
+
+```csharp
+public class MyCustomStage : ISimulationStage, ISimulationStageLifecycle
+{
+    public string Name => "MyStage";
+
+    public void OnSimulationStart(SimulationContext context)
+    {
+        // Called once when simulation starts
+    }
+
+    public void OnSimulationEnd(SimulationContext context)
+    {
+        // Called once when simulation ends
+    }
+
+    public Task ExecuteAsync(SimulationContext context)
+    {
+        // Called each tick
+        return Task.CompletedTask;
+    }
+}
+```
+
+### Custom Stability Criteria
+
+Implement `IStabilityCriteria` for custom stability detection:
+
+```csharp
+public class MyStabilityCriteria : IStabilityCriteria
+{
+    public bool ShouldCheckStability(SimulationContext context, SimulationConfig config)
+    {
+        // Determine when to check stability
+        return context.CurrentTick % 10 == 0;
+    }
+
+    public bool IsStable(SimulationContext context, SimulationConfig config)
+    {
+        // Determine if simulation is stable
+        return /* your logic */;
+    }
+}
+
+// Use with SimulationEngine
+var engine = new SimulationEngine(stages, config, new MyStabilityCriteria());
+```
+
+### Snapshot Validation
+
+Version 3.0 adds methods for snapshot validation:
+
+```csharp
+// Non-throwing deserialization
+if (XmlSnapshotSerializer.TryDeserializeFromFile(path, out var snapshot, out var error))
+    Console.WriteLine("Snapshot loaded successfully");
+else
+    Console.WriteLine($"Failed to load snapshot: {error}");
+
+// Quick validation
+if (XmlSnapshotSerializer.ValidateSnapshot(path))
+    Console.WriteLine("Snapshot is valid");
+```
+
 ## Simulation Metrics
 
 ### MetricsCollector

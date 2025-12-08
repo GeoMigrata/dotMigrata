@@ -4,12 +4,31 @@
 [![.NET9.0](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
 [![.NET10.0](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-3.0-green.svg)]()
 
 dotMigrata, a product from Project GeoMigrata, is a C# .NET simulation framework designed to model individual-based
 population migration and city
 evolution in a multi-city system. The framework simulates individual persons (10,000 to 1,000,000+) with unique
 characteristics, capturing how city factors influence individual migration decisions and how migration feedback affects
 city dynamics over time.
+
+## Version 3.0 Highlights
+
+**Version 3.0** brings major improvements to the framework:
+
+- **Enhanced Exception System**: Comprehensive exception hierarchy with `GeoMigrataException`, `ConfigurationException`,
+  `GeneratorSpecificationException`, `WorldValidationException`, and `SnapshotException` for better error handling
+- **Improved Value Specifications**: Named attribute methods like `Age()`, `Income()`, `MovingWillingness()` for
+  clearer, more expressive code
+- **Normal Distribution Support**: `Approximately(mean, stdDev)` method for realistic value generation using normal
+  distributions
+- **Configurable Parallelism**: Control parallel processing in migration calculations with `UseParallelProcessing` and
+  `MaxDegreeOfParallelism` settings
+- **Validation & Safety**: Strict configuration validation with early failure detection using the `Guard` utility class
+- **Better Snapshot Handling**: Enhanced snapshot serialization with versioning, validation methods, and proper
+  exception handling
+- **Modern C# Features**: Updated to use C# latest features including records, init-only properties, and collection
+  expressions
 
 ## Core Idea
 
