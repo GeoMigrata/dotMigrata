@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
+using dotMigrata.Core.Exceptions;
 using dotMigrata.Snapshot.Models;
 
 namespace dotMigrata.Snapshot.Serialization;
@@ -9,7 +10,7 @@ namespace dotMigrata.Snapshot.Serialization;
 /// XML snapshot serializer using C# XML serialization attributes.
 /// </summary>
 /// <remarks>
-///     <para>Provides attribute-based XML serialization with v2.0 format:</para>
+///     <para>Provides attribute-based XML serialization with v3.0 format:</para>
 ///     <list type="bullet">
 ///         <item>
 ///             <description>Single namespace for all elements</description>
@@ -19,6 +20,9 @@ namespace dotMigrata.Snapshot.Serialization;
 ///         </item>
 ///         <item>
 ///             <description>Shorter element names for reduced file size</description>
+///         </item>
+///         <item>
+///             <description>Version tracking for backwards compatibility</description>
 ///         </item>
 ///     </list>
 /// </remarks>
@@ -41,8 +45,8 @@ public static class XmlSnapshotSerializer
 
     static XmlSnapshotSerializer()
     {
-        // Single namespace for all elements (v2.0 simplified format)
-        Namespaces.Add("", "http://geomigrata.pages.dev/snapshot");
+        // Single namespace for all elements (v3.0 format)
+        Namespaces.Add("", "https://geomigrata.pages.dev/snapshot");
     }
 
     /// <summary>
@@ -53,14 +57,24 @@ public static class XmlSnapshotSerializer
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="snapshot" /> is <see langword="null" />.
     /// </exception>
+    /// <exception cref="SnapshotException">
+    /// Thrown when serialization fails.
+    /// </exception>
     public static string Serialize(WorldSnapshotXml snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
-        using var stringWriter = new StringWriter();
-        using var xmlWriter = XmlWriter.Create(stringWriter, DefaultWriterSettings);
-        Serializer.Serialize(xmlWriter, snapshot, Namespaces);
-        return stringWriter.ToString();
+        try
+        {
+            using var stringWriter = new StringWriter();
+            using var xmlWriter = XmlWriter.Create(stringWriter, DefaultWriterSettings);
+            Serializer.Serialize(xmlWriter, snapshot, Namespaces);
+            return stringWriter.ToString();
+        }
+        catch (Exception ex) when (ex is not SnapshotException)
+        {
+            throw new SnapshotException("Failed to serialize snapshot to XML.", ex);
+        }
     }
 
     /// <summary>
@@ -74,48 +88,127 @@ public static class XmlSnapshotSerializer
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="filePath" /> is <see langword="null" /> or whitespace.
     /// </exception>
+    /// <exception cref="SnapshotException">
+    /// Thrown when serialization fails.
+    /// </exception>
     public static void SerializeToFile(WorldSnapshotXml snapshot, string filePath)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
-        using var xmlWriter = XmlWriter.Create(filePath, DefaultWriterSettings);
-        Serializer.Serialize(xmlWriter, snapshot, Namespaces);
+        try
+        {
+            using var xmlWriter = XmlWriter.Create(filePath, DefaultWriterSettings);
+            Serializer.Serialize(xmlWriter, snapshot, Namespaces);
+        }
+        catch (Exception ex) when (ex is not SnapshotException)
+        {
+            throw new SnapshotException($"Failed to serialize snapshot to file: {filePath}", ex)
+            {
+                FilePath = filePath
+            };
+        }
     }
 
     /// <summary>
     /// Deserializes a snapshot from an XML string.
     /// </summary>
     /// <param name="xml">XML string containing the snapshot.</param>
-    /// <returns>
-    /// Deserialized <see cref="WorldSnapshotXml" />, or <see langword="null" /> if deserialization fails.
-    /// </returns>
+    /// <returns>Deserialized <see cref="WorldSnapshotXml" />.</returns>
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="xml" /> is <see langword="null" /> or whitespace.
     /// </exception>
-    public static WorldSnapshotXml? Deserialize(string xml)
+    /// <exception cref="SnapshotException">
+    /// Thrown when deserialization fails or the snapshot is invalid.
+    /// </exception>
+    public static WorldSnapshotXml Deserialize(string xml)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(xml);
 
-        using var stringReader = new StringReader(xml);
-        return Serializer.Deserialize(stringReader) as WorldSnapshotXml;
+        try
+        {
+            using var stringReader = new StringReader(xml);
+            var snapshot = Serializer.Deserialize(stringReader) as WorldSnapshotXml;
+
+            return snapshot ?? throw new SnapshotException("Deserialization resulted in null snapshot.");
+        }
+        catch (Exception ex) when (ex is not SnapshotException)
+        {
+            throw new SnapshotException("Failed to deserialize snapshot from XML string.", ex);
+        }
     }
 
     /// <summary>
     /// Deserializes a snapshot from an XML file.
     /// </summary>
     /// <param name="filePath">Path to the XML file.</param>
-    /// <returns>
-    /// Deserialized <see cref="WorldSnapshotXml" />, or <see langword="null" /> if deserialization fails.
-    /// </returns>
+    /// <returns>Deserialized <see cref="WorldSnapshotXml" />.</returns>
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="filePath" /> is <see langword="null" /> or whitespace.
     /// </exception>
-    public static WorldSnapshotXml? DeserializeFromFile(string filePath)
+    /// <exception cref="SnapshotException">
+    /// Thrown when the file cannot be read or deserialization fails.
+    /// </exception>
+    public static WorldSnapshotXml DeserializeFromFile(string filePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
-        using var fileStream = File.OpenRead(filePath);
-        return Serializer.Deserialize(fileStream) as WorldSnapshotXml;
+        try
+        {
+            using var fileStream = File.OpenRead(filePath);
+            var snapshot = Serializer.Deserialize(fileStream) as WorldSnapshotXml;
+
+            if (snapshot == null)
+            {
+                throw new SnapshotException($"Deserialization of file '{filePath}' resulted in null snapshot.")
+                {
+                    FilePath = filePath
+                };
+            }
+
+            return snapshot;
+        }
+        catch (Exception ex) when (ex is not SnapshotException)
+        {
+            throw new SnapshotException($"Failed to deserialize snapshot from file: {filePath}", ex)
+            {
+                FilePath = filePath
+            };
+        }
     }
+
+    /// <summary>
+    /// Attempts to deserialize a snapshot from an XML file without throwing exceptions.
+    /// </summary>
+    /// <param name="filePath">Path to the XML file.</param>
+    /// <param name="snapshot">When this method returns, contains the deserialized snapshot if successful; otherwise, null.</param>
+    /// <param name="error">When this method returns, contains the error message if deserialization failed; otherwise, null.</param>
+    /// <returns>
+    /// <see langword="true" /> if deserialization was successful; otherwise, <see langword="false" />.
+    /// </returns>
+    public static bool TryDeserializeFromFile(string filePath, out WorldSnapshotXml? snapshot, out string? error)
+    {
+        snapshot = null;
+        error = null;
+
+        try
+        {
+            snapshot = DeserializeFromFile(filePath);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Validates a snapshot file without fully deserializing it.
+    /// </summary>
+    /// <param name="filePath">Path to the XML file to validate.</param>
+    /// <returns>
+    /// <see langword="true" /> if the file is a valid snapshot; otherwise, <see langword="false" />.
+    /// </returns>
+    public static bool ValidateSnapshot(string filePath) => TryDeserializeFromFile(filePath, out _, out _);
 }

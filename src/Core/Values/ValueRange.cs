@@ -9,6 +9,7 @@ namespace dotMigrata.Core.Values;
 /// <param name="Max">The maximum value of the range.</param>
 /// <remarks>
 /// This type provides normalization capabilities with various transformation types.
+/// Use the <see cref="IsValid"/> property to check if the range is valid before use.
 /// </remarks>
 public readonly record struct ValueRange(double Min, double Max)
 {
