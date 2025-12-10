@@ -1,4 +1,5 @@
 ﻿using dotMigrata.Core.Entities;
+using dotMigrata.Simulation.Exceptions;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
 
@@ -110,16 +111,29 @@ public sealed class SimulationEngine
                 // Execute all stages
                 foreach (var stage in _stages.Where(stage => stage.ShouldExecute(context)))
                 {
-                    await stage.ExecuteAsync(context);
-                    NotifyObservers(o => o.OnStageComplete(stage.Name, context));
+                    try
+                    {
+                        await stage.ExecuteAsync(context);
+                        NotifyObservers(o => o.OnStageComplete(stage.Name, context));
+                    }
+                    catch (Exception ex) when (ex is not SimulationException)
+                    {
+                        throw new SimulationRuntimeException(
+                            $"Error executing stage '{stage.Name}': {ex.Message}", ex)
+                        {
+                            TickNumber = tick,
+                            StageName = stage.Name,
+                            TotalPopulation = world.Population
+                        };
+                    }
                 }
 
                 // Notify observers of tick complete
                 NotifyObservers(o => o.OnTickComplete(context));
 
                 // Check for stability using strategy pattern
-                if (_stabilityCriteria.ShouldCheckStability(context, _config) &&
-                    _stabilityCriteria.IsStable(context, _config))
+                if (!_stabilityCriteria.ShouldCheckStability(context, _config) ||
+                    !_stabilityCriteria.IsStable(context, _config)) continue;
                 {
                     context.IsStabilized = true;
                     NotifyLifecycleStages(stage => stage.OnSimulationEnd(context));
@@ -148,7 +162,11 @@ public sealed class SimulationEngine
         catch (Exception ex)
         {
             var wrapped = new SimulationRuntimeException(
-                "An unexpected error occurred during simulation execution.", ex);
+                "An unexpected error occurred during simulation execution.", ex)
+            {
+                TickNumber = context.CurrentTick,
+                TotalPopulation = world.Population
+            };
             NotifyLifecycleStages(stage => stage.OnSimulationEnd(context));
             NotifyObservers(o => o.OnError(context, wrapped));
             throw wrapped;
