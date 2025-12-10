@@ -6,19 +6,28 @@ namespace dotMigrata.Simulation.Engine;
 
 /// <summary>
 /// Main simulation engine that orchestrates the execution of simulation stages.
-/// Implements a tick-based simulation loop with observer support and cancellation.
+/// Implements a tick-based simulation loop with observer support, lifecycle hooks, and cancellation.
 /// </summary>
+/// <remarks>
+/// <para><b>Thread Safety:</b> This class is not thread-safe. Each instance should be used by a single thread.</para>
+/// <para><b>Lifecycle:</b> Stages implementing <see cref="ISimulationStageLifecycle"/> receive start/end notifications.</para>
+/// <para><b>Stability:</b> Uses <see cref="IStabilityCriteria"/> to determine when simulation has converged.</para>
+/// </remarks>
 public sealed class SimulationEngine
 {
     private readonly SimulationConfig _config;
     private readonly List<ISimulationObserver> _observers;
     private readonly List<ISimulationStage> _stages;
+    private readonly IStabilityCriteria _stabilityCriteria;
 
     /// <summary>
     /// Initializes a new instance of the SimulationEngine.
     /// </summary>
     /// <param name="stages">The ordered list of stages to execute in each tick.</param>
     /// <param name="config">Configuration for simulation behavior. If null, uses default configuration.</param>
+    /// <param name="stabilityCriteria">
+    /// Custom stability detection strategy. If null, uses <see cref="Stability.DefaultStabilityCriteria"/>.
+    /// </param>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="stages" /> is <see langword="null" />.
     /// </exception>
@@ -28,21 +37,22 @@ public sealed class SimulationEngine
     /// <exception cref="SimulationConfigurationException">
     /// Thrown when <paramref name="config" /> contains invalid values.
     /// </exception>
-    public SimulationEngine(IEnumerable<ISimulationStage> stages, SimulationConfig? config = null)
+    public SimulationEngine(
+        IEnumerable<ISimulationStage> stages,
+        SimulationConfig? config = null,
+        IStabilityCriteria? stabilityCriteria = null)
     {
-        var stageList = stages.ToList() ?? throw new ArgumentNullException(nameof(stages));
+        ArgumentNullException.ThrowIfNull(stages);
+
+        var stageList = stages.ToList();
 
         if (stageList.Count == 0)
             throw new ArgumentException("At least one simulation stage is required.", nameof(stages));
 
-        var effectiveConfig = (config ?? SimulationConfig.Default).Validate();
-
         _stages = stageList;
-        _config = effectiveConfig;
         _observers = [];
-
-        if (_stages.Count == 0)
-            throw new ArgumentException("At least one simulation stage is required.", nameof(stages));
+        _config = (config ?? SimulationConfig.Default).Validate();
+        _stabilityCriteria = stabilityCriteria ?? new Stability.DefaultStabilityCriteria();
     }
 
     /// <summary>
@@ -71,11 +81,17 @@ public sealed class SimulationEngine
     /// <param name="world">The world to simulate.</param>
     /// <param name="cancellationToken">Optional cancellation token to cancel the simulation.</param>
     /// <returns>The final simulation context.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="world"/> is null.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when cancellation is requested.</exception>
+    /// <exception cref="SimulationException">Thrown when a simulation error occurs.</exception>
     public async Task<SimulationContext> RunAsync(World world, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(world);
 
         var context = new SimulationContext(world);
+
+        // Notify lifecycle stages - simulation start
+        NotifyLifecycleStages(stage => stage.OnSimulationStart(context));
 
         // Notify observers of simulation start
         NotifyObservers(o => o.OnSimulationStart(context));
@@ -84,12 +100,7 @@ public sealed class SimulationEngine
         {
             for (var tick = 0; tick < _config.MaxTicks; tick++)
             {
-                // Check for cancellation
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    NotifyObservers(o => o.OnSimulationEnd(context, "Cancelled"));
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
+                cancellationToken.ThrowIfCancellationRequested();
 
                 context.CurrentTick = tick;
 
@@ -106,62 +117,72 @@ public sealed class SimulationEngine
                 // Notify observers of tick complete
                 NotifyObservers(o => o.OnTickComplete(context));
 
-                // Check for stability
-                if (!ShouldCheckStability(context)) continue;
-                if (!IsStable(context)) continue;
-                context.IsStabilized = true;
-                NotifyObservers(o => o.OnSimulationEnd(context, "Stabilized"));
-                return context;
+                // Check for stability using strategy pattern
+                if (_stabilityCriteria.ShouldCheckStability(context, _config) &&
+                    _stabilityCriteria.IsStable(context, _config))
+                {
+                    context.IsStabilized = true;
+                    NotifyLifecycleStages(stage => stage.OnSimulationEnd(context));
+                    NotifyObservers(o => o.OnSimulationEnd(context, "Stabilized"));
+                    return context;
+                }
             }
 
             // Max ticks reached
+            NotifyLifecycleStages(stage => stage.OnSimulationEnd(context));
             NotifyObservers(o => o.OnSimulationEnd(context, "MaxTicksReached"));
             return context;
         }
         catch (OperationCanceledException)
         {
-            // Don't notify error for cancellation - already notified
+            NotifyLifecycleStages(stage => stage.OnSimulationEnd(context));
+            NotifyObservers(o => o.OnSimulationEnd(context, "Cancelled"));
             throw;
         }
         catch (SimulationException ex)
         {
+            NotifyLifecycleStages(stage => stage.OnSimulationEnd(context));
             NotifyObservers(o => o.OnError(context, ex));
             throw;
         }
         catch (Exception ex)
         {
-            var wrapped =
-                new SimulationRuntimeException("An unexpected error occurred during simulation execution.", ex);
+            var wrapped = new SimulationRuntimeException(
+                "An unexpected error occurred during simulation execution.", ex);
+            NotifyLifecycleStages(stage => stage.OnSimulationEnd(context));
             NotifyObservers(o => o.OnError(context, wrapped));
             throw wrapped;
         }
     }
 
     /// <summary>
-    /// Determines whether stability should be checked for the current tick.
+    /// Notifies stages implementing <see cref="ISimulationStageLifecycle"/> with the specified action.
     /// </summary>
-    private bool ShouldCheckStability(SimulationContext context)
+    /// <param name="action">The lifecycle action to invoke on each lifecycle stage.</param>
+    private void NotifyLifecycleStages(Action<ISimulationStageLifecycle> action)
     {
-        return _config.CheckStability &&
-               context.CurrentTick >= _config.MinTicksBeforeStabilityCheck &&
-               context.CurrentTick % _config.StabilityCheckInterval == 0;
+        foreach (var stage in _stages.OfType<ISimulationStageLifecycle>())
+        {
+            try
+            {
+                action(stage);
+            }
+            catch
+            {
+                // Lifecycle stages should not break the simulation
+                // Errors are silently ignored to maintain simulation integrity
+            }
+        }
     }
-
-    /// <summary>
-    /// Determines whether the simulation has stabilized.
-    /// </summary>
-    private bool IsStable(SimulationContext context)
-    {
-        return context.TotalPopulationChange <= _config.StabilityThreshold;
-    }
-
 
     /// <summary>
     /// Notifies all observers with the specified action.
     /// </summary>
+    /// <param name="action">The action to invoke on each observer.</param>
     private void NotifyObservers(Action<ISimulationObserver> action)
     {
         foreach (var observer in _observers)
+        {
             try
             {
                 action(observer);
@@ -169,7 +190,8 @@ public sealed class SimulationEngine
             catch
             {
                 // Observers should not break the simulation
-                // In production, this might log the error
+                // Errors are silently ignored to maintain simulation integrity
             }
+        }
     }
 }

@@ -20,6 +20,7 @@ public sealed class SimulationBuilder
     private readonly List<ISimulationStage> _stages = [];
     private IAttractionCalculator? _attractionCalculator;
     private IMigrationCalculator? _migrationCalculator;
+    private IStabilityCriteria? _stabilityCriteria;
     private StandardModelConfig _modelConfig = StandardModelConfig.Default;
     private int? _randomSeed;
     private SimulationConfig _simulationConfig = SimulationConfig.Default;
@@ -211,6 +212,20 @@ public sealed class SimulationBuilder
     }
 
     /// <summary>
+    /// Sets a custom stability criteria for determining when the simulation has converged.
+    /// </summary>
+    /// <param name="stabilityCriteria">The custom stability criteria implementation.</param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="stabilityCriteria" /> is <see langword="null" />.
+    /// </exception>
+    public SimulationBuilder WithStabilityCriteria(IStabilityCriteria stabilityCriteria)
+    {
+        _stabilityCriteria = stabilityCriteria ?? throw new ArgumentNullException(nameof(stabilityCriteria));
+        return this;
+    }
+
+    /// <summary>
     /// Builds the configured simulation engine.
     /// </summary>
     /// <returns>A configured <see cref="SimulationEngine" /> instance.</returns>
@@ -229,9 +244,10 @@ public sealed class SimulationBuilder
             : CreateDefaultStages();
 
         var validatedConfig = _simulationConfig.Validate();
-        var engine = new SimulationEngine(stages, validatedConfig);
+        var engine = new SimulationEngine(stages, validatedConfig, _stabilityCriteria);
 
-        foreach (var observer in _observers) engine.AddObserver(observer);
+        foreach (var observer in _observers)
+            engine.AddObserver(observer);
 
         return engine;
     }
