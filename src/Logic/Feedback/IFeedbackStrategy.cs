@@ -32,10 +32,13 @@ public interface IFeedbackStrategy
     /// </summary>
     /// <param name="city">The city being evaluated.</param>
     /// <param name="world">The world context.</param>
-    /// <returns><see langword="true"/> if feedback should be applied; otherwise, <see langword="false"/>.</returns>
+    /// <returns><see langword="true" /> if feedback should be applied; otherwise, <see langword="false" />.</returns>
     /// <remarks>
-    /// Default implementation returns <see langword="true"/> (always apply).
+    /// Default implementation returns <see langword="true" /> (always apply).
     /// Override to implement conditional feedback (e.g., only when population exceeds threshold).
     /// </remarks>
-    bool ShouldApply(City city, World world) => true;
+    bool ShouldApply(City city, World world)
+    {
+        return true;
+    }
 }

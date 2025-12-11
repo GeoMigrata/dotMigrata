@@ -15,8 +15,8 @@ namespace dotMigrata.Logic.Feedback;
 [DebuggerDisplay("Feedback: {Name}")]
 public sealed class CongestionFeedbackStrategy : IFeedbackStrategy
 {
-    private readonly string _factorName;
     private readonly double _congestionThreshold;
+    private readonly string _factorName;
     private readonly double _impactStrength;
 
     /// <summary>

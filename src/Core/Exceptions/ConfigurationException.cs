@@ -6,14 +6,14 @@
 public sealed class ConfigurationException : DotMigrataException
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ConfigurationException"/> class.
+    /// Initializes a new instance of the <see cref="ConfigurationException" /> class.
     /// </summary>
     public ConfigurationException()
     {
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ConfigurationException"/> class with a specified error message.
+    /// Initializes a new instance of the <see cref="ConfigurationException" /> class with a specified error message.
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
     public ConfigurationException(string message)
@@ -22,7 +22,7 @@ public sealed class ConfigurationException : DotMigrataException
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ConfigurationException"/> class with a specified error message
+    /// Initializes a new instance of the <see cref="ConfigurationException" /> class with a specified error message
     /// and a reference to the inner exception that is the cause of this exception.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>

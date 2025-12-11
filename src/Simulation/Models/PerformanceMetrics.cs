@@ -10,17 +10,17 @@ namespace dotMigrata.Simulation.Models;
 /// </remarks>
 public sealed class PerformanceMetrics
 {
-    private readonly Stopwatch _totalStopwatch = new();
-    private readonly Stopwatch _tickStopwatch = new();
     private readonly List<TimeSpan> _tickDurations = [];
+    private readonly Stopwatch _tickStopwatch = new();
+    private readonly Stopwatch _totalStopwatch = new();
     private long _lastGcMemory;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PerformanceMetrics"/> class.
+    /// Initializes a new instance of the <see cref="PerformanceMetrics" /> class.
     /// </summary>
     public PerformanceMetrics()
     {
-        _lastGcMemory = GC.GetTotalMemory(forceFullCollection: false);
+        _lastGcMemory = GC.GetTotalMemory(false);
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public sealed class PerformanceMetrics
     /// <summary>
     /// Gets the current memory usage in bytes.
     /// </summary>
-    public static long CurrentMemoryBytes => GC.GetTotalMemory(forceFullCollection: false);
+    public static long CurrentMemoryBytes => GC.GetTotalMemory(false);
 
     /// <summary>
     /// Gets the memory delta since last measurement in bytes.
@@ -95,7 +95,7 @@ public sealed class PerformanceMetrics
     internal void StartSimulation()
     {
         _totalStopwatch.Restart();
-        _lastGcMemory = GC.GetTotalMemory(forceFullCollection: false);
+        _lastGcMemory = GC.GetTotalMemory(false);
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
-﻿using dotMigrata.Core.Values;
+﻿using System.Diagnostics.CodeAnalysis;
+using dotMigrata.Core.Values;
 
 namespace dotMigrata.Core.Entities;
 
@@ -158,7 +159,7 @@ public class City : IDisposable
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factor" /> is <see langword="null" />.
     /// </exception>
-    public bool TryGetFactorValue(FactorDefinition factor, out FactorValue? factorValue)
+    public bool TryGetFactorValue(FactorDefinition factor, [NotNullWhen(true)] out FactorValue? factorValue)
     {
         ArgumentNullException.ThrowIfNull(factor);
         return _factorLookup.TryGetValue(factor, out factorValue);

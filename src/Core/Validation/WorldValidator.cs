@@ -4,7 +4,7 @@ using dotMigrata.Core.Exceptions;
 namespace dotMigrata.Core.Validation;
 
 /// <summary>
-/// Provides comprehensive validation for <see cref="World"/> instances before simulation execution.
+/// Provides comprehensive validation for <see cref="World" /> instances before simulation execution.
 /// </summary>
 /// <remarks>
 /// Validates world structure, factor consistency, and data integrity to prevent runtime errors.
@@ -15,7 +15,7 @@ public static class WorldValidator
     /// Validates a world instance for simulation readiness.
     /// </summary>
     /// <param name="world">The world to validate.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="world"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="world" /> is null.</exception>
     /// <exception cref="WorldValidationException">Thrown when validation fails.</exception>
     public static void Validate(World world)
     {
@@ -40,7 +40,7 @@ public static class WorldValidator
 
             if (missingFactors.Count > 0)
                 throw new WorldValidationException(
-                    city.DisplayName, 
+                    city.DisplayName,
                     missingFactors.Select(f => f.DisplayName));
         }
     }
@@ -82,17 +82,15 @@ public static class WorldValidator
             throw new ConfigurationException("World must contain at least one person.");
 
         foreach (var city in world.Cities)
+        foreach (var person in city.Persons)
         {
-            foreach (var person in city.Persons)
-            {
-                if (person.CurrentCity != city)
-                    throw new ConfigurationException(
-                        $"Person in city '{city.DisplayName}' has mismatched CurrentCity reference.");
+            if (person.CurrentCity != city)
+                throw new ConfigurationException(
+                    $"Person in city '{city.DisplayName}' has mismatched CurrentCity reference.");
 
-                // Validate that person has sensitivities for all factors
-                foreach (var factor in world.FactorDefinitions)
-                    _ = person.GetSensitivity(factor); // This validates the factor exists
-            }
+            // Validate that person has sensitivities for all factors
+            foreach (var factor in world.FactorDefinitions)
+                _ = person.GetSensitivity(factor); // This validates the factor exists
         }
     }
 
@@ -105,12 +103,10 @@ public static class WorldValidator
         {
             if (city.Capacity is not > 0) continue;
             if (city.Population > city.Capacity.Value * 2)
-            {
                 // Allow some overpopulation, but warn if severely over capacity
                 Console.WriteLine(
                     $"Warning: City '{city.DisplayName}' population ({city.Population}) " +
                     $"significantly exceeds capacity ({city.Capacity.Value})");
-            }
         }
     }
 

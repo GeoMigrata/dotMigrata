@@ -7,14 +7,14 @@
 public sealed class SnapshotException : DotMigrataException
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="SnapshotException"/> class.
+    /// Initializes a new instance of the <see cref="SnapshotException" /> class.
     /// </summary>
     public SnapshotException()
     {
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SnapshotException"/> class with a specified error message.
+    /// Initializes a new instance of the <see cref="SnapshotException" /> class with a specified error message.
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
     public SnapshotException(string message)
@@ -23,7 +23,7 @@ public sealed class SnapshotException : DotMigrataException
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SnapshotException"/> class with a specified error message
+    /// Initializes a new instance of the <see cref="SnapshotException" /> class with a specified error message
     /// and a reference to the inner exception that is the cause of this exception.
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>

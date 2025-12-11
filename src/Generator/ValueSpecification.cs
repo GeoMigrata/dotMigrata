@@ -9,8 +9,8 @@ namespace dotMigrata.Generator;
 public sealed record ValueSpecification
 {
     private readonly double? _fixedValue;
-    private readonly (double Min, double Max)? _range;
     private readonly double? _mean;
+    private readonly (double Min, double Max)? _range;
     private readonly double? _standardDeviation;
 
     private ValueSpecification(
@@ -73,21 +73,28 @@ public sealed record ValueSpecification
     /// </summary>
     /// <param name="value">The fixed value.</param>
     /// <returns>A value specification with a fixed value.</returns>
-    public static ValueSpecification Fixed(double value) =>
-        new(value, null, 1.0, null, null);
+    public static ValueSpecification Fixed(double value)
+    {
+        return new ValueSpecification(value, null, 1.0, null, null);
+    }
 
     /// <summary>
     /// Creates a random value specification with a range.
     /// </summary>
     /// <param name="min">Minimum value (inclusive).</param>
-    /// <param name="max">Maximum value (inclusive). Must be greater than or equal to <paramref name="min"/>.</param>
+    /// <param name="max">Maximum value (inclusive). Must be greater than or equal to <paramref name="min" />.</param>
     /// <returns>A value specification with a random range.</returns>
-    /// <exception cref="GeneratorSpecificationException">Thrown when <paramref name="min"/> is greater than <paramref name="max"/>.</exception>
-    public static ValueSpecification InRange(double min, double max) =>
-        min > max
+    /// <exception cref="GeneratorSpecificationException">
+    /// Thrown when <paramref name="min" /> is greater than
+    /// <paramref name="max" />.
+    /// </exception>
+    public static ValueSpecification InRange(double min, double max)
+    {
+        return min > max
             ? throw new GeneratorSpecificationException(
                 $"Minimum value ({min}) must be less than or equal to maximum value ({max}).")
             : new ValueSpecification(null, (min, max), 1.0, null, null);
+    }
 
     /// <summary>
     /// Creates a value specification that represents an approximate value using a normal distribution.
@@ -96,12 +103,14 @@ public sealed record ValueSpecification
     /// <param name="mean">The mean value (center of the distribution).</param>
     /// <param name="standardDeviation">The standard deviation. Must be positive.</param>
     /// <returns>A value specification representing an approximate value.</returns>
-    /// <exception cref="GeneratorSpecificationException">Thrown when <paramref name="standardDeviation"/> is not positive.</exception>
-    public static ValueSpecification Approximately(double mean, double standardDeviation) =>
-        standardDeviation <= 0
+    /// <exception cref="GeneratorSpecificationException">Thrown when <paramref name="standardDeviation" /> is not positive.</exception>
+    public static ValueSpecification Approximately(double mean, double standardDeviation)
+    {
+        return standardDeviation <= 0
             ? throw new GeneratorSpecificationException(
                 $"Standard deviation must be positive. Got: {standardDeviation}")
             : new ValueSpecification(null, null, 1.0, mean, standardDeviation);
+    }
 
     /// <summary>
     /// Creates a random value specification with a scale.
@@ -110,17 +119,22 @@ public sealed record ValueSpecification
     /// </summary>
     /// <param name="scale">Scale factor to apply to the random value. Must be non-negative.</param>
     /// <returns>A value specification with default range and scale.</returns>
-    /// <exception cref="GeneratorSpecificationException">Thrown when <paramref name="scale"/> is negative.</exception>
-    public static ValueSpecification RandomWithScale(double scale) =>
-        scale < 0
+    /// <exception cref="GeneratorSpecificationException">Thrown when <paramref name="scale" /> is negative.</exception>
+    public static ValueSpecification RandomWithScale(double scale)
+    {
+        return scale < 0
             ? throw new GeneratorSpecificationException($"Scale must be non-negative. Got: {scale}")
             : new ValueSpecification(null, null, scale, null, null);
+    }
 
     /// <summary>
     /// Creates a value specification for default random generation (no range, no scale).
     /// </summary>
     /// <returns>A value specification for default random generation.</returns>
-    public static ValueSpecification Random() => new(null, null, 1.0, null, null);
+    public static ValueSpecification Random()
+    {
+        return new ValueSpecification(null, null, 1.0, null, null);
+    }
 
     /// <summary>
     /// Applies a scale to this specification, creating a biased random value.
@@ -129,9 +143,11 @@ public sealed record ValueSpecification
     /// </summary>
     /// <param name="scale">Scale factor to multiply the generated value by. Must be non-negative.</param>
     /// <returns>A new value specification with the scale applied.</returns>
-    /// <exception cref="GeneratorSpecificationException">Thrown when <paramref name="scale"/> is negative.</exception>
-    public ValueSpecification WithScale(double scale) =>
-        scale < 0
+    /// <exception cref="GeneratorSpecificationException">Thrown when <paramref name="scale" /> is negative.</exception>
+    public ValueSpecification WithScale(double scale)
+    {
+        return scale < 0
             ? throw new GeneratorSpecificationException($"Scale must be non-negative. Got: {scale}")
             : this with { Scale = scale };
+    }
 }

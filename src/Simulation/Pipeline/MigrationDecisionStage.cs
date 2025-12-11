@@ -17,6 +17,11 @@ namespace dotMigrata.Simulation.Pipeline;
 [DebuggerDisplay("Stage: {Name}, Ready: true")]
 public sealed class MigrationDecisionStage : ISimulationStage
 {
+    /// <summary>
+    /// Gets the constant name identifier for this stage.
+    /// </summary>
+    private const string StageName = "MigrationDecision";
+
     private readonly IAttractionCalculator _attractionCalculator;
     private readonly IMigrationCalculator _migrationCalculator;
 
@@ -36,11 +41,6 @@ public sealed class MigrationDecisionStage : ISimulationStage
 
     /// <inheritdoc />
     public string Name => StageName;
-
-    /// <summary>
-    /// Gets the constant name identifier for this stage.
-    /// </summary>
-    private const string StageName = "MigrationDecision";
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

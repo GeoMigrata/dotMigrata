@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using dotMigrata.Core.Entities;
 using dotMigrata.Logic.Feedback;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
@@ -16,8 +17,13 @@ namespace dotMigrata.Simulation.Pipeline;
 [DebuggerDisplay("Stage: {Name}, Strategies: {_strategies.Count}")]
 public sealed class FeedbackStage : ISimulationStage
 {
-    private readonly List<IFeedbackStrategy> _strategies;
+    /// <summary>
+    /// Gets the constant name identifier for this stage.
+    /// </summary>
+    private const string StageName = "Feedback";
+
     private readonly int _applicationInterval;
+    private readonly List<IFeedbackStrategy> _strategies;
 
     /// <summary>
     /// Initializes a new instance of the FeedbackStage with the specified strategies.
@@ -48,17 +54,19 @@ public sealed class FeedbackStage : ISimulationStage
     {
     }
 
+    /// <summary>
+    /// Gets the collection of feedback strategies used by this stage.
+    /// </summary>
+    public IReadOnlyList<IFeedbackStrategy> Strategies => _strategies.AsReadOnly();
+
     /// <inheritdoc />
     public string Name => StageName;
 
-    /// <summary>
-    /// Gets the constant name identifier for this stage.
-    /// </summary>
-    private const string StageName = "Feedback";
-
     /// <inheritdoc />
-    public bool ShouldExecute(SimulationContext context) =>
-        context.CurrentTick % _applicationInterval == 0;
+    public bool ShouldExecute(SimulationContext context)
+    {
+        return context.CurrentTick % _applicationInterval == 0;
+    }
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -83,14 +91,9 @@ public sealed class FeedbackStage : ISimulationStage
     /// <param name="city">The city to apply feedback to.</param>
     /// <param name="world">The world context.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ApplyCityFeedback(Core.Entities.City city, Core.Entities.World world)
+    private void ApplyCityFeedback(City city, World world)
     {
         foreach (var strategy in _strategies.Where(strategy => strategy.ShouldApply(city, world)))
             strategy.ApplyFeedback(city, world);
     }
-
-    /// <summary>
-    /// Gets the collection of feedback strategies used by this stage.
-    /// </summary>
-    public IReadOnlyList<IFeedbackStrategy> Strategies => _strategies.AsReadOnly();
 }

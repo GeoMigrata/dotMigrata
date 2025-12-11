@@ -7,7 +7,6 @@ namespace dotMigrata.Simulation.Models;
 /// Represents the context and state for a single simulation execution.
 /// Contains the world being simulated, current tick information, performance metrics, and shared data between stages.
 /// </summary>
-/// 
 public sealed class SimulationContext
 {
     private readonly Dictionary<string, object> _sharedData = new();

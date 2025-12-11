@@ -7,7 +7,7 @@
 public sealed class WorldValidationException : DotMigrataException
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="WorldValidationException"/> class.
+    /// Initializes a new instance of the <see cref="WorldValidationException" /> class.
     /// </summary>
     /// <param name="cityName">The name of the city that failed validation.</param>
     /// <param name="missingFactorNames">The names of the factors that are missing values.</param>

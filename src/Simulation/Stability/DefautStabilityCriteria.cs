@@ -1,4 +1,5 @@
-﻿using dotMigrata.Simulation.Interfaces;
+﻿using dotMigrata.Core.Entities;
+using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
 
 namespace dotMigrata.Simulation.Stability;
@@ -9,8 +10,8 @@ namespace dotMigrata.Simulation.Stability;
 /// is below the configured threshold for the current tick.
 /// </summary>
 /// <remarks>
-/// This implementation checks whether the <see cref="SimulationContext.TotalPopulationChange"/>
-/// is less than or equal to the configured <see cref="SimulationConfig.StabilityThreshold"/>.
+/// This implementation checks whether the <see cref="SimulationContext.TotalPopulationChange" />
+/// is less than or equal to the configured <see cref="SimulationConfig.StabilityThreshold" />.
 /// </remarks>
 public sealed class DefaultStabilityCriteria : IStabilityCriteria
 {
@@ -33,7 +34,7 @@ public sealed class DefaultStabilityCriteria : IStabilityCriteria
         return context.TotalPopulationChange <= config.StabilityThreshold;
     }
 
-    private static int GetPreviousPopulation(Core.Entities.City city, SimulationContext context)
+    private static int GetPreviousPopulation(City city, SimulationContext context)
     {
         // This is a simplified implementation. In a real scenario, you might want to track
         // population history in the context or use a more sophisticated approach.

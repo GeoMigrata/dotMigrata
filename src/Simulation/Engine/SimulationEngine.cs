@@ -3,6 +3,7 @@ using dotMigrata.Simulation.Exceptions;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Logging;
 using dotMigrata.Simulation.Models;
+using dotMigrata.Simulation.Stability;
 using Microsoft.Extensions.Logging;
 
 // ReSharper disable SuspiciousTypeConversion.Global
@@ -14,19 +15,22 @@ namespace dotMigrata.Simulation.Engine;
 /// Implements a tick-based simulation loop with observer support, lifecycle hooks, cancellation, and graceful shutdown.
 /// </summary>
 /// <remarks>
-/// <para><b>Thread Safety:</b> This class is not thread-safe. Each instance should be used by a single thread.</para>
-/// <para><b>Lifecycle:</b> Stages implementing <see cref="ISimulationStageLifecycle"/> receive start/end notifications.</para>
-/// <para><b>Stability:</b> Uses <see cref="IStabilityCriteria"/> to determine when simulation has converged.</para>
-/// <para><b>Logging:</b> Supports optional <see cref="ILogger"/> for structured logging of simulation events.</para>
-/// <para><b>Disposal:</b> Implements <see cref="IAsyncDisposable"/> for graceful shutdown and resource cleanup.</para>
+///     <para><b>Thread Safety:</b> This class is not thread-safe. Each instance should be used by a single thread.</para>
+///     <para>
+///     <b>Lifecycle:</b> Stages implementing <see cref="ISimulationStageLifecycle" /> receive start/end
+///     notifications.
+///     </para>
+///     <para><b>Stability:</b> Uses <see cref="IStabilityCriteria" /> to determine when simulation has converged.</para>
+///     <para><b>Logging:</b> Supports optional <see cref="ILogger" /> for structured logging of simulation events.</para>
+///     <para><b>Disposal:</b> Implements <see cref="IAsyncDisposable" /> for graceful shutdown and resource cleanup.</para>
 /// </remarks>
 public sealed class SimulationEngine : IAsyncDisposable
 {
     private readonly SimulationConfig _config;
-    private readonly List<ISimulationObserver> _observers;
-    private readonly List<ISimulationStage> _stages;
-    private readonly IStabilityCriteria _stabilityCriteria;
     private readonly ILogger<SimulationEngine>? _logger;
+    private readonly List<ISimulationObserver> _observers;
+    private readonly IStabilityCriteria _stabilityCriteria;
+    private readonly List<ISimulationStage> _stages;
     private SimulationContext? _currentContext;
     private bool _disposed;
 
@@ -36,7 +40,7 @@ public sealed class SimulationEngine : IAsyncDisposable
     /// <param name="stages">The ordered list of stages to execute in each tick.</param>
     /// <param name="config">Configuration for simulation behavior. If null, uses default configuration.</param>
     /// <param name="stabilityCriteria">
-    /// Custom stability detection strategy. If null, uses <see cref="Stability.DefaultStabilityCriteria"/>.
+    /// Custom stability detection strategy. If null, uses <see cref="Stability.DefaultStabilityCriteria" />.
     /// </param>
     /// <param name="logger">Optional logger for structured logging. If null, no logging is performed.</param>
     /// <exception cref="ArgumentNullException">
@@ -62,9 +66,82 @@ public sealed class SimulationEngine : IAsyncDisposable
 
         _stages = stageList;
         _config = (config ?? SimulationConfig.Default).Validate();
-        _stabilityCriteria = stabilityCriteria ?? new Stability.DefaultStabilityCriteria();
+        _stabilityCriteria = stabilityCriteria ?? new DefaultStabilityCriteria();
         _logger = logger;
         _observers = [];
+    }
+
+    /// <summary>
+    /// Asynchronously disposes the simulation engine, performing graceful shutdown and resource cleanup.
+    /// </summary>
+    /// <returns>A task representing the asynchronous dispose operation.</returns>
+    /// <remarks>
+    ///     <para>Performs the following cleanup operations:</para>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             <description>Flushes all observers to ensure data is persisted</description>
+    ///         </item>
+    ///         <item>
+    ///             <description>Disposes observers and stages implementing <see cref="IAsyncDisposable" /></description>
+    ///         </item>
+    ///         <item>
+    ///             <description>Logs shutdown information if logger is configured</description>
+    ///         </item>
+    ///     </list>
+    /// </remarks>
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed)
+            return;
+
+        _logger?.LogInformation("SimulationEngine shutting down gracefully...");
+
+        try
+        {
+            // Flush observers to ensure all data is persisted
+            foreach (var observer in _observers)
+                try
+                {
+                    switch (observer)
+                    {
+                        case IAsyncDisposable asyncDisposable:
+                            await asyncDisposable.DisposeAsync();
+                            break;
+                        case IDisposable disposable:
+                            disposable.Dispose();
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogWarning(ex, "Error disposing observer {ObserverType}", observer.GetType().Name);
+                }
+
+            // Dispose stages implementing IAsyncDisposable
+            foreach (var stage in _stages)
+                try
+                {
+                    switch (stage)
+                    {
+                        case IAsyncDisposable asyncDisposable:
+                            await asyncDisposable.DisposeAsync();
+                            break;
+                        case IDisposable disposable:
+                            disposable.Dispose();
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogWarning(ex, "Error disposing stage {StageName}", stage.Name);
+                }
+
+            _logger?.LogInformation("SimulationEngine shutdown complete");
+        }
+        finally
+        {
+            _disposed = true;
+        }
     }
 
     /// <summary>
@@ -81,7 +158,10 @@ public sealed class SimulationEngine : IAsyncDisposable
     /// Removes an observer from the simulation.
     /// </summary>
     /// <param name="observer">The observer to remove.</param>
-    public void RemoveObserver(ISimulationObserver observer) => _observers.Remove(observer);
+    public void RemoveObserver(ISimulationObserver observer)
+    {
+        _observers.Remove(observer);
+    }
 
 
     /// <summary>
@@ -90,7 +170,7 @@ public sealed class SimulationEngine : IAsyncDisposable
     /// <param name="world">The world to simulate.</param>
     /// <param name="cancellationToken">Optional cancellation token to cancel the simulation.</param>
     /// <returns>The final simulation context.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="world"/> is null.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="world" /> is null.</exception>
     /// <exception cref="OperationCanceledException">Thrown when cancellation is requested.</exception>
     /// <exception cref="SimulationException">Thrown when a simulation error occurs.</exception>
     public async Task<SimulationContext> RunAsync(World world, CancellationToken cancellationToken = default)
@@ -130,7 +210,6 @@ public sealed class SimulationEngine : IAsyncDisposable
 
                 // Execute all stages
                 foreach (var stage in _stages.Where(stage => stage.ShouldExecute(context)))
-                {
                     try
                     {
                         await stage.ExecuteAsync(context);
@@ -152,7 +231,6 @@ public sealed class SimulationEngine : IAsyncDisposable
                             TotalPopulation = world.Population
                         };
                     }
-                }
 
                 // Notify observers of tick complete
                 NotifyObservers(o => o.OnTickComplete(context));
@@ -166,14 +244,12 @@ public sealed class SimulationEngine : IAsyncDisposable
 
                 // Log performance metrics periodically
                 if (_logger != null && tick > 0 && tick % 10 == 0)
-                {
                     _logger.LogInformation(SimulationEvents.PerformanceMetrics,
                         "Performance: Tick {Tick}, Avg: {AvgMs:F2}ms/tick, Rate: {Rate:F2} ticks/sec, Memory: {MemMB:F2} MB",
                         tick,
                         context.Performance.AverageTickDuration.TotalMilliseconds,
                         context.Performance.TicksPerSecond,
                         PerformanceMetrics.CurrentMemoryBytes / 1024.0 / 1024.0);
-                }
 
                 // Check for stability using strategy pattern
                 if (!_stabilityCriteria.ShouldCheckStability(context, _config)) continue;
@@ -250,13 +326,12 @@ public sealed class SimulationEngine : IAsyncDisposable
     }
 
     /// <summary>
-    /// Notifies stages implementing <see cref="ISimulationStageLifecycle"/> with the specified action.
+    /// Notifies stages implementing <see cref="ISimulationStageLifecycle" /> with the specified action.
     /// </summary>
     /// <param name="action">The lifecycle action to invoke on each lifecycle stage.</param>
     private void NotifyLifecycleStages(Action<ISimulationStageLifecycle> action)
     {
         foreach (var stage in _stages.OfType<ISimulationStageLifecycle>())
-        {
             try
             {
                 action(stage);
@@ -266,7 +341,6 @@ public sealed class SimulationEngine : IAsyncDisposable
                 // Lifecycle stages should not break the simulation
                 // Errors are silently ignored to maintain simulation integrity
             }
-        }
     }
 
     /// <summary>
@@ -276,7 +350,6 @@ public sealed class SimulationEngine : IAsyncDisposable
     private void NotifyObservers(Action<ISimulationObserver> action)
     {
         foreach (var observer in _observers)
-        {
             try
             {
                 action(observer);
@@ -286,85 +359,13 @@ public sealed class SimulationEngine : IAsyncDisposable
                 // Observers should not break the simulation
                 // Errors are silently ignored to maintain simulation integrity
             }
-        }
-    }
-
-    /// <summary>
-    /// Asynchronously disposes the simulation engine, performing graceful shutdown and resource cleanup.
-    /// </summary>
-    /// <returns>A task representing the asynchronous dispose operation.</returns>
-    /// <remarks>
-    /// <para>Performs the following cleanup operations:</para>
-    /// <list type="bullet">
-    /// <item><description>Flushes all observers to ensure data is persisted</description></item>
-    /// <item><description>Disposes observers and stages implementing <see cref="IAsyncDisposable"/></description></item>
-    /// <item><description>Logs shutdown information if logger is configured</description></item>
-    /// </list>
-    /// </remarks>
-    public async ValueTask DisposeAsync()
-    {
-        if (_disposed)
-            return;
-
-        _logger?.LogInformation("SimulationEngine shutting down gracefully...");
-
-        try
-        {
-            // Flush observers to ensure all data is persisted
-            foreach (var observer in _observers)
-            {
-                try
-                {
-                    switch (observer)
-                    {
-                        case IAsyncDisposable asyncDisposable:
-                            await asyncDisposable.DisposeAsync();
-                            break;
-                        case IDisposable disposable:
-                            disposable.Dispose();
-                            break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogWarning(ex, "Error disposing observer {ObserverType}", observer.GetType().Name);
-                }
-            }
-
-            // Dispose stages implementing IAsyncDisposable
-            foreach (var stage in _stages)
-            {
-                try
-                {
-                    switch (stage)
-                    {
-                        case IAsyncDisposable asyncDisposable:
-                            await asyncDisposable.DisposeAsync();
-                            break;
-                        case IDisposable disposable:
-                            disposable.Dispose();
-                            break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogWarning(ex, "Error disposing stage {StageName}", stage.Name);
-                }
-            }
-
-            _logger?.LogInformation("SimulationEngine shutdown complete");
-        }
-        finally
-        {
-            _disposed = true;
-        }
     }
 
     /// <summary>
     /// Creates a checkpoint of the current simulation state.
     /// </summary>
     /// <returns>
-    /// A checkpoint containing the complete simulation state, or <see langword="null"/> if no simulation is running.
+    /// A checkpoint containing the complete simulation state, or <see langword="null" /> if no simulation is running.
     /// </returns>
     /// <remarks>
     /// Checkpoints can be used to save and later resume simulation execution.

@@ -59,7 +59,7 @@ public sealed record SimulationCheckpoint
     /// <param name="config">The simulation configuration.</param>
     /// <returns>A new checkpoint representing the current simulation state.</returns>
     /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="context"/> or <paramref name="config"/> is <see langword="null"/>.
+    /// Thrown when <paramref name="context" /> or <paramref name="config" /> is <see langword="null" />.
     /// </exception>
     public static SimulationCheckpoint FromContext(SimulationContext context, SimulationConfig config)
     {
@@ -82,7 +82,9 @@ public sealed record SimulationCheckpoint
     /// Gets a human-readable summary of this checkpoint.
     /// </summary>
     /// <returns>A formatted string describing the checkpoint.</returns>
-    public string GetSummary() =>
-        $"Checkpoint at tick {TickNumber} (Created: {CreatedAt:g}, " +
-        $"Population: {World.Population}, Stabilized: {IsStabilized})";
+    public string GetSummary()
+    {
+        return $"Checkpoint at tick {TickNumber} (Created: {CreatedAt:g}, " +
+               $"Population: {World.Population}, Stabilized: {IsStabilized})";
+    }
 }

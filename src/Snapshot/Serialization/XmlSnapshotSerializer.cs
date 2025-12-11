@@ -159,12 +159,10 @@ public static class XmlSnapshotSerializer
             var snapshot = Serializer.Deserialize(fileStream) as WorldSnapshotXml;
 
             if (snapshot == null)
-            {
                 throw new SnapshotException($"Deserialization of file '{filePath}' resulted in null snapshot.")
                 {
                     FilePath = filePath
                 };
-            }
 
             return snapshot;
         }
@@ -210,5 +208,8 @@ public static class XmlSnapshotSerializer
     /// <returns>
     /// <see langword="true" /> if the file is a valid snapshot; otherwise, <see langword="false" />.
     /// </returns>
-    public static bool ValidateSnapshot(string filePath) => TryDeserializeFromFile(filePath, out _, out _);
+    public static bool ValidateSnapshot(string filePath)
+    {
+        return TryDeserializeFromFile(filePath, out _, out _);
+    }
 }

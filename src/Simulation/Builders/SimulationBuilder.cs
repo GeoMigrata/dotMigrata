@@ -18,17 +18,17 @@ namespace dotMigrata.Simulation.Builders;
 /// </remarks>
 public sealed class SimulationBuilder
 {
+    private readonly List<IFeedbackStrategy> _feedbackStrategies = [];
     private readonly List<ISimulationObserver> _observers = [];
     private readonly List<ISimulationStage> _stages = [];
-    private readonly List<IFeedbackStrategy> _feedbackStrategies = [];
     private IAttractionCalculator? _attractionCalculator;
-    private IMigrationCalculator? _migrationCalculator;
-    private IStabilityCriteria? _stabilityCriteria;
+    private int _feedbackInterval = 1;
     private ILogger<SimulationEngine>? _logger;
+    private IMigrationCalculator? _migrationCalculator;
     private StandardModelConfig _modelConfig = StandardModelConfig.Default;
     private int? _randomSeed;
-    private int _feedbackInterval = 1;
     private SimulationConfig _simulationConfig = SimulationConfig.Default;
+    private IStabilityCriteria? _stabilityCriteria;
 
     /// <summary>
     /// Creates a new <see cref="SimulationBuilder" /> instance.

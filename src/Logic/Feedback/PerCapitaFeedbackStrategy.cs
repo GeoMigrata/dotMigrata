@@ -16,8 +16,8 @@ namespace dotMigrata.Logic.Feedback;
 public sealed class PerCapitaFeedbackStrategy : IFeedbackStrategy
 {
     private readonly string _factorName;
-    private readonly double _scalingFactor;
     private readonly double _minimumPopulation;
+    private readonly double _scalingFactor;
 
     /// <summary>
     /// Initializes a new instance of the PerCapitaFeedbackStrategy.
@@ -50,8 +50,10 @@ public sealed class PerCapitaFeedbackStrategy : IFeedbackStrategy
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool ShouldApply(City city, World world) =>
-        city.Population >= _minimumPopulation;
+    public bool ShouldApply(City city, World world)
+    {
+        return city.Population >= _minimumPopulation;
+    }
 
     /// <inheritdoc />
     public void ApplyFeedback(City city, World world)

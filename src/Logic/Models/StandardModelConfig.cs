@@ -69,7 +69,7 @@ public sealed record StandardModelConfig
 
     /// <summary>
     /// Gets or initializes the maximum degree of parallelism for parallel processing.
-    /// Only used when <see cref="UseParallelProcessing"/> is true.
+    /// Only used when <see cref="UseParallelProcessing" /> is true.
     /// When null, uses the system default (typically the number of logical processors).
     /// Default: null
     /// </summary>

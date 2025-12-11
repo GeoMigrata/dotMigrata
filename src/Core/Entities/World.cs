@@ -1,5 +1,5 @@
-﻿using dotMigrata.Core.Values;
-using dotMigrata.Core.Exceptions;
+﻿using dotMigrata.Core.Exceptions;
+using dotMigrata.Core.Values;
 
 namespace dotMigrata.Core.Entities;
 

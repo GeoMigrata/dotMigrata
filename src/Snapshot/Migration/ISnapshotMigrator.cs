@@ -25,7 +25,7 @@ public interface ISnapshotMigrator
     /// Determines whether this migrator can handle the migration from the specified version.
     /// </summary>
     /// <param name="version">The snapshot version to check.</param>
-    /// <returns><see langword="true"/> if this migrator can handle the migration; otherwise, <see langword="false"/>.</returns>
+    /// <returns><see langword="true" /> if this migrator can handle the migration; otherwise, <see langword="false" />.</returns>
     bool CanMigrate(string version);
 
     /// <summary>
@@ -34,7 +34,7 @@ public interface ISnapshotMigrator
     /// <param name="snapshot">The snapshot to migrate.</param>
     /// <returns>The migrated snapshot in the target version format.</returns>
     /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="snapshot"/> is <see langword="null"/>.
+    /// Thrown when <paramref name="snapshot" /> is <see langword="null" />.
     /// </exception>
     /// <exception cref="Core.Exceptions.SnapshotException">
     /// Thrown when migration fails due to incompatible data or schema issues.

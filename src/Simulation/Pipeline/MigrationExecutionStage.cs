@@ -18,13 +18,13 @@ namespace dotMigrata.Simulation.Pipeline;
 [DebuggerDisplay("Stage: {Name}, Ready: true")]
 public sealed class MigrationExecutionStage : ISimulationStage
 {
-    /// <inheritdoc />
-    public string Name => StageName;
-
     /// <summary>
     /// Gets the constant name identifier for this stage.
     /// </summary>
     private const string StageName = "MigrationExecution";
+
+    /// <inheritdoc />
+    public string Name => StageName;
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
