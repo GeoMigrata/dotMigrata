@@ -1,4 +1,4 @@
-﻿﻿# Usage Guide
+﻿# Usage Guide
 
 This guide provides detailed examples and usage instructions for dotMigrata.
 
@@ -8,6 +8,7 @@ This guide provides detailed examples and usage instructions for dotMigrata.
 - [Quick Start Example](#quick-start-example)
 - [PersonCollection System](#personcollection-system)
 - [Custom Person Generation](#custom-person-generation)
+- [Creating Custom Person Types](#creating-custom-person-types)
 - [Configuring Simulation Parameters](#configuring-simulation-parameters)
 - [Working with Snapshots](#working-with-snapshots)
 
@@ -239,7 +240,7 @@ FactorDefinition[] allFactors = [incomeFactor, pollutionFactor, housingFactor];
 var collection = new PersonCollection();
 
 // 1. Add a specific individual with exact attributes
-var wealthyPerson = new Person(new Dictionary<FactorDefinition, double>
+var wealthyPerson = new StandardPerson(new Dictionary<FactorDefinition, double>
 {
     [incomeFactor] = 8.5,      // Use object reference, not string
     [pollutionFactor] = -6.0,
@@ -253,7 +254,7 @@ var wealthyPerson = new Person(new Dictionary<FactorDefinition, double>
 collection.Add(wealthyPerson);
 
 // 2. Add 10,000 identical persons (duplicates)
-var middleClassPerson = new Person(new Dictionary<FactorDefinition, double>
+var middleClassPerson = new StandardPerson(new Dictionary<FactorDefinition, double>
 {
     [incomeFactor] = 5.0,
     [pollutionFactor] = -3.0,
@@ -284,7 +285,7 @@ collection.Add(new GeneratorConfig(seed: 42)
 });
 
 // Generate all persons and use in city
-IEnumerable<Person> persons = collection.GenerateAllPersons(allFactors);
+IEnumerable<PersonBase> persons = collection.GenerateAllPersons(allFactors);
 
 var city = new City(
     factorValues: [
@@ -363,7 +364,7 @@ collection.Add(new GeneratorConfig(seed: 42)
     SensitivityStdDev = 3.0  // Standard deviation for normal distribution
 });
 
-IEnumerable<Person> persons = collection.GenerateAllPersons(allFactors);
+IEnumerable<PersonBase> persons = collection.GenerateAllPersons(allFactors);
 
 // Add persons to city
 var city = new City(
@@ -378,6 +379,131 @@ var city = new City(
     Capacity = 500000
 };
 ```
+
+## Creating Custom Person Types
+
+Version `0.5.0-beta` introduces an inheritance-based architecture that allows you to create custom person types by
+inheriting from `PersonBase`. This enables domain-specific properties while maintaining compatibility with the
+framework.
+
+### When to Create Custom Person Types
+
+Create a custom person type when you need:
+
+- Domain-specific attributes (e.g., age, income, education level for demographic models)
+- Custom behavioral properties beyond what `StandardPerson` provides
+- Specialized migration logic in custom calculators
+
+### Example: Creating a Demographic Person Type
+
+```csharp
+using dotMigrata.Core.Entities;
+using dotMigrata.Core.Values;
+
+/// <summary>
+/// Custom person type with demographic attributes.
+/// </summary>
+public sealed class DemographicPerson : PersonBase
+{
+    public DemographicPerson(IDictionary<FactorDefinition, double> factorSensitivities)
+        : base(factorSensitivities)
+    {
+    }
+
+    /// <summary>
+    /// Age of the person in years.
+    /// </summary>
+    public int Age { get; init; }
+
+    /// <summary>
+    /// Annual income in local currency.
+    /// </summary>
+    public double Income { get; init; }
+
+    /// <summary>
+    /// Education level (e.g., "HighSchool", "Bachelor", "Master", "PhD").
+    /// </summary>
+    public string EducationLevel { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Employment status.
+    /// </summary>
+    public bool IsEmployed { get; init; }
+
+    /// <inheritdoc />
+    public override string GetPersonType() => "Demographic";
+}
+```
+
+### Using Custom Person Types with Custom Calculators
+
+When using custom person types, you typically need custom calculators that can access the additional properties:
+
+```csharp
+using dotMigrata.Core.Entities;
+using dotMigrata.Logic.Calculators;
+using dotMigrata.Logic.Interfaces;
+using dotMigrata.Logic.Models;
+
+/// <summary>
+/// Custom attraction calculator that considers demographic attributes.
+/// </summary>
+public class DemographicAttractionCalculator : IAttractionCalculator
+{
+    private readonly StandardAttractionCalculator _baseCalculator;
+
+    public DemographicAttractionCalculator(StandardModelConfig? config = null)
+    {
+        _baseCalculator = new StandardAttractionCalculator(config);
+    }
+
+    public AttractionResult CalculateAttraction(City city, PersonBase person, City? originCity = null)
+    {
+        // Calculate base attraction using standard logic
+        var result = _baseCalculator.CalculateAttraction(city, person, originCity);
+
+        // Apply demographic-specific adjustments if it's a DemographicPerson
+        if (person is DemographicPerson demoPerson)
+        {
+            var adjustment = 1.0;
+
+            // Young people are more mobile (higher attraction)
+            if (demoPerson.Age < 30)
+                adjustment *= 1.2;
+
+            // High-income individuals less sensitive to economic factors
+            if (demoPerson.Income > 100000)
+                adjustment *= 0.9;
+
+            // Educated individuals prefer certain cities
+            if (demoPerson.EducationLevel == "PhD" && city.DisplayName.Contains("University"))
+                adjustment *= 1.3;
+
+            result.AdjustedAttraction *= adjustment;
+        }
+
+        return result;
+    }
+
+    public IDictionary<City, AttractionResult> CalculateAttractionForAllCities(
+        IEnumerable<City> cities, 
+        PersonBase person, 
+        City? originCity = null)
+    {
+        return cities.ToDictionary(
+            city => city,
+            city => CalculateAttraction(city, person, originCity));
+    }
+}
+```
+
+### Key Points for Custom Person Types
+
+- **Inherit from `PersonBase`**: All custom person types must inherit from the abstract `PersonBase` class
+- **Implement `GetPersonType()`**: Return a unique string identifier for your person type
+- **Use pattern matching**: Access custom properties using `is` pattern matching in calculators
+- **Thread safety**: Ensure custom properties are immutable (use `init` instead of `set`)
+- **Factory pattern**: Consider creating factory methods for complex initialization
 
 ## Configuring Simulation Parameters
 

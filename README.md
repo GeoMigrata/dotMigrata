@@ -4,7 +4,7 @@
 [![.NET9.0](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
 [![.NET10.0](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-3.0-green.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.5.0--beta-green.svg)]()
 
 dotMigrata, a product from Project GeoMigrata, is a C# .NET simulation framework designed to model individual-based
 population migration and city
@@ -12,23 +12,35 @@ evolution in a multi-city system. The framework simulates individual persons (10
 characteristics, capturing how city factors influence individual migration decisions and how migration feedback affects
 city dynamics over time.
 
-## Version 3.0 Highlights
+## Version 0.5.0-beta Highlights
 
-**Version 3.0** brings major improvements to the framework:
+**Version 0.5.0-beta** introduces a major architectural refactoring with inheritance-based person types:
 
+### Breaking Changes
+
+- **Person class removed entirely** - The monolithic `Person` class has been replaced with an inheritance-based
+  architecture
+- **PersonBase abstract class** - New base class with essential migration properties (`MovingWillingness`,
+  `RetentionRate`, `FactorSensitivities`)
+- **StandardPerson implementation** - Concrete class that replaces the old `Person` class with additional properties (
+  `SensitivityScaling`, `AttractionThreshold`, `MinimumAcceptableAttraction`, `Tags`)
+- **Type-based extensibility** - Custom person types can now inherit from `PersonBase` for domain-specific properties
+- **Updated interfaces** - All interfaces (`IAttractionCalculator`, `IMigrationCalculator`) now use `PersonBase` instead
+  of `Person`
+
+### Enhanced Features
+
+- **Inheritance-based architecture**: Define custom person types by inheriting from `PersonBase`
+- **Pattern matching support**: `StandardAttractionCalculator` uses pattern matching for `StandardPerson` properties
+- **Type discrimination**: `GetPersonType()` method for runtime type identification
+- **Backward compatibility**: `StandardPerson` provides all functionality of the removed `Person` class
 - **Enhanced Exception System**: Comprehensive exception hierarchy with `DotMigrataException`, `ConfigurationException`,
-  `GeneratorSpecificationException`, `WorldValidationException`, and `SnapshotException` for better error handling
-- **Improved Value Specifications**: Named attribute methods like `Age()`, `Income()`, `MovingWillingness()` for
-  clearer, more expressive code
-- **Normal Distribution Support**: `Approximately(mean, stdDev)` method for realistic value generation using normal
-  distributions
-- **Configurable Parallelism**: Control parallel processing in migration calculations with `UseParallelProcessing` and
-  `MaxDegreeOfParallelism` settings
-- **Validation & Safety**: Strict configuration validation with early failure detection using the `Guard` utility class
-- **Better Snapshot Handling**: Enhanced snapshot serialization with versioning, validation methods, and proper
-  exception handling
-- **Modern C# Features**: Updated to use C# latest features including records, init-only properties, and collection
-  expressions
+  `GeneratorSpecificationException`, `WorldValidationException`, and `SnapshotException`
+- **Improved Value Specifications**: Named attribute methods like `MovingWillingness()`, `RetentionRate()` for clearer,
+  more expressive code
+- **Normal Distribution Support**: `Approximately(mean, stdDev)` method for realistic value generation
+- **Configurable Parallelism**: Control parallel processing with `UseParallelProcessing` and `MaxDegreeOfParallelism`
+- **Modern C# Features**: Uses C# latest features including records, init-only properties, and collection expressions
 
 ## Core Idea
 
@@ -47,8 +59,10 @@ factors in an ongoing iterative process.
   city states with their populations.
 - **City:** Contains factor values (e.g., income, pollution, public services) and a collection of individual persons
   residing in the city. Each city has values for all factor definitions defined in the world.
-- **Person:** Individual entity with unique ID, personalized factor sensitivities, migration willingness, and retention
-  rate. Each person makes independent migration decisions based on their own preferences.
+- **PersonBase/StandardPerson:** Base class and standard implementation for individual entities with unique
+  characteristics. `PersonBase` is an abstract class defining essential migration properties, while `StandardPerson` is
+  the concrete implementation with additional behavioral properties. Each person makes independent migration decisions
+  based on their own preferences.
 - **FactorDefinition & FactorValue:** Define metadata for each factor, including direction (pull or push),
   normalization, and value range. Factor values are normalized for internal calculations. Each city has a FactorValue
   for every FactorDefinition in the world.
@@ -68,7 +82,7 @@ factors in an ongoing iterative process.
 1. Initialize the world with cities, factor definitions, and persons.
     - Each City must have FactorValues for all FactorDefinitions
     - Persons are generated with randomized sensitivities and attributes
-    - Each Person is assigned to an initial city
+   - Each person (PersonBase/StandardPerson instance) is assigned to an initial city
 2. For each simulation step:
     - For each person, calculate attraction to all cities based on personal sensitivities
     - Each person independently decides whether to migrate based on attraction differences and personal willingness
@@ -119,7 +133,8 @@ factors in an ongoing iterative process.
 Contains fundamental domain models:
 
 - `World`, `City` - Entity models
-- `Person` - Individual entity with unique attributes
+- `PersonBase` - Abstract base class for all person types
+- `StandardPerson` - Standard implementation with migration-specific properties
 - `FactorDefinition`, `FactorValue` - Factor system models
 - `Coordinate` - Geographic coordinate model
 
@@ -155,7 +170,7 @@ Complete snapshot system for saving and restoring simulation states:
 - **XML Serialization** - Attribute-based XML format using `System.Xml.Serialization`
 - **PersonCollection Storage** - Stores collection specifications instead of individual persons
 - **Deterministic Reproducibility** - Uses random seeds to regenerate exact simulation states
-- **Namespace Design** - Distinguishes code concepts (`c:Person`, `c:City`) from snapshot containers
+- **Namespace Design** - Distinguishes code concepts (`c:StandardPerson`, `c:City`) from snapshot containers
 - **Efficient Format** - Compact XML supporting millions of persons
 
 ## Performance Characteristics
@@ -200,7 +215,7 @@ Extend the framework by implementing these interfaces:
 
 Domain models available for use and extension:
 
-- **`World`**, **`City`**, **`Person`** - Core simulation entities
+- **`World`**, **`City`**, **`PersonBase`**, **`StandardPerson`** - Core simulation entities
 - **`FactorDefinition`**, **`FactorValue`** - City characteristic system
 - **`PersonGenerator`**, **`PersonGeneratorConfig`** - Population generation
 - **`SimulationContext`** - Runtime simulation state

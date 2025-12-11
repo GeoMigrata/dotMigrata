@@ -1,4 +1,4 @@
-﻿﻿# API Reference
+﻿# API Reference
 
 This document provides a comprehensive reference for the public API of dotMigrata.
 
@@ -22,7 +22,7 @@ new World(
 - `DisplayName` (string) - Display name of the world
 - `Cities` (IReadOnlyList<City>) - List of cities
 - `FactorDefinitions` (IReadOnlyList<FactorDefinition>) - List of factor definitions
-- `AllPersons` (IEnumerable<Person>) - All persons across all cities
+- `AllPersons` (IEnumerable<PersonBase>) - All persons across all cities
 - `Population` (int) - Total population across all cities
 
 **Example:**
@@ -45,45 +45,125 @@ Represents a city with geographic location, factors, and individual persons.
 - `Location` (Coordinate, required) - Geographic coordinates
 - `Capacity` (int?, init) - Maximum population capacity (optional, null or 0 means no limit)
 - `FactorValues` (IReadOnlyList<FactorValue>) - Factor values for this city
-- `Persons` (IReadOnlyList<Person>) - Persons residing in this city (returns snapshot)
+- `Persons` (IReadOnlyList<PersonBase>) - Persons residing in this city (returns snapshot)
 - `Population` (int) - Total population (count of persons)
 
 **Methods:**
 
 - `UpdateFactorIntensity(FactorDefinition, IntensityValue)` - Updates a factor's intensity
 - `TryGetFactorValue(FactorDefinition, out FactorValue?)` - Gets a factor value
-- `AddPerson(Person)` - Adds a person to this city (thread-safe)
-- `RemovePerson(Person)` - Removes a person from this city (thread-safe, returns bool)
+- `AddPerson(PersonBase)` - Adds a person to this city (thread-safe)
+- `RemovePerson(PersonBase)` - Removes a person from this city (thread-safe, returns bool)
 
-### Person
+### PersonBase (Abstract)
 
-Represents an individual person with unique attributes and migration preferences.
+Abstract base class for all person types in the simulation. Defines core migration-essential properties that all person
+types must implement.
 
 **Properties:**
 
-- `CurrentCity` (City?) - Current city where the person resides
+- `CurrentCity` (City?) - Current city where the person resides (mutable for migration)
 - `MovingWillingness` (NormalizedValue) - Willingness to migrate (0-1 range, required)
 - `RetentionRate` (NormalizedValue) - Tendency to stay in current location (0-1 range, required)
-- `SensitivityScaling` (double) - Attraction scaling coefficient (default: 1.0)
-- `AttractionThreshold` (double) - Minimum attraction difference for migration (default: 0.0)
-- `MinimumAcceptableAttraction` (double) - Minimum destination attraction (default: 0.0)
 - `FactorSensitivities` (IReadOnlyDictionary<FactorDefinition, double>) - Factor sensitivities
-- `Tags` (IReadOnlyList<string>) - Tags for categorization and statistical analysis
 
 **Constructor:**
 
 ```csharp
-new Person(IDictionary<FactorDefinition, double> factorSensitivities)
-{
-    MovingWillingness = NormalizedValue.FromRatio(0.5),
-    RetentionRate = NormalizedValue.FromRatio(0.3)
-}
+protected PersonBase(IDictionary<FactorDefinition, double> factorSensitivities)
 ```
 
 **Methods:**
 
 - `GetSensitivity(FactorDefinition)` - Gets sensitivity value for a factor (returns SensitivityValue)
 - `UpdateSensitivity(FactorDefinition, SensitivityValue)` - Updates sensitivity for a factor
+- `GetPersonType()` - Abstract method returning type identifier string
+
+**Remarks:**
+
+Custom person types can inherit from `PersonBase` to add domain-specific properties. The framework guarantees all person
+types have the essential properties needed for migration logic.
+
+### StandardPerson
+
+Standard implementation of a person with properties for the default migration model. This is the concrete class that
+replaces the old `Person` class.
+
+**Inheritance:** `PersonBase`
+
+**Properties:**
+
+- Inherits all properties from `PersonBase` (`CurrentCity`, `MovingWillingness`, `RetentionRate`, `FactorSensitivities`)
+- `SensitivityScaling` (double, init) - Attraction scaling coefficient (default: 1.0)
+- `AttractionThreshold` (double, init) - Minimum attraction difference for migration (default: 0.0)
+- `MinimumAcceptableAttraction` (double, init) - Minimum destination attraction (default: 0.0)
+- `Tags` (IReadOnlyList<string>, init) - Tags for categorization and statistical analysis (default: empty)
+
+**Constructor:**
+
+```csharp
+new StandardPerson(IDictionary<FactorDefinition, double> factorSensitivities)
+{
+    MovingWillingness = NormalizedValue.FromRatio(0.5),
+    RetentionRate = NormalizedValue.FromRatio(0.3),
+    SensitivityScaling = 1.0,
+    AttractionThreshold = 0.0,
+    MinimumAcceptableAttraction = 0.0,
+    Tags = ["example_tag"]
+}
+```
+
+**Methods:**
+
+- `GetPersonType()` - Returns "Standard" as the type identifier
+- Inherits `GetSensitivity(FactorDefinition)` and `UpdateSensitivity(FactorDefinition, SensitivityValue)` from
+  `PersonBase`
+
+**Remarks:**
+
+Used by `StandardAttractionCalculator` (which uses pattern matching to access `SensitivityScaling`) and
+`StandardMigrationCalculator` (which uses pattern matching to access `AttractionThreshold` and
+`MinimumAcceptableAttraction`). For custom migration models, create a new class inheriting from `PersonBase` instead of
+modifying this class.
+
+**Example of Pattern Matching in StandardAttractionCalculator:**
+
+```csharp
+// Apply person's sensitivity scaling if it's a StandardPerson
+if (person is StandardPerson stdPerson)
+    totalScore *= stdPerson.SensitivityScaling;
+```
+
+### Creating Custom Person Types
+
+To create custom person types, inherit from `PersonBase`:
+
+```csharp
+public sealed class CustomPerson : PersonBase
+{
+    public CustomPerson(IDictionary<FactorDefinition, double> factorSensitivities)
+        : base(factorSensitivities)
+    {
+    }
+
+    // Add custom properties
+    public int Age { get; init; }
+    public double Income { get; init; }
+
+    public override string GetPersonType() => "Custom";
+}
+```
+
+Then use pattern matching in custom calculators to access the additional properties:
+
+```csharp
+if (person is CustomPerson customPerson)
+{
+    // Access custom properties
+    var ageAdjustment = customPerson.Age < 30 ? 1.2 : 1.0;
+    // ... custom logic
+}
+```
 
 ### FactorDefinition
 
@@ -138,7 +218,7 @@ PersonCollection Add(IndividualSpecification specification)
 PersonCollection Add(IndividualsSpecification specification)
 PersonCollection Add(GeneratorSpecification specification)
 PersonCollection Add(IPersonSpecification specification)
-IEnumerable<Person> GenerateAllPersons(IEnumerable<FactorDefinition> factorDefinitions)
+IEnumerable<PersonBase> GenerateAllPersons(IEnumerable<FactorDefinition> factorDefinitions)
 int GetTotalCount()
 void Clear()
 ```
@@ -150,7 +230,7 @@ Interface for person specifications (Individual, Individuals, Generator).
 **Methods:**
 
 ```csharp
-IEnumerable<Person> GeneratePersons(
+IEnumerable<PersonBase> GeneratePersons(
     IEnumerable<FactorDefinition> factorDefinitions,
     Func<string> idGenerator)
 ```
@@ -308,18 +388,18 @@ Interface for calculating city attraction for individual persons.
 ```csharp
 AttractionResult CalculateAttraction(
     City city, 
-    Person person, 
+    PersonBase person, 
     City? originCity = null)
 
 IDictionary<City, AttractionResult> CalculateAttractionForAllCities(
     IEnumerable<City> cities, 
-    Person person, 
+    PersonBase person, 
     City? originCity = null)
 ```
 
 **Implementations:**
 
-- `StandardAttractionCalculator` - Standard model implementation
+- `StandardAttractionCalculator` - Standard model implementation (uses pattern matching for `StandardPerson` properties)
 
 ### IMigrationCalculator
 
@@ -329,7 +409,7 @@ Interface for calculating individual migration decisions.
 
 ```csharp
 MigrationFlow? CalculateMigrationDecision(
-    Person person,
+    PersonBase person,
     IEnumerable<City> destinationCities,
     IDictionary<City, AttractionResult> attractionResults)
 
@@ -488,14 +568,14 @@ static WorldSnapshotXml? DeserializeFromFile(string filePath)
 - **Deterministic Reproducibility**: Uses random seeds to regenerate exact simulation states from step count
 - **Attribute-Based Format**: Simple properties as attributes, complex structures as elements
 - **Efficient**: Supports millions of persons without storing individual instances
-- **Immutable Person Properties**: Persons regenerated from specifications on load
+- **Immutable Person Properties**: StandardPerson instances regenerated from specifications on load
 
 **XML Structure with Namespaces:**
 
 ```xml
 
-<Snapshot xmlns="http://geomigrata.pages.dev/snapshot"
-          xmlns:c="http://geomigrata.pages.dev/code"
+<Snapshot xmlns="https://geomigrata.pages.dev/snapshot"
+          xmlns:c="https://geomigrata.pages.dev/code"
           Version="1.0" Id="..." Status="Seed" CreatedAt="..." CurrentStep="0">
     <World DisplayName="Example World">
         <!-- FactorDefinitions is a snapshot container (default namespace) -->
@@ -508,14 +588,14 @@ static WorldSnapshotXml? DeserializeFromFile(string filePath)
         <!-- PersonCollections are snapshot-only constructs -->
         <PersonCollections>
             <PersonCollection Id="young_people">
-                <!-- c:Person maps to Person class with Count attribute for duplication -->
-                <c:Person Count="1" MovingWillingness="0.5" RetentionRate="0.3"
-                          AttractionThreshold="0.3" SensitivityScaling="0.5"
-                          MinimumAcceptableAttraction="10" Tags="tag1;tag2">
+                <!-- c:StandardPerson maps to StandardPerson class with Count attribute for duplication -->
+                <c:StandardPerson Count="1" MovingWillingness="0.5" RetentionRate="0.3"
+                                  AttractionThreshold="0.3" SensitivityScaling="0.5"
+                                  MinimumAcceptableAttraction="10" Tags="tag1;tag2">
                     <FactorSensitivities>
                         <Sensitivity Id="pollution" Value="0.5"/>
                     </FactorSensitivities>
-                </c:Person>
+                </c:StandardPerson>
 
                 <!-- Generator uses ValueSpecifications for mass person generation -->
                 <Generator Count="100000">
@@ -578,7 +658,7 @@ static WorldSnapshotXml? DeserializeFromFile(string filePath)
 2. **Deterministic reproduction** - Same seed + step count = exact same state
 3. **Scalable** - Millions of persons without storing individual instances
 4. **Immutable persons** - Only CurrentCity changes, all other properties from specifications
-5. **Collections "expand" at startup** - Generators run to produce actual Person instances
+5. **Collections "expand" at startup** - Generators run to produce actual PersonBase/StandardPerson instances
 
 ### SnapshotStatus
 
@@ -614,7 +694,7 @@ Represents an individual person's migration decision.
 
 - `OriginCity` (City) - Origin city
 - `DestinationCity` (City) - Destination city
-- `Person` (Person) - The individual person migrating
+- `Person` (PersonBase) - The individual person migrating
 - `MigrationProbability` (double, 0-1) - Migration probability
 
 ## Enums
@@ -781,9 +861,7 @@ catch (WorldValidationException ex)
 {
     Console.WriteLine($"City '{ex.CityName}' is missing factors:");
     foreach (var factor in ex.MissingFactorNames)
-    {
         Console.WriteLine($"  - {factor}");
-    }
 }
 ```
 
@@ -848,19 +926,13 @@ Version 3.0 adds methods for snapshot validation:
 ```csharp
 // Non-throwing deserialization
 if (XmlSnapshotSerializer.TryDeserializeFromFile(path, out var snapshot, out var error))
-{
     Console.WriteLine("Snapshot loaded successfully");
-}
 else
-{
     Console.WriteLine($"Failed to load snapshot: {error}");
-}
 
 // Quick validation
 if (XmlSnapshotSerializer.ValidateSnapshot(path))
-{
     Console.WriteLine("Snapshot is valid");
-}
 ```
 
 ## Simulation Metrics
