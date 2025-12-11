@@ -1,4 +1,5 @@
 ﻿using dotMigrata.Logic.Calculators;
+using dotMigrata.Logic.Feedback;
 using dotMigrata.Logic.Interfaces;
 using dotMigrata.Logic.Models;
 using dotMigrata.Simulation.Engine;
@@ -19,12 +20,14 @@ public sealed class SimulationBuilder
 {
     private readonly List<ISimulationObserver> _observers = [];
     private readonly List<ISimulationStage> _stages = [];
+    private readonly List<IFeedbackStrategy> _feedbackStrategies = [];
     private IAttractionCalculator? _attractionCalculator;
     private IMigrationCalculator? _migrationCalculator;
     private IStabilityCriteria? _stabilityCriteria;
     private ILogger<SimulationEngine>? _logger;
     private StandardModelConfig _modelConfig = StandardModelConfig.Default;
     private int? _randomSeed;
+    private int _feedbackInterval = 1;
     private SimulationConfig _simulationConfig = SimulationConfig.Default;
 
     /// <summary>
@@ -242,6 +245,52 @@ public sealed class SimulationBuilder
     }
 
     /// <summary>
+    /// Adds a feedback strategy to dynamically adjust city factors based on migration patterns.
+    /// </summary>
+    /// <param name="strategy">The feedback strategy to add.</param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="strategy" /> is <see langword="null" />.
+    /// </exception>
+    public SimulationBuilder WithFeedback(IFeedbackStrategy strategy)
+    {
+        ArgumentNullException.ThrowIfNull(strategy);
+        _feedbackStrategies.Add(strategy);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds multiple feedback strategies.
+    /// </summary>
+    /// <param name="strategies">The feedback strategies to add.</param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="strategies" /> is <see langword="null" />.
+    /// </exception>
+    public SimulationBuilder WithFeedback(IEnumerable<IFeedbackStrategy> strategies)
+    {
+        ArgumentNullException.ThrowIfNull(strategies);
+        _feedbackStrategies.AddRange(strategies);
+        return this;
+    }
+
+    /// <summary>
+    /// Sets how often feedback should be applied (every N ticks).
+    /// </summary>
+    /// <param name="interval">The interval in ticks between feedback applications.</param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="interval" /> is less than 1.
+    /// </exception>
+    public SimulationBuilder WithFeedbackInterval(int interval)
+    {
+        if (interval < 1)
+            throw new ArgumentOutOfRangeException(nameof(interval), "Feedback interval must be at least 1.");
+        _feedbackInterval = interval;
+        return this;
+    }
+
+    /// <summary>
     /// Builds the configured simulation engine.
     /// </summary>
     /// <returns>A configured <see cref="SimulationEngine" /> instance.</returns>
@@ -270,10 +319,16 @@ public sealed class SimulationBuilder
 
     private List<ISimulationStage> CreateDefaultStages()
     {
-        return
-        [
+        var stages = new List<ISimulationStage>
+        {
             new MigrationDecisionStage(_migrationCalculator!, _attractionCalculator!),
             new MigrationExecutionStage()
-        ];
+        };
+
+        // Add feedback stage if strategies are configured
+        if (_feedbackStrategies.Count > 0)
+            stages.Add(new FeedbackStage(_feedbackStrategies, _feedbackInterval));
+
+        return stages;
     }
 }
