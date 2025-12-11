@@ -69,7 +69,7 @@ public sealed class PerformanceMetrics
     {
         get
         {
-            var current = PerformanceMetrics.CurrentMemoryBytes;
+            var current = CurrentMemoryBytes;
             var delta = current - _lastGcMemory;
             _lastGcMemory = current;
             return delta;
@@ -133,7 +133,7 @@ public sealed class PerformanceMetrics
         return $"Performance: {TotalTicks} ticks in {TotalElapsed:g} " +
                $"(Avg: {AverageTickDuration.TotalMilliseconds:F2}ms/tick, " +
                $"Rate: {TicksPerSecond:F2} ticks/sec, " +
-               $"Memory: {PerformanceMetrics.CurrentMemoryBytes / 1024.0 / 1024.0:F2} MB)";
+               $"Memory: {CurrentMemoryBytes / 1024.0 / 1024.0:F2} MB)";
     }
 
     /// <summary>
@@ -150,7 +150,7 @@ public sealed class PerformanceMetrics
             ["MinTickDuration"] = MinTickDuration,
             ["MaxTickDuration"] = MaxTickDuration,
             ["TicksPerSecond"] = TicksPerSecond,
-            ["CurrentMemoryMB"] = PerformanceMetrics.CurrentMemoryBytes / 1024.0 / 1024.0,
+            ["CurrentMemoryMB"] = CurrentMemoryBytes / 1024.0 / 1024.0,
             ["MemoryDeltaKB"] = MemoryDeltaBytes / 1024.0
         };
     }
