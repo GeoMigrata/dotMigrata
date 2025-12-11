@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using dotMigrata.Core.Entities;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
 
@@ -104,7 +103,6 @@ public sealed class DebugObserver : ISimulationObserver
         // Show population distribution by tags (only for StandardPerson)
         var allPersons = context.World.Cities.SelectMany(c => c.Persons).ToList();
         var tagGroups = allPersons
-            .OfType<StandardPerson>()
             .SelectMany(p => p.Tags.DefaultIfEmpty("unknown"))
             .GroupBy(t => t)
             .OrderByDescending(g => g.Count())
@@ -322,8 +320,8 @@ public sealed class DebugObserver : ISimulationObserver
             var samplePersons = group.Take(_maxPersonsToShow).ToList();
             foreach (var flow in samplePersons)
             {
-                var tags = flow.Person is StandardPerson stdPerson && stdPerson.Tags.Any()
-                    ? string.Join(", ", stdPerson.Tags)
+                var tags = flow.Person.Tags.Any()
+                    ? string.Join(", ", flow.Person.Tags)
                     : "no tags";
                 SetColor(ConsoleColor.DarkGray);
                 Write("        • ");

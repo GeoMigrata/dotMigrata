@@ -70,37 +70,4 @@ public sealed class StandardPerson : PersonBase
     ///     </para>
     /// </remarks>
     public double MinimumAcceptableAttraction { get; init; }
-
-    /// <summary>
-    /// Gets the tags associated with this person for categorization and statistical analysis.
-    /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///     Tags can be used to group persons by characteristics such as:
-    ///     <list type="bullet">
-    ///         <item>
-    ///             <description>Demographics: "young", "educated", "high-income"</description>
-    ///         </item>
-    ///         <item>
-    ///             <description>Generation source: "initial", "generated-wave-1"</description>
-    ///         </item>
-    ///         <item>
-    ///             <description>Behavioral groups: "risk-averse", "opportunity-seeker"</description>
-    ///         </item>
-    ///     </list>
-    ///     </para>
-    ///     <para>
-    ///     Tags do not affect migration logic but are useful for observers and analysis.
-    ///     </para>
-    /// </remarks>
-    public IReadOnlyList<string> Tags { get; init; } = [];
-
-    /// <inheritdoc />
-    /// <remarks>
-    /// Returns "Standard" to identify this as the standard person type.
-    /// </remarks>
-    public override string GetPersonType()
-    {
-        return "Standard";
-    }
 }

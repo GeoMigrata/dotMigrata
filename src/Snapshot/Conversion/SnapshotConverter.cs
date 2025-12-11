@@ -141,19 +141,19 @@ public static class SnapshotConverter
         };
     }
 
-    private static Dictionary<string, List<StandardPerson>> ConvertPersonCollections(
+    private static Dictionary<string, List<PersonBase>> ConvertPersonCollections(
         List<PersonCollectionXml>? collections,
         Dictionary<string, FactorDefinition> factorLookup,
         List<FactorDefinition> allFactors)
     {
-        var result = new Dictionary<string, List<StandardPerson>>();
+        var result = new Dictionary<string, List<PersonBase>>();
 
         if (collections == null)
             return result;
 
         foreach (var collection in collections)
         {
-            var persons = new List<StandardPerson>();
+            var persons = new List<PersonBase>();
 
             // Process person templates
             if (collection.Persons != null)
@@ -173,7 +173,7 @@ public static class SnapshotConverter
         return result;
     }
 
-    private static IEnumerable<StandardPerson> ConvertPersonTemplate(
+    private static IEnumerable<PersonBase> ConvertPersonTemplate(
         PersonTemplateXml template,
         Dictionary<string, FactorDefinition> factorLookup)
     {
@@ -197,7 +197,7 @@ public static class SnapshotConverter
         }
     }
 
-    private static IEnumerable<StandardPerson> ConvertGenerator(
+    private static IEnumerable<PersonBase> ConvertGenerator(
         GeneratorXml generator,
         Dictionary<string, FactorDefinition> factorLookup,
         List<FactorDefinition> allFactors)
@@ -287,7 +287,7 @@ public static class SnapshotConverter
     private static List<City> ConvertCities(
         List<CityXml>? cities,
         Dictionary<string, FactorDefinition> factorLookup,
-        Dictionary<string, List<StandardPerson>> personCollections)
+        Dictionary<string, List<PersonBase>> personCollections)
     {
         if (cities == null || cities.Count == 0)
             throw new InvalidOperationException("Snapshot must contain at least one city.");
@@ -298,7 +298,7 @@ public static class SnapshotConverter
     private static City ConvertCity(
         CityXml cityXml,
         Dictionary<string, FactorDefinition> factorLookup,
-        Dictionary<string, List<StandardPerson>> personCollections)
+        Dictionary<string, List<PersonBase>> personCollections)
     {
         // Convert factor values
         var factorValues = new List<FactorValue>();
@@ -312,7 +312,7 @@ public static class SnapshotConverter
                     });
 
         // Collect persons from referenced collections
-        var persons = new List<StandardPerson>();
+        var persons = new List<PersonBase>();
         if (cityXml.PersonCollections != null)
             foreach (var collectionRef in cityXml.PersonCollections)
                 if (personCollections.TryGetValue(collectionRef.Id, out var collectionPersons))

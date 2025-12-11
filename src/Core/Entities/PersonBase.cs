@@ -76,14 +76,29 @@ public abstract class PersonBase
     public IReadOnlyDictionary<FactorDefinition, double> FactorSensitivities => _factorSensitivities;
 
     /// <summary>
-    /// Gets the person type identifier for runtime type discrimination.
+    /// Gets the tags associated with this person for categorization and statistical analysis.
     /// </summary>
-    /// <returns>A string identifying the person type (e.g., "Standard", "Demographic", "Economic").</returns>
     /// <remarks>
-    /// Used for logging, diagnostics, and snapshot serialization.
-    /// Should return a stable, unique identifier for each person type.
+    ///     <para>
+    ///     Tags can be used to group persons by characteristics such as:
+    ///     <list type="bullet">
+    ///         <item>
+    ///             <description>Demographics: "young", "educated", "high-income"</description>
+    ///         </item>
+    ///         <item>
+    ///             <description>Generation source: "initial", "generated-wave-1"</description>
+    ///         </item>
+    ///         <item>
+    ///             <description>Behavioral groups: "risk-averse", "opportunity-seeker"</description>
+    ///         </item>
+    ///     </list>
+    ///     </para>
+    ///     <para>
+    ///     Tags do not affect migration logic but are useful for observers and analysis.
+    ///     All person types support tags for consistent categorization across the simulation.
+    ///     </para>
     /// </remarks>
-    public abstract string GetPersonType();
+    public IReadOnlyList<string> Tags { get; init; } = [];
 
     /// <summary>
     /// Gets the sensitivity value for a specific factor.

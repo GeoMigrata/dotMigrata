@@ -66,6 +66,7 @@ types must implement.
 - `MovingWillingness` (NormalizedValue) - Willingness to migrate (0-1 range, required)
 - `RetentionRate` (NormalizedValue) - Tendency to stay in current location (0-1 range, required)
 - `FactorSensitivities` (IReadOnlyDictionary<FactorDefinition, double>) - Factor sensitivities
+- `Tags` (IReadOnlyList<string>) - Tags for categorization and statistical analysis (v0.5.1-beta+)
 
 **Constructor:**
 
@@ -77,12 +78,12 @@ protected PersonBase(IDictionary<FactorDefinition, double> factorSensitivities)
 
 - `GetSensitivity(FactorDefinition)` - Gets sensitivity value for a factor (returns SensitivityValue)
 - `UpdateSensitivity(FactorDefinition, SensitivityValue)` - Updates sensitivity for a factor
-- `GetPersonType()` - Abstract method returning type identifier string
 
 **Remarks:**
 
 Custom person types can inherit from `PersonBase` to add domain-specific properties. The framework guarantees all person
-types have the essential properties needed for migration logic.
+types have the essential properties needed for migration logic. All person types support tags for consistent
+categorization.
 
 ### StandardPerson
 
@@ -93,11 +94,11 @@ replaces the old `Person` class.
 
 **Properties:**
 
-- Inherits all properties from `PersonBase` (`CurrentCity`, `MovingWillingness`, `RetentionRate`, `FactorSensitivities`)
+- Inherits all properties from `PersonBase` (`CurrentCity`, `MovingWillingness`, `RetentionRate`, `FactorSensitivities`,
+  `Tags`)
 - `SensitivityScaling` (double, init) - Attraction scaling coefficient (default: 1.0)
 - `AttractionThreshold` (double, init) - Minimum attraction difference for migration (default: 0.0)
 - `MinimumAcceptableAttraction` (double, init) - Minimum destination attraction (default: 0.0)
-- `Tags` (IReadOnlyList<string>, init) - Tags for categorization and statistical analysis (default: empty)
 
 **Constructor:**
 
@@ -115,7 +116,6 @@ new StandardPerson(IDictionary<FactorDefinition, double> factorSensitivities)
 
 **Methods:**
 
-- `GetPersonType()` - Returns "Standard" as the type identifier
 - Inherits `GetSensitivity(FactorDefinition)` and `UpdateSensitivity(FactorDefinition, SensitivityValue)` from
   `PersonBase`
 
@@ -149,8 +149,6 @@ public sealed class CustomPerson : PersonBase
     // Add custom properties
     public int Age { get; init; }
     public double Income { get; init; }
-
-    public override string GetPersonType() => "Custom";
 }
 ```
 
@@ -214,80 +212,62 @@ A collection of person specifications that can be used to generate a population.
 **Methods:**
 
 ```csharp
-PersonCollection Add(IndividualSpecification specification)
-PersonCollection Add(IndividualsSpecification specification)
-PersonCollection Add(GeneratorSpecification specification)
-PersonCollection Add(IPersonSpecification specification)
+PersonCollection Add(PersonBase person)
+PersonCollection Add(PersonBase person, int count)
+PersonCollection Add(GeneratorConfig generator)
 IEnumerable<PersonBase> GenerateAllPersons(IEnumerable<FactorDefinition> factorDefinitions)
 int GetTotalCount()
 void Clear()
 ```
 
-### IPersonSpecification
+### GeneratorConfig
 
-Interface for person specifications (Individual, Individuals, Generator).
-
-**Methods:**
-
-```csharp
-IEnumerable<PersonBase> GeneratePersons(
-    IEnumerable<FactorDefinition> factorDefinitions,
-    Func<string> idGenerator)
-```
-
-### IndividualSpecification
-
-Specifies a single manually-defined person.
-
-**Properties:**
-
-- `FactorSensitivities` (Dictionary<string, double>) - Factor sensitivities by factor name
-- `MovingWillingness` (double, 0-1) - Required
-- `RetentionRate` (double, 0-1) - Required
-- `SensitivityScaling` (double) - Default: 1.0
-- `AttractionThreshold` (double) - Default: 0.0
-- `MinimumAcceptableAttraction` (double) - Default: 0.0
-- `Tags` (IReadOnlyList<string>) - Tags for categorization
-
-### IndividualsSpecification
-
-Specifies multiple identical persons (duplicates).
-
-**Properties:**
-
-- `Count` (int) - Number of duplicate persons - Required
-- `FactorSensitivities` (Dictionary<string, double>) - Required
-- `MovingWillingness` (double, 0-1) - Required
-- `RetentionRate` (double, 0-1) - Required
-- `SensitivityScaling` (double) - Default: 1.0
-- `AttractionThreshold` (double) - Default: 0.0
-- `MinimumAcceptableAttraction` (double) - Default: 0.0
-- `Tags` (IReadOnlyList<string>) - Tags for categorization
-
-### GeneratorSpecification
-
-Generates persons with randomized or specified attributes.
+Generates persons with randomized or specified attributes. Supports both `StandardPerson` (default) and custom person
+types via the `PersonFactory` property.
 
 **Constructors:**
 
 ```csharp
-new GeneratorSpecification() // True random
-new GeneratorSpecification(int seed) // Pseudo-random with seed
+new GeneratorConfig() // Random seed
+new GeneratorConfig(int seed) // Specific seed for reproducibility
 ```
 
 **Properties:**
 
 - `Count` (int) - Number of persons to generate - Required
-- `FactorSensitivities` (Dictionary<string, ValueSpecification>) - Factor sensitivity specifications
-- `MovingWillingness` (ValueSpecification?) - Willingness specification
-- `RetentionRate` (ValueSpecification?) - Retention specification
-- `SensitivityScaling` (ValueSpecification?) - Scaling specification
-- `AttractionThreshold` (ValueSpecification?) - Threshold specification
-- `MinimumAcceptableAttraction` (ValueSpecification?) - Min attraction specification
-- `Tags` (IReadOnlyList<string>) - Tags to assign to all generated persons
-- `DefaultMinSensitivity` (double) - Default: -10.0
-- `DefaultMaxSensitivity` (double) - Default: 10.0
-- `DefaultSensitivityStdDev` (double) - Default: 3.0
+- `FactorSensitivities` (Dictionary<FactorDefinition, ValueSpecification>) - Factor sensitivity specifications
+- `MovingWillingness` (ValueSpecification) - Willingness specification - Required
+- `RetentionRate` (ValueSpecification) - Retention specification - Required
+- `SensitivityScaling` (ValueSpecification?) - Scaling specification - Optional (default: 1.0)
+- `AttractionThreshold` (ValueSpecification?) - Threshold specification - Optional (default: 0.0)
+- `MinimumAcceptableAttraction` (ValueSpecification?) - Min attraction specification - Optional (default: 0.0)
+- `Tags` (IReadOnlyList<string>) - Tags to assign to all generated persons - Optional
+- `DefaultSensitivityRange` (ValueRange) - Default range for unspecified factors - Default: (-10.0, 10.0)
+- `SensitivityStdDev` (double) - Standard deviation for sensitivity normal distribution - Default: 3.0
+- `PersonFactory` (Func<...>?) - Optional factory for creating custom person types - Default: null
+
+**PersonFactory Signature (v0.5.1-beta and later):**
+
+```csharp
+Func<IDictionary<FactorDefinition, double>,  // Factor sensitivities
+     NormalizedValue,                         // Moving willingness
+     NormalizedValue,                         // Retention rate
+     double,                                  // Sensitivity scaling
+     double,                                  // Attraction threshold
+     double,                                  // Minimum acceptable attraction
+     IReadOnlyList<string>,                   // Tags
+     PersonBase>                              // Return: custom person instance
+```
+
+When `PersonFactory` is null, the generator creates `StandardPerson` instances with the generated properties. When set,
+the factory function is called for each person, allowing creation of custom person types with additional domain-specific
+properties.
+
+**Methods:**
+
+```csharp
+IEnumerable<PersonBase> GeneratePersons(IEnumerable<FactorDefinition> factorDefinitions)
+```
 
 ### ValueSpecification
 

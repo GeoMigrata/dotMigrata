@@ -4,43 +4,13 @@
 [![.NET9.0](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
 [![.NET10.0](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.5.0--beta-green.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.5.1--beta-green.svg)]()
 
 dotMigrata, a product from Project GeoMigrata, is a C# .NET simulation framework designed to model individual-based
 population migration and city
 evolution in a multi-city system. The framework simulates individual persons (10,000 to 1,000,000+) with unique
 characteristics, capturing how city factors influence individual migration decisions and how migration feedback affects
 city dynamics over time.
-
-## Version 0.5.0-beta Highlights
-
-**Version 0.5.0-beta** introduces a major architectural refactoring with inheritance-based person types:
-
-### Breaking Changes
-
-- **Person class removed entirely** - The monolithic `Person` class has been replaced with an inheritance-based
-  architecture
-- **PersonBase abstract class** - New base class with essential migration properties (`MovingWillingness`,
-  `RetentionRate`, `FactorSensitivities`)
-- **StandardPerson implementation** - Concrete class that replaces the old `Person` class with additional properties (
-  `SensitivityScaling`, `AttractionThreshold`, `MinimumAcceptableAttraction`, `Tags`)
-- **Type-based extensibility** - Custom person types can now inherit from `PersonBase` for domain-specific properties
-- **Updated interfaces** - All interfaces (`IAttractionCalculator`, `IMigrationCalculator`) now use `PersonBase` instead
-  of `Person`
-
-### Enhanced Features
-
-- **Inheritance-based architecture**: Define custom person types by inheriting from `PersonBase`
-- **Pattern matching support**: `StandardAttractionCalculator` uses pattern matching for `StandardPerson` properties
-- **Type discrimination**: `GetPersonType()` method for runtime type identification
-- **Backward compatibility**: `StandardPerson` provides all functionality of the removed `Person` class
-- **Enhanced Exception System**: Comprehensive exception hierarchy with `DotMigrataException`, `ConfigurationException`,
-  `GeneratorSpecificationException`, `WorldValidationException`, and `SnapshotException`
-- **Improved Value Specifications**: Named attribute methods like `MovingWillingness()`, `RetentionRate()` for clearer,
-  more expressive code
-- **Normal Distribution Support**: `Approximately(mean, stdDev)` method for realistic value generation
-- **Configurable Parallelism**: Control parallel processing with `UseParallelProcessing` and `MaxDegreeOfParallelism`
-- **Modern C# Features**: Uses C# latest features including records, init-only properties, and collection expressions
 
 ## Core Idea
 

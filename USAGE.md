@@ -429,9 +429,6 @@ public sealed class DemographicPerson : PersonBase
     /// Employment status.
     /// </summary>
     public bool IsEmployed { get; init; }
-
-    /// <inheritdoc />
-    public override string GetPersonType() => "Demographic";
 }
 ```
 
@@ -500,10 +497,154 @@ public class DemographicAttractionCalculator : IAttractionCalculator
 ### Key Points for Custom Person Types
 
 - **Inherit from `PersonBase`**: All custom person types must inherit from the abstract `PersonBase` class
-- **Implement `GetPersonType()`**: Return a unique string identifier for your person type
 - **Use pattern matching**: Access custom properties using `is` pattern matching in calculators
 - **Thread safety**: Ensure custom properties are immutable (use `init` instead of `set`)
+- **Tags support**: All person types inherit `Tags` property from `PersonBase` for consistent categorization
 - **Factory pattern**: Consider creating factory methods for complex initialization
+
+### Generating Custom Person Types with PersonFactory
+
+Version `0.5.1-beta` adds support for generating custom person types using the `PersonFactory` property in
+`GeneratorConfig`. This allows you to specify how custom properties should be generated for your custom person types.
+
+```csharp
+using dotMigrata.Core.Entities;
+using dotMigrata.Core.Enums;
+using dotMigrata.Core.Values;
+using dotMigrata.Generator;
+using static dotMigrata.Generator.AttributeValueBuilder;
+
+// Define your custom person type (as shown in previous example)
+public sealed class DemographicPerson : PersonBase
+{
+    public DemographicPerson(IDictionary<FactorDefinition, double> factorSensitivities)
+        : base(factorSensitivities)
+    {
+    }
+
+    public int Age { get; init; }
+    public double Income { get; init; }
+    public string EducationLevel { get; init; } = string.Empty;
+    public bool IsEmployed { get; init; }
+}
+
+// Define factors
+var incomeFactor = new FactorDefinition
+{
+    DisplayName = "Income",
+    Type = FactorType.Positive,
+    MinValue = 20000,
+    MaxValue = 100000
+};
+
+var educationFactor = new FactorDefinition
+{
+    DisplayName = "Education Quality",
+    Type = FactorType.Positive,
+    MinValue = 0,
+    MaxValue = 100
+};
+
+FactorDefinition[] allFactors = [incomeFactor, educationFactor];
+
+// Create a PersonCollection with custom person generator
+var collection = new PersonCollection();
+
+// Use PersonFactory to generate custom person types
+var random = new Random(42);  // For additional custom property generation
+collection.Add(new GeneratorConfig
+{
+    Count = 10000,
+    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
+    {
+        [incomeFactor] = Attribute("IncomeSensitivity").InRange(3, 8),
+        [educationFactor] = Attribute("EducationSensitivity").InRange(2, 7)
+    },
+    MovingWillingness = MovingWillingness().InRange(0.4, 0.7),
+    RetentionRate = RetentionRate().InRange(0.3, 0.6),
+
+    // PersonFactory receives: sensitivities, willingness, retention, scaling, threshold, minAttraction, tags
+    // and returns a PersonBase-derived instance with custom properties set
+    PersonFactory = (sensitivities, willingness, retention, scaling, threshold, minAttraction, tags) =>
+    {
+        // Generate custom properties
+        var age = random.Next(18, 65);
+        var income = random.Next(25000, 120000);
+        var educationLevel = age < 25 ? "HighSchool" : 
+                           age < 30 ? "Bachelor" :
+                           age < 40 ? "Master" : "PhD";
+        var isEmployed = random.NextDouble() > 0.1;  // 90% employment rate
+        return new DemographicPerson(sensitivities)
+        {
+            MovingWillingness = willingness,
+            RetentionRate = retention,
+            Age = age,
+            Income = income,
+            EducationLevel = educationLevel,
+            IsEmployed = isEmployed
+        };
+    }
+});
+
+// Generate all persons
+IEnumerable<PersonBase> persons = collection.GenerateAllPersons(allFactors);
+
+// You can now use these custom persons with your custom calculator
+// Note: persons will be of type DemographicPerson, but returned as PersonBase
+var demographicPersons = persons.Cast<DemographicPerson>();
+Console.WriteLine($"Generated {demographicPersons.Count()} demographic persons");
+Console.WriteLine($"Average age: {demographicPersons.Average(p => p.Age):F1}");
+Console.WriteLine($"Average income: {demographicPersons.Average(p => p.Income):C0}");
+```
+
+**Important Notes for PersonFactory:**
+
+- The `PersonFactory` function receives 7 parameters: factor sensitivities, moving willingness, retention rate,
+  sensitivity scaling, attraction threshold, minimum acceptable attraction, and tags
+- These are the standard properties that the generator creates based on your `ValueSpecification` settings
+- Your factory function is responsible for creating the custom person instance and setting any additional custom
+  properties
+- You can use additional random number generators or any other logic within the factory to generate custom property
+  values
+- For StandardPerson (default), you can omit the `PersonFactory` and the framework will create StandardPerson instances
+  automatically
+- Template mode (`PersonCollection.Add(person, count)`) does not support custom person types - use `PersonFactory`
+  instead
+
+### Custom Person Types and Snapshots
+
+Version `0.5.1-beta` makes the snapshot system compatible with custom person types by using `PersonBase` throughout.
+However, note that:
+
+- **XML snapshots store only StandardPerson properties** by default (willingness, retention, sensitivities, etc.)
+- **Custom properties are not persisted** in the current snapshot format
+- If you need to persist custom properties, you should:
+  1. Store your world state using standard .NET serialization (JSON, Binary, etc.)
+  2. Or extend the snapshot XML schema with custom elements for your person type
+  3. Or use generators with PersonFactory to recreate custom persons from seed data
+
+```csharp
+using dotMigrata.Snapshot.Serialization;
+using dotMigrata.Snapshot.Conversion;
+
+// Converting a world with custom persons to snapshot
+var world = new World(cities, allFactors)
+{
+    DisplayName = "World with Custom Persons"
+};
+
+// This will work, but custom properties won't be saved
+var snapshot = SnapshotConverter.ToSnapshot(world);
+XmlSnapshotSerializer.SerializeToFile(snapshot, "world-snapshot.xml");
+
+// When loading back, you'll get base PersonBase instances
+// Custom properties will be lost
+var loadedSnapshot = XmlSnapshotSerializer.DeserializeFromFile("world-snapshot.xml");
+var loadedWorld = SnapshotConverter.ToWorld(loadedSnapshot);
+
+// For reproducible custom person generation, use generators with seeds
+// Store the generator configuration instead of person instances
+```
 
 ## Configuring Simulation Parameters
 

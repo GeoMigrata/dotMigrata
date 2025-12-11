@@ -91,11 +91,31 @@ public sealed class GeneratorConfig
     public double SensitivityStdDev { get; init; } = 3.0;
 
     /// <summary>
+    /// Gets or sets an optional factory function for creating custom person types.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///     When set, this factory function is called for each person to be generated, allowing
+    ///     creation of custom person types that inherit from <see cref="PersonBase" />.
+    ///     </para>
+    ///     <para>
+    ///     The factory receives the generated base properties (sensitivities, moving willingness, retention rate)
+    ///     and StandardPerson-specific properties, allowing users to create their own person types with additional custom
+    ///     properties.
+    ///     </para>
+    ///     <para>
+    ///     When null (default), generates <see cref="StandardPerson" /> instances.
+    ///     </para>
+    /// </remarks>
+    public Func<IDictionary<FactorDefinition, double>, NormalizedValue, NormalizedValue, double, double, double,
+        IReadOnlyList<string>, PersonBase>? PersonFactory { get; init; }
+
+    /// <summary>
     /// Generates persons according to this configuration.
     /// </summary>
     /// <param name="factorDefinitions">The factor definitions for the world.</param>
     /// <returns>Generated persons.</returns>
-    public IEnumerable<StandardPerson> GeneratePersons(IEnumerable<FactorDefinition> factorDefinitions)
+    public IEnumerable<PersonBase> GeneratePersons(IEnumerable<FactorDefinition> factorDefinitions)
     {
         var factors = factorDefinitions.ToList();
 
@@ -109,23 +129,28 @@ public sealed class GeneratorConfig
                 sensitivities[factor] = sensitivity;
             }
 
-            var person = new StandardPerson(sensitivities)
-            {
-                MovingWillingness = NormalizedValue.FromRatio(GenerateValue(MovingWillingness)),
-                RetentionRate = NormalizedValue.FromRatio(GenerateValue(RetentionRate)),
-                SensitivityScaling = SensitivityScaling != null
-                    ? GenerateValue(SensitivityScaling)
-                    : 1.0,
-                AttractionThreshold = AttractionThreshold != null
-                    ? GenerateValue(AttractionThreshold)
-                    : 0.0,
-                MinimumAcceptableAttraction = MinimumAcceptableAttraction != null
-                    ? GenerateValue(MinimumAcceptableAttraction)
-                    : 0.0,
-                Tags = Tags.ToList()
-            };
+            var movingWillingness = NormalizedValue.FromRatio(GenerateValue(MovingWillingness));
+            var retentionRate = NormalizedValue.FromRatio(GenerateValue(RetentionRate));
+            var sensitivityScaling = SensitivityScaling != null ? GenerateValue(SensitivityScaling) : 1.0;
+            var attractionThreshold = AttractionThreshold != null ? GenerateValue(AttractionThreshold) : 0.0;
+            var minimumAcceptableAttraction =
+                MinimumAcceptableAttraction != null ? GenerateValue(MinimumAcceptableAttraction) : 0.0;
+            var tags = Tags.ToList();
 
-            yield return person;
+            // Use custom factory if provided, otherwise create StandardPerson
+            if (PersonFactory != null)
+                yield return PersonFactory(sensitivities, movingWillingness, retentionRate,
+                    sensitivityScaling, attractionThreshold, minimumAcceptableAttraction, tags);
+            else
+                yield return new StandardPerson(sensitivities)
+                {
+                    MovingWillingness = movingWillingness,
+                    RetentionRate = retentionRate,
+                    SensitivityScaling = sensitivityScaling,
+                    AttractionThreshold = attractionThreshold,
+                    MinimumAcceptableAttraction = minimumAcceptableAttraction,
+                    Tags = tags
+                };
         }
     }
 

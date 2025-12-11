@@ -104,10 +104,11 @@ public sealed class PersonSpecification
             }
             else
             {
-                // For custom person types, create basic copies
-                // Custom types should handle their own cloning logic if needed
-                for (var i = 0; i < Count; i++)
-                    yield return _template;
+                // For custom person types, we cannot safely duplicate instances
+                // Custom types should use GeneratorConfig with PersonFactory instead
+                throw new InvalidOperationException(
+                    $"Cannot duplicate custom person type '{_template.GetType().Name}' using template mode. " +
+                    "Custom person types should use GeneratorConfig with a PersonFactory function to generate multiple instances.");
             }
         }
         else if (_generator != null)
