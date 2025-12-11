@@ -68,8 +68,9 @@ public sealed class MetricsCollector
             };
         }).ToList();
 
-        // Calculate tag populations
+        // Calculate tag populations (only for StandardPerson)
         var tagPopulations = world.AllPersons
+            .OfType<StandardPerson>()
             .SelectMany(p => p.Tags)
             .GroupBy(tag => tag)
             .ToDictionary(g => g.Key, g => g.Count());

@@ -59,7 +59,7 @@ public class World
     /// <summary>
     /// Gets all persons across all cities in the world.
     /// </summary>
-    public IEnumerable<Person> AllPersons => _cities.SelectMany(c => c.Persons);
+    public IEnumerable<PersonBase> AllPersons => _cities.SelectMany(c => c.Persons);
 
     /// <summary>
     /// Gets the total population across all cities in the world.

@@ -20,7 +20,7 @@ public sealed record MigrationFlow
     /// <summary>
     /// Gets the person who is migrating.
     /// </summary>
-    public required Person Person { get; init; }
+    public required PersonBase Person { get; init; }
 
     /// <summary>
     /// Gets the migration probability (0-1) for this flow.

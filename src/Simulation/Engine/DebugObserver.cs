@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using dotMigrata.Core.Entities;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
 
@@ -100,9 +101,10 @@ public sealed class DebugObserver : ISimulationObserver
         WriteValue($"{context.World.Population:N0}");
         WriteLine();
 
-        // Show population distribution by tags
+        // Show population distribution by tags (only for StandardPerson)
         var allPersons = context.World.Cities.SelectMany(c => c.Persons).ToList();
         var tagGroups = allPersons
+            .OfType<StandardPerson>()
             .SelectMany(p => p.Tags.DefaultIfEmpty("unknown"))
             .GroupBy(t => t)
             .OrderByDescending(g => g.Count())
@@ -316,37 +318,31 @@ public sealed class DebugObserver : ISimulationObserver
             WriteLine($": {group.Count():N0} persons");
 
             // Show sample persons
-            if (_showPersonDetails)
+            if (!_showPersonDetails) continue;
+            var samplePersons = group.Take(_maxPersonsToShow).ToList();
+            foreach (var flow in samplePersons)
             {
-                var samplePersons = group.Take(_maxPersonsToShow).ToList();
-                foreach (var flow in samplePersons)
-                {
-                    var tags = flow.Person.Tags.Any()
-                        ? string.Join(", ", flow.Person.Tags)
-                        : "no tags";
-                    SetColor(ConsoleColor.DarkGray);
-                    Write("        • ");
-                    SetColor(ConsoleColor.Gray);
-                    Write($"[{tags}] ");
-                    SetColor(ConsoleColor.DarkGray);
-                    Write($"Willingness: {flow.Person.MovingWillingness.Value:F2}, ");
-                    Write($"Prob: {flow.MigrationProbability:F3}");
-                    WriteLine();
-                }
-
-                if (group.Count() > _maxPersonsToShow)
-                {
-                    SetColor(ConsoleColor.DarkGray);
-                    WriteLine($"        ... and {group.Count() - _maxPersonsToShow:N0} more");
-                }
+                var tags = flow.Person is StandardPerson stdPerson && stdPerson.Tags.Any()
+                    ? string.Join(", ", stdPerson.Tags)
+                    : "no tags";
+                SetColor(ConsoleColor.DarkGray);
+                Write("        • ");
+                SetColor(ConsoleColor.Gray);
+                Write($"[{tags}] ");
+                SetColor(ConsoleColor.DarkGray);
+                Write($"Willingness: {flow.Person.MovingWillingness.Value:F2}, ");
+                Write($"Prob: {flow.MigrationProbability:F3}");
+                WriteLine();
             }
+
+            if (group.Count() <= _maxPersonsToShow) continue;
+            SetColor(ConsoleColor.DarkGray);
+            WriteLine($"        ... and {group.Count() - _maxPersonsToShow:N0} more");
         }
 
-        if (flowGroups.Count > 5)
-        {
-            SetColor(ConsoleColor.DarkGray);
-            WriteLine($"      ... and {flowGroups.Count - 5} more migration routes");
-        }
+        if (flowGroups.Count <= 5) return;
+        SetColor(ConsoleColor.DarkGray);
+        WriteLine($"      ... and {flowGroups.Count - 5} more migration routes");
     }
 
     private void SetColor(ConsoleColor color)

@@ -27,7 +27,7 @@ public sealed class WorldSnapshotXml
     /// Gets the snapshot format version for compatibility tracking.
     /// </summary>
     [XmlAttribute("Version")]
-    public string Version { get; init; } = "0.4";
+    public string Version { get; init; } = "0.5";
 
     /// <summary>
     /// Gets the unique identifier for this snapshot.

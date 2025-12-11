@@ -22,7 +22,7 @@ public interface IMigrationCalculator
     /// otherwise, <see langword="null" />.
     /// </returns>
     MigrationFlow? CalculateMigrationDecision(
-        Person person,
+        PersonBase person,
         IEnumerable<City> destinationCities,
         IDictionary<City, AttractionResult> attractionResults);
 

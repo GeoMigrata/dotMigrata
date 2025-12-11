@@ -43,7 +43,7 @@ public class StandardMigrationCalculator : IMigrationCalculator
 
     /// <inheritdoc />
     public MigrationFlow? CalculateMigrationDecision(
-        Person person,
+        PersonBase person,
         IEnumerable<City> destinationCities,
         IDictionary<City, AttractionResult> attractionResults)
     {
@@ -69,13 +69,17 @@ public class StandardMigrationCalculator : IMigrationCalculator
             var attractionDiff = (destAttraction.AdjustedAttraction - originAttraction.AdjustedAttraction)
                                  * person.MovingWillingness.Value;
 
-            // Skip if below person's attraction threshold
-            if (attractionDiff < person.AttractionThreshold)
-                continue;
+            // For StandardPerson, apply threshold and minimum checks
+            if (person is StandardPerson stdPerson)
+            {
+                // Skip if below person's attraction threshold
+                if (attractionDiff < stdPerson.AttractionThreshold)
+                    continue;
 
-            // Skip if destination attraction below minimum acceptable
-            if (destAttraction.AdjustedAttraction < person.MinimumAcceptableAttraction)
-                continue;
+                // Skip if destination attraction below minimum acceptable
+                if (destAttraction.AdjustedAttraction < stdPerson.MinimumAcceptableAttraction)
+                    continue;
+            }
 
             // Convert to migration probability using sigmoid
             var probability = MathUtils.Sigmoid(
@@ -120,7 +124,7 @@ public class StandardMigrationCalculator : IMigrationCalculator
         var allPersons = world.AllPersons.ToList();
 
         // Configure parallel or sequential processing based on config
-        IEnumerable<Person> query = allPersons;
+        IEnumerable<PersonBase> query = allPersons;
 
         if (_config.UseParallelProcessing)
         {

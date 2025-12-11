@@ -10,9 +10,9 @@ namespace dotMigrata.Generator;
 public sealed class PersonSpecification
 {
     private readonly GeneratorConfig? _generator;
-    private readonly Person? _template;
+    private readonly PersonBase? _template;
 
-    private PersonSpecification(Person? template, GeneratorConfig? generator, int count)
+    private PersonSpecification(PersonBase? template, GeneratorConfig? generator, int count)
     {
         _template = template;
         _generator = generator;
@@ -39,7 +39,7 @@ public sealed class PersonSpecification
     /// </summary>
     /// <param name="person">The person to add.</param>
     /// <returns>A person specification.</returns>
-    public static PersonSpecification FromPerson(Person person)
+    public static PersonSpecification FromPerson(PersonBase person)
     {
         ArgumentNullException.ThrowIfNull(person);
         return new PersonSpecification(person, null, 1);
@@ -51,7 +51,7 @@ public sealed class PersonSpecification
     /// <param name="person">The person template to duplicate.</param>
     /// <param name="count">Number of duplicates to create.</param>
     /// <returns>A person specification.</returns>
-    public static PersonSpecification FromPerson(Person person, int count)
+    public static PersonSpecification FromPerson(PersonBase person, int count)
     {
         ArgumentNullException.ThrowIfNull(person);
         return count <= 0
@@ -75,31 +75,46 @@ public sealed class PersonSpecification
     /// </summary>
     /// <param name="factorDefinitions">Factor definitions for the world.</param>
     /// <returns>Generated persons.</returns>
-    internal IEnumerable<Person> GeneratePersons(IEnumerable<FactorDefinition> factorDefinitions)
+    internal IEnumerable<PersonBase> GeneratePersons(IEnumerable<FactorDefinition> factorDefinitions)
     {
         if (_template != null)
+        {
             // Generate duplicates from template
-            for (var i = 0; i < Count; i++)
+            // For StandardPerson, preserve all properties
+            if (_template is StandardPerson stdTemplate)
             {
-                var sensitivities = _template.FactorSensitivities.ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => kvp.Value);
-
-                var person = new Person(sensitivities)
+                for (var i = 0; i < Count; i++)
                 {
-                    MovingWillingness = _template.MovingWillingness,
-                    RetentionRate = _template.RetentionRate,
-                    SensitivityScaling = _template.SensitivityScaling,
-                    AttractionThreshold = _template.AttractionThreshold,
-                    MinimumAcceptableAttraction = _template.MinimumAcceptableAttraction,
-                    Tags = _template.Tags.ToList()
-                };
+                    var sensitivities = stdTemplate.FactorSensitivities.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value);
 
-                yield return person;
+                    var person = new StandardPerson(sensitivities)
+                    {
+                        MovingWillingness = stdTemplate.MovingWillingness,
+                        RetentionRate = stdTemplate.RetentionRate,
+                        SensitivityScaling = stdTemplate.SensitivityScaling,
+                        AttractionThreshold = stdTemplate.AttractionThreshold,
+                        MinimumAcceptableAttraction = stdTemplate.MinimumAcceptableAttraction,
+                        Tags = stdTemplate.Tags.ToList()
+                    };
+
+                    yield return person;
+                }
             }
+            else
+            {
+                // For custom person types, create basic copies
+                // Custom types should handle their own cloning logic if needed
+                for (var i = 0; i < Count; i++)
+                    yield return _template;
+            }
+        }
         else if (_generator != null)
+        {
             // Generate from generator configuration
             foreach (var person in _generator.GeneratePersons(factorDefinitions))
                 yield return person;
+        }
     }
 }

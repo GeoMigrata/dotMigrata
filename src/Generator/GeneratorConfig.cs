@@ -95,7 +95,7 @@ public sealed class GeneratorConfig
     /// </summary>
     /// <param name="factorDefinitions">The factor definitions for the world.</param>
     /// <returns>Generated persons.</returns>
-    public IEnumerable<Person> GeneratePersons(IEnumerable<FactorDefinition> factorDefinitions)
+    public IEnumerable<StandardPerson> GeneratePersons(IEnumerable<FactorDefinition> factorDefinitions)
     {
         var factors = factorDefinitions.ToList();
 
@@ -109,7 +109,7 @@ public sealed class GeneratorConfig
                 sensitivities[factor] = sensitivity;
             }
 
-            var person = new Person(sensitivities)
+            var person = new StandardPerson(sensitivities)
             {
                 MovingWillingness = NormalizedValue.FromRatio(GenerateValue(MovingWillingness)),
                 RetentionRate = NormalizedValue.FromRatio(GenerateValue(RetentionRate)),

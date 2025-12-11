@@ -25,9 +25,9 @@
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
         <!-- Assembly Information -->
-        <AssemblyVersion>0.4.0.0</AssemblyVersion>
-        <FileVersion>0.4.0.0</FileVersion>
-        <InformationalVersion>0.4.0-beta</InformationalVersion>
+        <AssemblyVersion>0.5.0.0</AssemblyVersion>
+        <FileVersion>0.5.0.0</FileVersion>
+        <InformationalVersion>0.5.0-beta</InformationalVersion>
 
         <!-- Build Settings -->
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>

@@ -141,19 +141,19 @@ public static class SnapshotConverter
         };
     }
 
-    private static Dictionary<string, List<Person>> ConvertPersonCollections(
+    private static Dictionary<string, List<StandardPerson>> ConvertPersonCollections(
         List<PersonCollectionXml>? collections,
         Dictionary<string, FactorDefinition> factorLookup,
         List<FactorDefinition> allFactors)
     {
-        var result = new Dictionary<string, List<Person>>();
+        var result = new Dictionary<string, List<StandardPerson>>();
 
         if (collections == null)
             return result;
 
         foreach (var collection in collections)
         {
-            var persons = new List<Person>();
+            var persons = new List<StandardPerson>();
 
             // Process person templates
             if (collection.Persons != null)
@@ -173,7 +173,7 @@ public static class SnapshotConverter
         return result;
     }
 
-    private static IEnumerable<Person> ConvertPersonTemplate(
+    private static IEnumerable<StandardPerson> ConvertPersonTemplate(
         PersonTemplateXml template,
         Dictionary<string, FactorDefinition> factorLookup)
     {
@@ -185,7 +185,7 @@ public static class SnapshotConverter
             // Create a copy of sensitivities for each person to ensure independence
             var personSensitivities = new Dictionary<FactorDefinition, double>(sensitivities);
 
-            yield return new Person(personSensitivities)
+            yield return new StandardPerson(personSensitivities)
             {
                 MovingWillingness = NormalizedValue.FromRatio(template.MovingWillingness),
                 RetentionRate = NormalizedValue.FromRatio(template.RetentionRate),
@@ -197,7 +197,7 @@ public static class SnapshotConverter
         }
     }
 
-    private static IEnumerable<Person> ConvertGenerator(
+    private static IEnumerable<StandardPerson> ConvertGenerator(
         GeneratorXml generator,
         Dictionary<string, FactorDefinition> factorLookup,
         List<FactorDefinition> allFactors)
@@ -287,7 +287,7 @@ public static class SnapshotConverter
     private static List<City> ConvertCities(
         List<CityXml>? cities,
         Dictionary<string, FactorDefinition> factorLookup,
-        Dictionary<string, List<Person>> personCollections)
+        Dictionary<string, List<StandardPerson>> personCollections)
     {
         if (cities == null || cities.Count == 0)
             throw new InvalidOperationException("Snapshot must contain at least one city.");
@@ -298,7 +298,7 @@ public static class SnapshotConverter
     private static City ConvertCity(
         CityXml cityXml,
         Dictionary<string, FactorDefinition> factorLookup,
-        Dictionary<string, List<Person>> personCollections)
+        Dictionary<string, List<StandardPerson>> personCollections)
     {
         // Convert factor values
         var factorValues = new List<FactorValue>();
@@ -312,7 +312,7 @@ public static class SnapshotConverter
                     });
 
         // Collect persons from referenced collections
-        var persons = new List<Person>();
+        var persons = new List<StandardPerson>();
         if (cityXml.PersonCollections != null)
             foreach (var collectionRef in cityXml.PersonCollections)
                 if (personCollections.TryGetValue(collectionRef.Id, out var collectionPersons))
@@ -362,7 +362,7 @@ public static class SnapshotConverter
         return id.Trim('_');
     }
 
-    private static IReadOnlyList<string> ParseTags(string? tags)
+    private static List<string> ParseTags(string? tags)
     {
         if (string.IsNullOrWhiteSpace(tags))
             return [];

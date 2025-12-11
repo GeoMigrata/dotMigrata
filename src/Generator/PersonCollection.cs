@@ -21,7 +21,7 @@ public sealed class PersonCollection
     /// </summary>
     /// <param name="person">The person to add.</param>
     /// <returns>This collection for method chaining.</returns>
-    public PersonCollection Add(Person person)
+    public PersonCollection Add(PersonBase person)
     {
         ArgumentNullException.ThrowIfNull(person);
         _specifications.Add(PersonSpecification.FromPerson(person));
@@ -34,7 +34,7 @@ public sealed class PersonCollection
     /// <param name="person">The person template to duplicate.</param>
     /// <param name="count">Number of duplicates to create.</param>
     /// <returns>This collection for method chaining.</returns>
-    public PersonCollection Add(Person person, int count)
+    public PersonCollection Add(PersonBase person, int count)
     {
         ArgumentNullException.ThrowIfNull(person);
         _specifications.Add(PersonSpecification.FromPerson(person, count));
@@ -58,7 +58,7 @@ public sealed class PersonCollection
     /// </summary>
     /// <param name="factorDefinitions">The factor definitions to use for person generation.</param>
     /// <returns>A collection of all generated persons.</returns>
-    public IEnumerable<Person> GenerateAllPersons(IEnumerable<FactorDefinition> factorDefinitions)
+    public IEnumerable<PersonBase> GenerateAllPersons(IEnumerable<FactorDefinition> factorDefinitions)
     {
         ArgumentNullException.ThrowIfNull(factorDefinitions);
 

@@ -24,7 +24,7 @@ public interface IAttractionCalculator
     /// <returns>
     /// An <see cref="AttractionResult" /> containing the calculated attraction score and any additional metadata.
     /// </returns>
-    AttractionResult CalculateAttraction(City city, Person person, City? originCity = null);
+    AttractionResult CalculateAttraction(City city, PersonBase person, City? originCity = null);
 
     /// <summary>
     /// Calculates attraction scores for a person across all cities.
@@ -39,6 +39,6 @@ public interface IAttractionCalculator
     /// </returns>
     IDictionary<City, AttractionResult> CalculateAttractionForAllCities(
         IEnumerable<City> cities,
-        Person person,
+        PersonBase person,
         City? originCity = null);
 }

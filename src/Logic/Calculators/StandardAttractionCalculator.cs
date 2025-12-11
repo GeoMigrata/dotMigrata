@@ -26,7 +26,7 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
 
 
     /// <inheritdoc />
-    public AttractionResult CalculateAttraction(City city, Person person, City? originCity = null)
+    public AttractionResult CalculateAttraction(City city, PersonBase person, City? originCity = null)
     {
         // Step 1: Calculate base attraction from factor system
         var baseAttraction = CalculateBaseAttraction(city, person);
@@ -55,7 +55,7 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
     /// <inheritdoc />
     public IDictionary<City, AttractionResult> CalculateAttractionForAllCities(
         IEnumerable<City> cities,
-        Person person,
+        PersonBase person,
         City? originCity = null)
     {
         return cities.ToDictionary(
@@ -70,7 +70,7 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
     /// - I_ck: normalized intensity of factor k in city c
     /// - D_k: direction of factor k (+1 for positive, -1 for negative)
     /// </summary>
-    private static double CalculateBaseAttraction(City city, Person person)
+    private static double CalculateBaseAttraction(City city, PersonBase person)
     {
         var totalScore = 0.0;
 
@@ -89,8 +89,9 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
             totalScore += sensitivity * normalizedIntensity * direction;
         }
 
-        // Apply person's sensitivity scaling
-        totalScore *= person.SensitivityScaling;
+        // Apply person's sensitivity scaling if it's a StandardPerson
+        if (person is StandardPerson stdPerson)
+            totalScore *= stdPerson.SensitivityScaling;
 
         // Normalize to [0, 1] range using sigmoid
         return MathUtils.Sigmoid(totalScore, 1.0);

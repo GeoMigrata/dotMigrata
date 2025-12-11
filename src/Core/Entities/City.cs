@@ -10,11 +10,11 @@ namespace dotMigrata.Core.Entities;
 ///     <para>Implements <see cref="IDisposable" /> for proper cleanup of synchronization resources.</para>
 /// </remarks>
 /// </summary>
-public class City : IDisposable
+public sealed class City : IDisposable
 {
     private readonly Dictionary<FactorDefinition, FactorValue> _factorLookup;
     private readonly List<FactorValue> _factorValues;
-    private readonly HashSet<Person> _persons;
+    private readonly HashSet<PersonBase> _persons;
     private readonly ReaderWriterLockSlim _personsLock = new();
     private bool _disposed;
 
@@ -25,7 +25,7 @@ public class City : IDisposable
     /// <param name="persons">The initial persons residing in this city, or <see langword="null" /> for none.</param>
     public City(
         IEnumerable<FactorValue>? factorValues = null,
-        IEnumerable<Person>? persons = null)
+        IEnumerable<PersonBase>? persons = null)
     {
         _factorValues = factorValues?.ToList() ?? [];
         _factorLookup = _factorValues.ToDictionary(fv => fv.Definition, fv => fv);
@@ -77,7 +77,7 @@ public class City : IDisposable
     /// <remarks>
     /// Returns a snapshot to avoid holding locks during iteration.
     /// </remarks>
-    public IReadOnlyList<Person> Persons
+    public IReadOnlyList<PersonBase> Persons
     {
         get
         {
@@ -178,7 +178,7 @@ public class City : IDisposable
     /// <remarks>
     /// Thread-safe O(1) operation using <see cref="HashSet{T}" />.
     /// </remarks>
-    public void AddPerson(Person person)
+    public void AddPerson(PersonBase person)
     {
         ArgumentNullException.ThrowIfNull(person);
 
@@ -210,7 +210,7 @@ public class City : IDisposable
     /// <remarks>
     /// Thread-safe O(1) operation using <see cref="HashSet{T}" />.
     /// </remarks>
-    public bool RemovePerson(Person person)
+    public bool RemovePerson(PersonBase person)
     {
         ArgumentNullException.ThrowIfNull(person);
 
@@ -239,7 +239,7 @@ public class City : IDisposable
     /// <see langword="true" /> to release both managed and unmanaged resources;
     /// <see langword="false" /> to release only unmanaged resources.
     /// </param>
-    protected virtual void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
         if (_disposed) return;
 
