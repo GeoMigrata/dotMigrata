@@ -5,8 +5,9 @@ namespace dotMigrata.Simulation.Models;
 
 /// <summary>
 /// Represents the context and state for a single simulation execution.
-/// Contains the world being simulated, current tick information, and shared data between stages.
+/// Contains the world being simulated, current tick information, performance metrics, and shared data between stages.
 /// </summary>
+/// 
 public sealed class SimulationContext
 {
     private readonly Dictionary<string, object> _sharedData = new();
@@ -18,6 +19,7 @@ public sealed class SimulationContext
     public SimulationContext(World world)
     {
         World = world ?? throw new ArgumentNullException(nameof(world));
+        Performance = new PerformanceMetrics();
     }
 
     /// <summary>
@@ -49,6 +51,11 @@ public sealed class SimulationContext
     /// Gets or sets the collection of migration flows calculated for the current tick.
     /// </summary>
     public IEnumerable<MigrationFlow> CurrentMigrationFlows { get; set; } = [];
+
+    /// <summary>
+    /// Gets the performance metrics for this simulation execution.
+    /// </summary>
+    public PerformanceMetrics Performance { get; }
 
     /// <summary>
     /// Stores data in the shared context with the specified key.

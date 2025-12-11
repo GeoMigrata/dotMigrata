@@ -5,6 +5,7 @@ using dotMigrata.Simulation.Engine;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
 using dotMigrata.Simulation.Pipeline;
+using Microsoft.Extensions.Logging;
 
 namespace dotMigrata.Simulation.Builders;
 
@@ -21,6 +22,7 @@ public sealed class SimulationBuilder
     private IAttractionCalculator? _attractionCalculator;
     private IMigrationCalculator? _migrationCalculator;
     private IStabilityCriteria? _stabilityCriteria;
+    private ILogger<SimulationEngine>? _logger;
     private StandardModelConfig _modelConfig = StandardModelConfig.Default;
     private int? _randomSeed;
     private SimulationConfig _simulationConfig = SimulationConfig.Default;
@@ -226,6 +228,20 @@ public sealed class SimulationBuilder
     }
 
     /// <summary>
+    /// Sets a logger for structured logging of simulation events.
+    /// </summary>
+    /// <param name="logger">The logger instance to use for logging.</param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="logger" /> is <see langword="null" />.
+    /// </exception>
+    public SimulationBuilder WithLogger(ILogger<SimulationEngine> logger)
+    {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        return this;
+    }
+
+    /// <summary>
     /// Builds the configured simulation engine.
     /// </summary>
     /// <returns>A configured <see cref="SimulationEngine" /> instance.</returns>
@@ -244,7 +260,7 @@ public sealed class SimulationBuilder
             : CreateDefaultStages();
 
         var validatedConfig = _simulationConfig.Validate();
-        var engine = new SimulationEngine(stages, validatedConfig, _stabilityCriteria);
+        var engine = new SimulationEngine(stages, validatedConfig, _stabilityCriteria, _logger);
 
         foreach (var observer in _observers)
             engine.AddObserver(observer);
