@@ -214,22 +214,38 @@ A collection of person specifications that can be used to generate a population.
 ```csharp
 PersonCollection Add(PersonBase person)
 PersonCollection Add(PersonBase person, int count)
-PersonCollection Add(GeneratorConfig generator)
+PersonCollection Add<TPerson>(IPersonGenerator<TPerson> generator) where TPerson : PersonBase
+[Obsolete] PersonCollection Add(GeneratorConfig generator) // Deprecated, use StandardPersonGenerator
 IEnumerable<PersonBase> GenerateAllPersons(IEnumerable<FactorDefinition> factorDefinitions)
 int GetTotalCount()
 void Clear()
 ```
 
-### GeneratorConfig
+### IPersonGenerator<TPerson>
 
-Generates persons with randomized or specified attributes. Supports both `StandardPerson` (default) and custom person
-types via the `PersonFactory` property.
+Generic interface for implementing custom person generators. Define your own generator to create custom person types
+with specific properties and generation logic.
+
+**Properties:**
+
+- `Count` (int) - Number of persons to generate
+
+**Methods:**
+
+```csharp
+IEnumerable<TPerson> Generate(IEnumerable<FactorDefinition> factorDefinitions)
+```
+
+### StandardPersonGenerator
+
+Concrete implementation of `IPersonGenerator<StandardPerson>` for generating StandardPerson instances with randomized
+or specified attributes.
 
 **Constructors:**
 
 ```csharp
-new GeneratorConfig() // Random seed
-new GeneratorConfig(int seed) // Specific seed for reproducibility
+new StandardPersonGenerator() // Random seed
+new StandardPersonGenerator(int seed) // Specific seed for reproducibility
 ```
 
 **Properties:**
@@ -244,30 +260,19 @@ new GeneratorConfig(int seed) // Specific seed for reproducibility
 - `Tags` (IReadOnlyList<string>) - Tags to assign to all generated persons - Optional
 - `DefaultSensitivityRange` (ValueRange) - Default range for unspecified factors - Default: (-10.0, 10.0)
 - `SensitivityStdDev` (double) - Standard deviation for sensitivity normal distribution - Default: 3.0
-- `PersonFactory` (Func<...>?) - Optional factory for creating custom person types - Default: null
-
-**PersonFactory Signature (v0.5.1-beta and later):**
-
-```csharp
-Func<IDictionary<FactorDefinition, double>,  // Factor sensitivities
-     NormalizedValue,                         // Moving willingness
-     NormalizedValue,                         // Retention rate
-     double,                                  // Sensitivity scaling
-     double,                                  // Attraction threshold
-     double,                                  // Minimum acceptable attraction
-     IReadOnlyList<string>,                   // Tags
-     PersonBase>                              // Return: custom person instance
-```
-
-When `PersonFactory` is null, the generator creates `StandardPerson` instances with the generated properties. When set,
-the factory function is called for each person, allowing creation of custom person types with additional domain-specific
-properties.
 
 **Methods:**
 
 ```csharp
-IEnumerable<PersonBase> GeneratePersons(IEnumerable<FactorDefinition> factorDefinitions)
+IEnumerable<StandardPerson> Generate(IEnumerable<FactorDefinition> factorDefinitions)
 ```
+
+### GeneratorConfig (Deprecated)
+
+**This class is deprecated in v0.5.2-beta. Use `StandardPersonGenerator` instead.**
+
+For backward compatibility, `GeneratorConfig` is still available but marked as obsolete. New code should use
+`StandardPersonGenerator` for StandardPerson or implement `IPersonGenerator<TPerson>` for custom person types.
 
 ### ValueSpecification
 
@@ -773,26 +778,20 @@ var engine = SimulationBuilder.Create()
 var result = await engine.RunAsync(world);
 ```
 
-## Version 3.0 Features
+## Version 3.0+ Features
 
 ### Value Specifications
 
-Version 3.0 introduces named attribute methods for clearer value specifications:
+Version 3.0+ uses direct `ValueSpecification` static methods for type-safe value creation:
 
-**Named Attribute Methods:**
+**ValueSpecification Methods:**
 
 ```csharp
-using static dotMigrata.Generator.AttributeValueBuilder;
-
-// Use named methods for common attributes
-MovingWillingness().Fixed(0.75)                      // Fixed value
-MovingWillingness().InRange(0.4, 0.8)                // Uniform distribution
-MovingWillingness().Approximately(0.6, 0.15)         // Normal distribution
-Age().Random(scale: 1.5)                             // Random with scale
-
-// Available named methods:
-Age(), Income(), Education(), RiskPreference(), 
-MovingWillingness(), RetentionRate(), SensitivityScaling(), AttractionThreshold()
+// Use ValueSpecification static methods directly (no using static needed)
+ValueSpecification.Fixed(0.75)                      // Fixed value
+ValueSpecification.InRange(0.4, 0.8)                // Uniform distribution  
+ValueSpecification.Approximately(0.6, 0.15)         // Normal distribution
+ValueSpecification.RandomWithScale(1.5)             // Random with scale
 
 // Generic method for custom attributes
 Attribute("CustomAttribute").InRange(0, 100)

@@ -71,10 +71,10 @@ directly, not strings.
 
 ```csharp
 var collection = new PersonCollection();
-collection.Add(new GeneratorConfig
+collection.Add(new StandardPersonGenerator
 {
     Count = 100000,
-    // Use FactorDefinition references (not strings) for type safety
+    // Use FactorDefinition references for type safety
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
         [incomeFactor] = ValueSpecification.InRange(3, 8),        // Sensitivity to income
@@ -264,10 +264,10 @@ var middleClassPerson = new StandardPerson(new Dictionary<FactorDefinition, doub
 collection.Add(middleClassPerson, count: 10_000);
 
 // 3. Generate 100,000 persons with varied attributes using a generator
-collection.Add(new GeneratorConfig(seed: 42)
+collection.Add(new StandardPersonGenerator(seed: 42)
 {
     Count = 100_000,
-    // Use FactorDefinition references (not strings) for type safety
+    // Use FactorDefinition references for type safety
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
         [incomeFactor] = ValueSpecification.InRange(3, 15),  // Custom range for Income sensitivity
@@ -316,7 +316,7 @@ var tagStats = world.AllPersons
 - Precise control with fixed values, custom ranges, or biased random
 - Reproducible generation with seeds
 - Efficient duplicate handling
-- **Full-reference architecture:** Uses `FactorDefinition` object references for type safety
+- Type-safe FactorDefinition references
 
 ## Custom Person Generation
 
@@ -344,7 +344,7 @@ FactorDefinition[] allFactors = [incomeFactor];
 var collection = new PersonCollection();
 
 // Configure generator with custom seed and sensitivity parameters
-collection.Add(new GeneratorConfig(seed: 42)
+collection.Add(new StandardPersonGenerator(seed: 42)
 {
     Count = 50000,
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
@@ -440,6 +440,10 @@ using dotMigrata.Logic.Models;
 /// <summary>
 /// Custom attraction calculator that considers demographic attributes.
 /// </summary>
+/// <remarks>
+/// Note: With World's person type validation, all persons will be DemographicPerson
+/// when using this calculator, so pattern matching is safe.
+/// </remarks>
 public class DemographicAttractionCalculator : IAttractionCalculator
 {
     private readonly StandardAttractionCalculator _baseCalculator;
@@ -454,26 +458,24 @@ public class DemographicAttractionCalculator : IAttractionCalculator
         // Calculate base attraction using standard logic
         var result = _baseCalculator.CalculateAttraction(city, person, originCity);
 
-        // Apply demographic-specific adjustments if it's a DemographicPerson
-        if (person is DemographicPerson demoPerson)
-        {
-            var adjustment = 1.0;
+        // Since World validates all persons are the same type, we can safely cast
+        var demoPerson = (DemographicPerson)person;
+        
+        var adjustment = 1.0;
 
-            // Young people are more mobile (higher attraction)
-            if (demoPerson.Age < 30)
-                adjustment *= 1.2;
+        // Young people are more mobile (higher attraction)
+        if (demoPerson.Age < 30)
+            adjustment *= 1.2;
 
-            // High-income individuals less sensitive to economic factors
-            if (demoPerson.Income > 100000)
-                adjustment *= 0.9;
+        // High-income individuals less sensitive to economic factors
+        if (demoPerson.Income > 100000)
+            adjustment *= 0.9;
 
-            // Educated individuals prefer certain cities
-            if (demoPerson.EducationLevel == "PhD" && city.DisplayName.Contains("University"))
-                adjustment *= 1.3;
+        // Educated individuals prefer certain cities
+        if (demoPerson.EducationLevel == "PhD" && city.DisplayName.Contains("University"))
+            adjustment *= 1.3;
 
-            result.AdjustedAttraction *= adjustment;
-        }
-
+        result.AdjustedAttraction *= adjustment;
         return result;
     }
 
@@ -492,15 +494,17 @@ public class DemographicAttractionCalculator : IAttractionCalculator
 ### Key Points for Custom Person Types
 
 - **Inherit from `PersonBase`**: All custom person types must inherit from the abstract `PersonBase` class
-- **Use pattern matching**: Access custom properties using `is` pattern matching in calculators
+- **Implement `IPersonGenerator<TPerson>`**: Create a custom generator for your person type
+- **Single type per world**: The framework enforces that all persons in a simulation are the same type
 - **Thread safety**: Ensure custom properties are immutable (use `init` instead of `set`)
 - **Tags support**: All person types inherit `Tags` property from `PersonBase` for consistent categorization
 - **Factory pattern**: Consider creating factory methods for complex initialization
 
-### Generating Custom Person Types with PersonFactory
+### Generating Custom Person Types
 
-Version `0.5.1-beta` adds support for generating custom person types using the `PersonFactory` property in
-`GeneratorConfig`. This allows you to specify how custom properties should be generated for your custom person types.
+Version `0.5.2-beta` provides a type-safe way to generate custom person types by implementing the
+`IPersonGenerator<TPerson>` interface. This approach is cleaner and more flexible than the deprecated PersonFactory
+pattern.
 
 ```csharp
 using dotMigrata.Core.Entities;
@@ -508,7 +512,7 @@ using dotMigrata.Core.Enums;
 using dotMigrata.Core.Values;
 using dotMigrata.Generator;
 
-// Define your custom person type (as shown in previous example)
+// Define your custom person type
 public sealed class DemographicPerson : PersonBase
 {
     public DemographicPerson(IDictionary<FactorDefinition, double> factorSensitivities)
@@ -522,7 +526,71 @@ public sealed class DemographicPerson : PersonBase
     public bool IsEmployed { get; init; }
 }
 
-// Define factors
+// Implement a custom generator for your person type
+public sealed class DemographicPersonGenerator : IPersonGenerator<DemographicPerson>
+{
+    private readonly Random _random;
+
+    public DemographicPersonGenerator(int seed = 0)
+    {
+        _random = seed == 0 ? new Random() : new Random(seed);
+    }
+
+    public required int Count { get; init; }
+    public required ValueSpecification MovingWillingness { get; init; }
+    public required ValueSpecification RetentionRate { get; init; }
+    public required ValueSpecification Age { get; init; }
+    public required ValueSpecification Income { get; init; }
+    public Dictionary<FactorDefinition, ValueSpecification> FactorSensitivities { get; init; } = [];
+    public IReadOnlyList<string> Tags { get; init; } = [];
+
+    public IEnumerable<DemographicPerson> Generate(IEnumerable<FactorDefinition> factorDefinitions)
+    {
+        var factors = factorDefinitions.ToList();
+        for (var i = 0; i < Count; i++)
+        {
+            // Generate base properties
+            var sensitivities = new Dictionary<FactorDefinition, double>();
+            foreach (var factor in factors)
+            {
+                if (FactorSensitivities.TryGetValue(factor, out var spec))
+                    sensitivities[factor] = GenerateValue(spec);
+                else
+                    sensitivities[factor] = _random.NextDouble() * 10 - 5; // Default range
+            }
+
+            var age = (int)GenerateValue(Age);
+            var income = GenerateValue(Income);
+            var educationLevel = age < 25 ? "HighSchool" : 
+                               age < 30 ? "Bachelor" :
+                               age < 40 ? "Master" : "PhD";
+
+            yield return new DemographicPerson(sensitivities)
+            {
+                MovingWillingness = NormalizedValue.FromRatio(GenerateValue(MovingWillingness)),
+                RetentionRate = NormalizedValue.FromRatio(GenerateValue(RetentionRate)),
+                Age = age,
+                Income = income,
+                EducationLevel = educationLevel,
+                IsEmployed = _random.NextDouble() > 0.1,
+                Tags = Tags.ToList()
+            };
+        }
+    }
+
+    private double GenerateValue(ValueSpecification spec)
+    {
+        if (spec.IsFixed) return spec.FixedValue!.Value;
+        if (spec.HasRange)
+        {
+            var (min, max) = spec.Range!.Value;
+            return min + _random.NextDouble() * (max - min);
+        }
+        return _random.NextDouble();
+    }
+}
+
+// Usage
 var incomeFactor = new FactorDefinition
 {
     DisplayName = "Income",
@@ -531,83 +599,40 @@ var incomeFactor = new FactorDefinition
     MaxValue = 100000
 };
 
-var educationFactor = new FactorDefinition
-{
-    DisplayName = "Education Quality",
-    Type = FactorType.Positive,
-    MinValue = 0,
-    MaxValue = 100
-};
+FactorDefinition[] allFactors = [incomeFactor];
 
-FactorDefinition[] allFactors = [incomeFactor, educationFactor];
-
-// Create a PersonCollection with custom person generator
 var collection = new PersonCollection();
-
-// Use PersonFactory to generate custom person types
-var random = new Random(42);  // For additional custom property generation
-collection.Add(new GeneratorConfig
+collection.Add(new DemographicPersonGenerator(seed: 42)
 {
     Count = 10000,
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        [incomeFactor] = ValueSpecification.InRange(3, 8),
-        [educationFactor] = ValueSpecification.InRange(2, 7)
+        [incomeFactor] = ValueSpecification.InRange(3, 8)
     },
     MovingWillingness = ValueSpecification.InRange(0.4, 0.7),
     RetentionRate = ValueSpecification.InRange(0.3, 0.6),
-
-    // PersonFactory receives: sensitivities, willingness, retention, scaling, threshold, minAttraction, tags
-    // and returns a PersonBase-derived instance with custom properties set
-    PersonFactory = (sensitivities, willingness, retention, scaling, threshold, minAttraction, tags) =>
-    {
-        // Generate custom properties
-        var age = random.Next(18, 65);
-        var income = random.Next(25000, 120000);
-        var educationLevel = age < 25 ? "HighSchool" : 
-                           age < 30 ? "Bachelor" :
-                           age < 40 ? "Master" : "PhD";
-        var isEmployed = random.NextDouble() > 0.1;  // 90% employment rate
-        return new DemographicPerson(sensitivities)
-        {
-            MovingWillingness = willingness,
-            RetentionRate = retention,
-            Age = age,
-            Income = income,
-            EducationLevel = educationLevel,
-            IsEmployed = isEmployed
-        };
-    }
+    Age = ValueSpecification.InRange(18, 65),
+    Income = ValueSpecification.InRange(25000, 120000),
+    Tags = ["demographic_study"]
 });
 
-// Generate all persons
 IEnumerable<PersonBase> persons = collection.GenerateAllPersons(allFactors);
-
-// You can now use these custom persons with your custom calculator
-// Note: persons will be of type DemographicPerson, but returned as PersonBase
 var demographicPersons = persons.Cast<DemographicPerson>();
 Console.WriteLine($"Generated {demographicPersons.Count()} demographic persons");
 Console.WriteLine($"Average age: {demographicPersons.Average(p => p.Age):F1}");
-Console.WriteLine($"Average income: {demographicPersons.Average(p => p.Income):C0}");
 ```
 
-**Important Notes for PersonFactory:**
+**Benefits of Custom Generators:**
 
-- The `PersonFactory` function receives 7 parameters: factor sensitivities, moving willingness, retention rate,
-  sensitivity scaling, attraction threshold, minimum acceptable attraction, and tags
-- These are the standard properties that the generator creates based on your `ValueSpecification` settings
-- Your factory function is responsible for creating the custom person instance and setting any additional custom
-  properties
-- You can use additional random number generators or any other logic within the factory to generate custom property
-  values
-- For StandardPerson (default), you can omit the `PersonFactory` and the framework will create StandardPerson instances
-  automatically
-- Template mode (`PersonCollection.Add(person, count)`) does not support custom person types - use `PersonFactory`
-  instead
+- **Type-safe**: Define exactly the properties your person type needs
+- **Flexible**: Full control over generation logic
+- **Clean API**: No unwieldy 7-parameter functions
+- **Testable**: Easy to unit test generator logic
+- **Discoverable**: Clear interface makes implementation obvious
 
 ### Custom Person Types and Snapshots
 
-Version `0.5.1-beta` makes the snapshot system compatible with custom person types by using `PersonBase` throughout.
+The snapshot system works with custom person types by using `PersonBase` throughout.
 However, note that:
 
 - **XML snapshots store only StandardPerson properties** by default (willingness, retention, sensitivities, etc.)
@@ -615,7 +640,7 @@ However, note that:
 - If you need to persist custom properties, you should:
   1. Store your world state using standard .NET serialization (JSON, Binary, etc.)
   2. Or extend the snapshot XML schema with custom elements for your person type
-  3. Or use generators with PersonFactory to recreate custom persons from seed data
+  3. Or use generators with seeds to recreate custom persons deterministically
 
 ```csharp
 using dotMigrata.Snapshot.Serialization;

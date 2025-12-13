@@ -4,7 +4,7 @@
 [![.NET9.0](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
 [![.NET10.0](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.5.1--beta-green.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.5.2--beta-green.svg)]()
 
 dotMigrata, a product from Project GeoMigrata, is a C# .NET simulation framework designed to model individual-based
 population migration and city
@@ -129,8 +129,8 @@ Implements a pipeline-based simulation engine:
 
 Person generation module:
 
-- `PersonGenerator` - Generates large populations with randomized attributes
-- `PersonGeneratorConfig` - Configuration for person generation (distributions, ranges, seeds)
+- `IPersonGenerator<TPerson>` - Generic interface for custom person generators
+- `StandardPersonGenerator` - Generator for StandardPerson with configurable attributes
 - `PersonCollection` - Flexible population specifications with Individual, Individuals, and Generator support
 
 ### Snapshot Layer (`/src/Snapshot`)
@@ -187,7 +187,7 @@ Domain models available for use and extension:
 
 - **`World`**, **`City`**, **`PersonBase`**, **`StandardPerson`** - Core simulation entities
 - **`FactorDefinition`**, **`FactorValue`** - City characteristic system
-- **`PersonGenerator`**, **`PersonGeneratorConfig`** - Population generation
+- **`IPersonGenerator<TPerson>`**, **`StandardPersonGenerator`** - Population generation
 - **`SimulationContext`** - Runtime simulation state
 - **`AttractionResult`**, **`MigrationFlow`** - Calculation results
 
