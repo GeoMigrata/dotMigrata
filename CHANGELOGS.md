@@ -1,4 +1,127 @@
-﻿## Version 0.5.2-beta Highlights
+﻿## Version 0.6.0-beta Highlights
+
+**Version 0.6.0-beta** introduces a comprehensive **Event System** as a core simulation mechanism alongside cities,
+factors, and persons.
+
+### Breaking Changes
+
+- **FeedbackStage replaced with EventStage** - Feedback strategies now work through the unified event system
+- **`WithFeedbackInterval` renamed to `WithEventInterval`** - Reflects broader event system usage
+- Events are now first-class simulation components with their own pipeline stage
+
+### New Features - Event System
+
+- **`ISimulationEvent`** - Core abstraction for simulation events that modify world state
+- **Event Triggers** - Multiple trigger types for flexible event scheduling:
+  - `TickTrigger` - Fire once at a specific tick
+  - `PeriodicTrigger` - Fire repeatedly at regular intervals
+  - `ContinuousTrigger` - Fire continuously within a time window
+  - `ConditionalTrigger` - Fire when custom conditions are met (extension point for ECA patterns)
+- **Event Effects** - Flexible effect system for factor modifications:
+  - `FactorChangeEffect` - Change city factor values with multiple application types
+  - `FeedbackEffect` - Adapter for existing feedback strategies (backward compatible)
+  - `CompositeEffect` - Apply multiple effects simultaneously
+- **Effect Application Types**:
+  - `Absolute` - Set factor to exact value
+  - `Delta` - Add/subtract from current value
+  - `Multiply` - Multiply current value
+  - `LinearTransition` - Transition linearly over duration
+  - `LogarithmicTransition` - Transition logarithmically (fast then slow)
+- **ValueSpecification Integration** - Reuses existing infrastructure for flexible value generation (fixed, range,
+  approximate)
+- **EventStage** - Pipeline stage that executes events based on their triggers
+- **Type-Safe Design** - Events use object references (FactorDefinition, City) instead of string IDs
+
+### Builder API Updates
+
+**New methods:**
+
+```csharp
+builder.WithEvent(ISimulationEvent)
+builder.WithFactorChange(displayName, factor, valueSpec, trigger, applicationType, duration, cityFilter)
+builder.WithEventInterval(interval)  // Renamed from WithFeedbackInterval
+```
+
+**Backward compatible:**
+
+```csharp
+builder.WithFeedback(strategy)  // Now creates periodic events internally
+```
+
+### Usage Examples
+
+```csharp
+// One-time event at tick 50
+builder.WithFactorChange(
+    "Earthquake",
+    infrastructureFactor,
+    ValueSpecification.Fixed(30),
+    new TickTrigger(50),
+    EffectApplicationType.Absolute);
+
+// Periodic event every 10 ticks
+builder.WithFactorChange(
+    "Housing Subsidy",
+    housingCostFactor,
+    ValueSpecification.Fixed(-5),
+    new PeriodicTrigger(10, startTick: 20, endTick: 80),
+    EffectApplicationType.Delta);
+
+// Linear transition over 20 ticks
+builder.WithFactorChange(
+    "Green Initiative",
+    pollutionFactor,
+    ValueSpecification.Fixed(20),
+    new TickTrigger(30),
+    EffectApplicationType.LinearTransition,
+    EffectDuration.Over(20));
+
+// Conditional event (extension point for complex ECA patterns)
+builder.WithEvent(new SimulationEvent(
+    "Congestion Response",
+    new ConditionalTrigger(
+        ctx => ctx.World.Cities.Any(c => c.Population > c.Capacity * 0.9),
+        cooldown: 10),
+    new FactorChangeEffect(...)));
+```
+
+### Architecture Benefits
+
+1. **Unified Mechanism** - Events and feedback use the same infrastructure
+2. **Extensible** - Easy to add custom triggers, effects, and event types
+3. **Type-Safe** - No string-based IDs, uses object references
+4. **Lightweight** - Reuses existing ValueSpecification, no heavy dependencies
+5. **Visualization-Ready** - Events have display names and descriptions for UI integration
+6. **Flexible Timing** - Support for one-time, periodic, continuous, and conditional execution
+
+### Migration Guide
+
+**v0.5.2 code:**
+
+```csharp
+builder.WithFeedback(strategy)
+    .WithFeedbackInterval(10);
+```
+
+**v0.6.0 equivalent:**
+
+```csharp
+builder.WithFeedback(strategy)  // Still works! Converted to events internally
+    .WithEventInterval(10);      // Renamed method
+```
+
+**New event-based approach:**
+
+```csharp
+builder.WithEvent(new SimulationEvent(
+    $"Feedback: {strategy.Name}",
+    new PeriodicTrigger(10),
+    new FeedbackEffect(strategy)));
+```
+
+---
+
+## Version 0.5.2-beta Highlights
 
 **Version 0.5.2-beta** introduces major architectural improvements for type safety, extensibility, and design clarity:
 

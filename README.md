@@ -38,14 +38,16 @@ factors in an ongoing iterative process.
   for every FactorDefinition in the world.
 - **PersonGenerator:** Module for generating large populations (10,000 to 1,000,000+) with randomized attributes using
   configurable distributions (normal distribution for sensitivities).
+- **Events:** Fundamental simulation mechanism that modifies city factor values during runtime. Events support various
+  triggers (one-time, periodic, continuous, conditional) and effect types (absolute, delta, multiply, linear/logarithmic
+  transitions). Enables dynamic scenarios like policy changes, disasters, or economic shifts.
 - **Attraction:** Computes net attractiveness of a city for an individual person considering normalized factor values,
   personal sensitivities, and factor directions.
 - **Migration:** Individual migration decisions are based on attraction differences, personal thresholds, and
   willingness to move. Each person independently decides whether to migrate and to which city, considering distance,
   capacity, and personal preferences.
-- **City Feedback:** After migration, city factors can be updated according to feedback mechanisms (per capita
-  resources, housing costs, congestion/pollution, industrial/economic effects), typically with smoothing to avoid abrupt
-  changes.
+- **Feedback:** Feedback strategies (e.g., congestion, per-capita resources) are integrated through the event system,
+  running as periodic events that dynamically adjust city factors based on population changes.
 
 ## Simulation Flow
 
@@ -57,7 +59,8 @@ factors in an ongoing iterative process.
     - For each person, calculate attraction to all cities based on personal sensitivities
     - Each person independently decides whether to migrate based on attraction differences and personal willingness
     - Execute migrations by moving persons between cities (thread-safe operations)
-    - Optionally update city factors based on migration feedback
+   - Execute events based on their triggers (one-time, periodic, continuous, or conditional)
+   - Events modify city factors dynamically (absolute changes, transitions, feedback mechanisms)
 3. Repeat until simulation ends (max time steps or system stabilizes).
 
 ## Key Features
@@ -122,8 +125,26 @@ Implements a pipeline-based simulation engine:
 
 - `ISimulationStage` - Extensible stage interface
 - `SimulationEngine` - Tick-based orchestrator
-- Built-in stages: `MigrationDecisionStage`, `MigrationExecutionStage`
+- Built-in stages: `MigrationDecisionStage`, `MigrationExecutionStage`, `EventStage`
 - `ISimulationObserver` - Observer pattern for monitoring (includes `ConsoleObserver`)
+
+#### Events Subsystem (`/src/Simulation/Events`)
+
+Core event system for dynamic factor modifications:
+
+- `ISimulationEvent`, `SimulationEvent` - Event abstractions and implementations
+- `IEventTrigger` - Trigger interface with multiple implementations:
+    - `TickTrigger` - One-time execution at specific tick
+    - `PeriodicTrigger` - Repeated execution at intervals
+    - `ContinuousTrigger` - Continuous execution within time window
+    - `ConditionalTrigger` - Condition-based execution (extension point for ECA patterns)
+- `IEventEffect` - Effect interface with implementations:
+    - `FactorChangeEffect` - Modify city factor values (absolute, delta, multiply, transitions)
+    - `FeedbackEffect` - Adapter for feedback strategies
+    - `CompositeEffect` - Multiple effects in sequence
+- `EffectApplicationType` - Application types (absolute, delta, multiply, linear/logarithmic transitions)
+- `EffectDuration` - Duration specification (instant or over N ticks)
+- `EventStage` - Pipeline stage for event execution
 
 ### Generator Layer (`/src/Generator`)
 

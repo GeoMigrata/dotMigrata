@@ -1,8 +1,15 @@
-﻿using dotMigrata.Logic.Calculators;
+﻿using dotMigrata.Core.Entities;
+using dotMigrata.Core.Values;
+using dotMigrata.Generator;
+using dotMigrata.Logic.Calculators;
 using dotMigrata.Logic.Feedback;
 using dotMigrata.Logic.Interfaces;
 using dotMigrata.Logic.Models;
 using dotMigrata.Simulation.Engine;
+using dotMigrata.Simulation.Events;
+using dotMigrata.Simulation.Events.Effects;
+using dotMigrata.Simulation.Events.Enums;
+using dotMigrata.Simulation.Events.Interfaces;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
 using dotMigrata.Simulation.Pipeline;
@@ -18,11 +25,11 @@ namespace dotMigrata.Simulation.Builders;
 /// </remarks>
 public sealed class SimulationBuilder
 {
-    private readonly List<IFeedbackStrategy> _feedbackStrategies = [];
+    private readonly List<ISimulationEvent> _events = [];
     private readonly List<ISimulationObserver> _observers = [];
     private readonly List<ISimulationStage> _stages = [];
     private IAttractionCalculator? _attractionCalculator;
-    private int _feedbackInterval = 1;
+    private int _defaultEventInterval = 1;
     private ILogger<SimulationEngine>? _logger;
     private IMigrationCalculator? _migrationCalculator;
     private StandardModelConfig _modelConfig = StandardModelConfig.Default;
@@ -245,22 +252,86 @@ public sealed class SimulationBuilder
     }
 
     /// <summary>
-    /// Adds a feedback strategy to dynamically adjust city factors based on migration patterns.
+    /// Adds a simulation event to the pipeline.
+    /// </summary>
+    /// <param name="evt">The event to add.</param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="evt" /> is <see langword="null" />.
+    /// </exception>
+    public SimulationBuilder WithEvent(ISimulationEvent evt)
+    {
+        ArgumentNullException.ThrowIfNull(evt);
+        _events.Add(evt);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a factor change event with fluent configuration.
+    /// </summary>
+    /// <param name="displayName">The display name of the event.</param>
+    /// <param name="factor">The factor to modify.</param>
+    /// <param name="valueSpecification">The target value specification.</param>
+    /// <param name="trigger">The trigger determining when this event fires.</param>
+    /// <param name="applicationType">How the value change is applied.</param>
+    /// <param name="duration">Duration over which the effect is applied.</param>
+    /// <param name="cityFilter">Optional filter for which cities are affected.</param>
+    /// <param name="description">Optional description of the event.</param>
+    /// <returns>This builder for method chaining.</returns>
+    public SimulationBuilder WithFactorChange(
+        string displayName,
+        FactorDefinition factor,
+        ValueSpecification valueSpecification,
+        IEventTrigger trigger,
+        EffectApplicationType applicationType = EffectApplicationType.Absolute,
+        EffectDuration? duration = null,
+        Func<City, bool>? cityFilter = null,
+        string? description = null)
+    {
+        var effect = new FactorChangeEffect(
+            factor,
+            valueSpecification,
+            applicationType,
+            duration ?? EffectDuration.Instant,
+            cityFilter,
+            _randomSeed);
+
+        var evt = new SimulationEvent(displayName, trigger, effect, description);
+        _events.Add(evt);
+
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a feedback strategy as a periodic event.
     /// </summary>
     /// <param name="strategy">The feedback strategy to add.</param>
     /// <returns>This builder for method chaining.</returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="strategy" /> is <see langword="null" />.
     /// </exception>
+    /// <remarks>
+    /// Feedback strategies are converted to periodic events for unified handling.
+    /// Use <see cref="WithEventInterval"/> to control the feedback interval.
+    /// </remarks>
     public SimulationBuilder WithFeedback(IFeedbackStrategy strategy)
     {
         ArgumentNullException.ThrowIfNull(strategy);
-        _feedbackStrategies.Add(strategy);
+
+        var effect = new FeedbackEffect(strategy);
+        var trigger = new PeriodicTrigger(_defaultEventInterval);
+        var evt = new SimulationEvent(
+            $"Feedback: {strategy.Name}",
+            trigger,
+            effect,
+            $"Feedback strategy: {strategy.Name}");
+
+        _events.Add(evt);
         return this;
     }
 
     /// <summary>
-    /// Adds multiple feedback strategies.
+    /// Adds multiple feedback strategies as periodic events.
     /// </summary>
     /// <param name="strategies">The feedback strategies to add.</param>
     /// <returns>This builder for method chaining.</returns>
@@ -270,23 +341,26 @@ public sealed class SimulationBuilder
     public SimulationBuilder WithFeedback(IEnumerable<IFeedbackStrategy> strategies)
     {
         ArgumentNullException.ThrowIfNull(strategies);
-        _feedbackStrategies.AddRange(strategies);
+
+        foreach (var strategy in strategies)
+            WithFeedback(strategy);
+
         return this;
     }
 
     /// <summary>
-    /// Sets how often feedback should be applied (every N ticks).
+    /// Sets the default interval for periodic events (e.g., feedback).
     /// </summary>
-    /// <param name="interval">The interval in ticks between feedback applications.</param>
+    /// <param name="interval">The interval in ticks between executions.</param>
     /// <returns>This builder for method chaining.</returns>
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown when <paramref name="interval" /> is less than 1.
     /// </exception>
-    public SimulationBuilder WithFeedbackInterval(int interval)
+    public SimulationBuilder WithEventInterval(int interval)
     {
         if (interval < 1)
-            throw new ArgumentOutOfRangeException(nameof(interval), "Feedback interval must be at least 1.");
-        _feedbackInterval = interval;
+            throw new ArgumentOutOfRangeException(nameof(interval), "Event interval must be at least 1.");
+        _defaultEventInterval = interval;
         return this;
     }
 
@@ -325,9 +399,9 @@ public sealed class SimulationBuilder
             new MigrationExecutionStage()
         };
 
-        // Add feedback stage if strategies are configured
-        if (_feedbackStrategies.Count > 0)
-            stages.Add(new FeedbackStage(_feedbackStrategies, _feedbackInterval));
+        // Add event stage if events are configured
+        if (_events.Count > 0)
+            stages.Add(new EventStage(_events));
 
         return stages;
     }
