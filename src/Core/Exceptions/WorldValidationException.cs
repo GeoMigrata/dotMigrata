@@ -2,12 +2,13 @@
 
 /// <summary>
 /// Represents validation errors that occur when validating world structure,
-/// such as missing factor values in cities.
+/// such as missing factor values in cities or mixing person types.
 /// </summary>
 public sealed class WorldValidationException : DotMigrataException
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="WorldValidationException" /> class.
+    /// Initializes a new instance of the <see cref="WorldValidationException" /> class
+    /// for missing factor values.
     /// </summary>
     /// <param name="cityName">The name of the city that failed validation.</param>
     /// <param name="missingFactorNames">The names of the factors that are missing values.</param>
@@ -18,6 +19,18 @@ public sealed class WorldValidationException : DotMigrataException
 
         CityName = cityName;
         MissingFactorNames = missingFactorNames.ToArray();
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WorldValidationException" /> class
+    /// with a custom message.
+    /// </summary>
+    /// <param name="message">The error message.</param>
+    public WorldValidationException(string message)
+        : base(message)
+    {
+        CityName = string.Empty;
+        MissingFactorNames = [];
     }
 
     /// <summary>

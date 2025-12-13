@@ -15,38 +15,38 @@ namespace dotMigrata.Logic.Feedback;
 [DebuggerDisplay("Feedback: {Name}")]
 public sealed class PerCapitaFeedbackStrategy : IFeedbackStrategy
 {
-    private readonly string _factorName;
+    private readonly FactorDefinition _factor;
     private readonly double _minimumPopulation;
     private readonly double _scalingFactor;
 
     /// <summary>
     /// Initializes a new instance of the PerCapitaFeedbackStrategy.
     /// </summary>
-    /// <param name="factorName">The name of the factor to adjust (e.g., "Economy", "Infrastructure").</param>
+    /// <param name="factor">The factor definition to adjust (e.g., "Economy", "Infrastructure").</param>
     /// <param name="scalingFactor">The scaling factor for population impact (default: 0.01).</param>
     /// <param name="minimumPopulation">Minimum population required to apply feedback (default: 100).</param>
-    /// <exception cref="ArgumentException">Thrown when factorName is null or empty.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="factor" /> is <see langword="null" />.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when scalingFactor or minimumPopulation is negative.</exception>
     public PerCapitaFeedbackStrategy(
-        string factorName,
+        FactorDefinition factor,
         double scalingFactor = 0.01,
         double minimumPopulation = 100)
     {
-        if (string.IsNullOrWhiteSpace(factorName))
-            throw new ArgumentException("Factor name cannot be null or empty.", nameof(factorName));
+        ArgumentNullException.ThrowIfNull(factor);
+
         if (scalingFactor < 0)
             throw new ArgumentOutOfRangeException(nameof(scalingFactor), "Scaling factor must be non-negative.");
         if (minimumPopulation < 0)
             throw new ArgumentOutOfRangeException(nameof(minimumPopulation),
                 "Minimum population must be non-negative.");
 
-        _factorName = factorName;
+        _factor = factor;
         _scalingFactor = scalingFactor;
         _minimumPopulation = minimumPopulation;
     }
 
     /// <inheritdoc />
-    public string Name => $"PerCapita({_factorName})";
+    public string Name => $"PerCapita({_factor.DisplayName})";
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -58,10 +58,7 @@ public sealed class PerCapitaFeedbackStrategy : IFeedbackStrategy
     /// <inheritdoc />
     public void ApplyFeedback(City city, World world)
     {
-        var factorDef = world.FactorDefinitions.FirstOrDefault(f => f.DisplayName == _factorName);
-        if (factorDef == null) return;
-
-        if (!city.TryGetFactorValue(factorDef, out var currentFactor)) return;
+        if (!city.TryGetFactorValue(_factor, out var currentFactor)) return;
 
         // Calculate per-capita adjustment
         var populationRatio = city.Population / Math.Max(city.Capacity ?? city.Population, 1.0);
@@ -70,10 +67,10 @@ public sealed class PerCapitaFeedbackStrategy : IFeedbackStrategy
         // Apply adjustment with clamping to valid range
         var newIntensity = Math.Clamp(
             currentFactor.Intensity.Value + adjustment,
-            factorDef.MinValue,
-            factorDef.MaxValue
+            _factor.MinValue,
+            _factor.MaxValue
         );
 
-        city.UpdateFactorIntensity(factorDef, IntensityValue.FromRaw(newIntensity));
+        city.UpdateFactorIntensity(_factor, IntensityValue.FromRaw(newIntensity));
     }
 }

@@ -42,10 +42,25 @@ public sealed class PersonCollection
     }
 
     /// <summary>
+    /// Adds a generator to this collection.
+    /// </summary>
+    /// <param name="generator">The person generator.</param>
+    /// <returns>This collection for method chaining.</returns>
+    /// <typeparam name="TPerson">The type of person the generator creates.</typeparam>
+    public PersonCollection Add<TPerson>(IPersonGenerator<TPerson> generator) where TPerson : PersonBase
+    {
+        ArgumentNullException.ThrowIfNull(generator);
+        _specifications.Add(PersonSpecification.FromGenerator(generator));
+        return this;
+    }
+
+    /// <summary>
     /// Adds a generator configuration to this collection.
     /// </summary>
     /// <param name="generator">The generator configuration.</param>
     /// <returns>This collection for method chaining.</returns>
+    [Obsolete(
+        "Use Add(IPersonGenerator<TPerson>) or Add(StandardPersonGenerator) instead. GeneratorConfig is deprecated.")]
     public PersonCollection Add(GeneratorConfig generator)
     {
         ArgumentNullException.ThrowIfNull(generator);

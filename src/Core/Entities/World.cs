@@ -68,9 +68,11 @@ public class World
 
     /// <summary>
     /// Validates that each city has values for all factor definitions.
+    /// Validates that all persons in the world are of the same type.
     /// </summary>
     /// <exception cref="WorldValidationException">
-    /// Thrown when a city is missing values for one or more factor definitions.
+    /// Thrown when a city is missing values for one or more factor definitions,
+    /// or when persons of different types are mixed in the world.
     /// </exception>
     private void ValidateWorldStructure()
     {
@@ -85,5 +87,15 @@ public class World
                     city.DisplayName,
                     missingFactors.Select(f => f.DisplayName));
         }
+
+        // Validate that all persons are of the same concrete type
+        Type? personType = null;
+        foreach (var currentType in from city in _cities from person in city.Persons select person.GetType())
+            if (personType == null)
+                personType = currentType;
+            else if (personType != currentType)
+                throw new WorldValidationException(
+                    $"World contains mixed person types: {personType.Name} and {currentType.Name}. " +
+                    $"A simulation world must contain only one person type.");
     }
 }

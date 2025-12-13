@@ -9,10 +9,10 @@ namespace dotMigrata.Generator;
 /// </summary>
 public sealed class PersonSpecification
 {
-    private readonly GeneratorConfig? _generator;
+    private readonly IPersonGenerator<PersonBase>? _generator;
     private readonly PersonBase? _template;
 
-    private PersonSpecification(PersonBase? template, GeneratorConfig? generator, int count)
+    private PersonSpecification(PersonBase? template, IPersonGenerator<PersonBase>? generator, int count)
     {
         _template = template;
         _generator = generator;
@@ -60,14 +60,32 @@ public sealed class PersonSpecification
     }
 
     /// <summary>
-    /// Creates a specification from a generator configuration.
+    /// Creates a specification from a person generator.
+    /// </summary>
+    /// <param name="generator">The person generator.</param>
+    /// <returns>A person specification.</returns>
+    /// <typeparam name="TPerson">The type of person the generator creates.</typeparam>
+    public static PersonSpecification FromGenerator<TPerson>(IPersonGenerator<TPerson> generator)
+        where TPerson : PersonBase
+    {
+        ArgumentNullException.ThrowIfNull(generator);
+        // Wrap the typed generator in a covariant interface cast
+        IPersonGenerator<PersonBase> baseGenerator = generator;
+        return new PersonSpecification(null, baseGenerator, generator.Count);
+    }
+
+    /// <summary>
+    /// Creates a specification from a generator configuration (deprecated).
     /// </summary>
     /// <param name="generator">The generator configuration.</param>
     /// <returns>A person specification.</returns>
+    [Obsolete("Use FromGenerator(IPersonGenerator<TPerson>) instead. GeneratorConfig is deprecated.")]
     public static PersonSpecification FromGenerator(GeneratorConfig generator)
     {
         ArgumentNullException.ThrowIfNull(generator);
-        return new PersonSpecification(null, generator, generator.Count);
+        // Wrap the old GeneratorConfig in an adapter
+        var adapter = new GeneratorConfigAdapter(generator);
+        return new PersonSpecification(null, adapter, generator.Count);
     }
 
     /// <summary>
@@ -105,17 +123,30 @@ public sealed class PersonSpecification
             else
             {
                 // For custom person types, we cannot safely duplicate instances
-                // Custom types should use GeneratorConfig with PersonFactory instead
+                // Custom types should use IPersonGenerator<TPerson> instead
                 throw new InvalidOperationException(
                     $"Cannot duplicate custom person type '{_template.GetType().Name}' using template mode. " +
-                    "Custom person types should use GeneratorConfig with a PersonFactory function to generate multiple instances.");
+                    "Custom person types should use IPersonGenerator<TPerson> to generate multiple instances.");
             }
         }
         else if (_generator != null)
         {
-            // Generate from generator configuration
-            foreach (var person in _generator.GeneratePersons(factorDefinitions))
+            // Generate from generator
+            foreach (var person in _generator.Generate(factorDefinitions))
                 yield return person;
+        }
+    }
+
+    /// <summary>
+    /// Adapter to wrap old GeneratorConfig as IPersonGenerator for backward compatibility.
+    /// </summary>
+    private sealed class GeneratorConfigAdapter(GeneratorConfig config) : IPersonGenerator<PersonBase>
+    {
+        public int Count => config.Count;
+
+        public IEnumerable<PersonBase> Generate(IEnumerable<FactorDefinition> factorDefinitions)
+        {
+            return config.GeneratePersons(factorDefinitions);
         }
     }
 }
