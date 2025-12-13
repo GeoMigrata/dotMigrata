@@ -3,7 +3,7 @@
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*'
 
 jobs:
   publish:
@@ -29,9 +29,7 @@ jobs:
         run: dotnet test -c Release --no-build
 
       - name: Pack
-        run: dotnet pack -c Release \
-          --no-build \
-          /p:PackageVersion=${GITHUB_REF_NAME#v}
+        run: dotnet pack dotMigrata.csproj -c Release --no-build /p:PackageVersion=${GITHUB_REF_NAME#v}
 
       - name: Push to NuGet
         run: dotnet nuget push "**/*.nupkg" \
