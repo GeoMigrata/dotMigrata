@@ -4,7 +4,7 @@
 [![.NET9.0](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
 [![.NET10.0](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.5.2--beta-green.svg)]()
+[![Release](https://github.com/GeoMigrata/dotMigrata/actions/workflows/release.yml/badge.svg)](https://github.com/GeoMigrata/dotMigrata/actions/workflows/release.yml)
 
 dotMigrata, a product from Project GeoMigrata, is a C# .NET simulation framework designed to model individual-based
 population migration and city
