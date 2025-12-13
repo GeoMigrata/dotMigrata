@@ -41,7 +41,6 @@ using dotMigrata.Simulation.Engine;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
 using dotMigrata.Simulation.Pipeline;
-using static dotMigrata.Generator.AttributeValueBuilder;
 
 // Define factor objects that will be referenced throughout the simulation
 var incomeFactor = new FactorDefinition
@@ -78,12 +77,12 @@ collection.Add(new GeneratorConfig
     // Use FactorDefinition references (not strings) for type safety
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        [incomeFactor] = Attribute("IncomeSensitivity").InRange(3, 8),        // Sensitivity to income
-        [pollutionFactor] = Attribute("PollutionSensitivity").InRange(-7, -3)    // Negative sensitivity to pollution
+        [incomeFactor] = ValueSpecification.InRange(3, 8),        // Sensitivity to income
+        [pollutionFactor] = ValueSpecification.InRange(-7, -3)    // Negative sensitivity to pollution
     },
-    // Use named attribute methods for person behavioral properties
-    MovingWillingness = MovingWillingness().InRange(0.4, 0.7),
-    RetentionRate = RetentionRate().InRange(0.3, 0.6),
+    // Direct ValueSpecification methods for person behavioral properties
+    MovingWillingness = ValueSpecification.InRange(0.4, 0.7),
+    RetentionRate = ValueSpecification.InRange(0.3, 0.6),
     Tags = ["urban_resident"]
 });
 ```
@@ -167,29 +166,27 @@ The framework provides several ways to specify values for person attributes:
 ### Fixed Values
 
 ```csharp
-using static dotMigrata.Generator.AttributeValueBuilder;
-
-MovingWillingness().Fixed(0.75)  // All persons get exactly 0.75
+ValueSpecification.Fixed(0.75)  // All persons get exactly 0.75
 ```
 
 ### Range Values (Uniform Distribution)
 
 ```csharp
-MovingWillingness().InRange(0.4, 0.8)  // Uniformly distributed between 0.4 and 0.8
+ValueSpecification.InRange(0.4, 0.8)  // Uniformly distributed between 0.4 and 0.8
 ```
 
 ### Approximate Values (Normal Distribution)
 
 ```csharp
 // Values sampled from normal distribution with mean=0.6, stddev=0.15
-MovingWillingness().Approximately(mean: 0.6, standardDeviation: 0.15)
+ValueSpecification.Approximately(mean: 0.6, standardDeviation: 0.15)
 ```
 
 ### Random with Scale
 
 ```csharp
 // Scale > 1.0 biases toward higher values, < 1.0 toward lower values
-MovingWillingness().Random(scale: 1.5)
+ValueSpecification.RandomWithScale(scale: 1.5)
 ```
 
 ## PersonCollection System
@@ -204,7 +201,6 @@ using dotMigrata.Core.Entities;
 using dotMigrata.Core.Enums;
 using dotMigrata.Core.Values;
 using dotMigrata.Generator;
-using static dotMigrata.Generator.AttributeValueBuilder;
 
 // First, define your factor objects
 var incomeFactor = new FactorDefinition
@@ -274,13 +270,13 @@ collection.Add(new GeneratorConfig(seed: 42)
     // Use FactorDefinition references (not strings) for type safety
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        [incomeFactor] = Attribute("IncomeSensitivity").InRange(3, 15),  // Custom range for Income sensitivity
-        [pollutionFactor] = Attribute("PollutionSensitivity").Fixed(-5.0)      // Fixed value - all persons get -5.0
+        [incomeFactor] = ValueSpecification.InRange(3, 15),  // Custom range for Income sensitivity
+        [pollutionFactor] = ValueSpecification.Fixed(-5.0)      // Fixed value - all persons get -5.0
         // Note: housingFactor sensitivity will use default range with normal distribution
     },
-    // Use named attribute methods for common person properties
-    MovingWillingness = MovingWillingness().InRange(0.6, 0.9),
-    RetentionRate = RetentionRate().InRange(0.3, 0.6),
+    // Direct ValueSpecification methods for person behavioral properties
+    MovingWillingness = ValueSpecification.InRange(0.6, 0.9),
+    RetentionRate = ValueSpecification.InRange(0.3, 0.6),
     Tags = ["young_professional", "tech_worker"]
 });
 
@@ -331,7 +327,6 @@ using dotMigrata.Core.Entities;
 using dotMigrata.Core.Enums;
 using dotMigrata.Core.Values;
 using dotMigrata.Generator;
-using static dotMigrata.Generator.AttributeValueBuilder;
 
 // Define factors first (full-reference architecture)
 var incomeFactor = new FactorDefinition
@@ -354,11 +349,11 @@ collection.Add(new GeneratorConfig(seed: 42)
     Count = 50000,
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        [incomeFactor] = Attribute("IncomeSensitivity").InRange(5, 9)  // Use FactorDefinition reference
+        [incomeFactor] = ValueSpecification.InRange(5, 9)  // Use FactorDefinition reference
     },
-    // Use named attribute methods for common person properties
-    MovingWillingness = MovingWillingness().InRange(0.4, 0.7),
-    RetentionRate = RetentionRate().InRange(0.3, 0.6),
+    // Direct ValueSpecification methods for person behavioral properties
+    MovingWillingness = ValueSpecification.InRange(0.4, 0.7),
+    RetentionRate = ValueSpecification.InRange(0.3, 0.6),
     // Advanced generator options
     DefaultSensitivityRange = new ValueRange(-10.0, 10.0),  // Default range for unspecified factors
     SensitivityStdDev = 3.0  // Standard deviation for normal distribution
@@ -512,7 +507,6 @@ using dotMigrata.Core.Entities;
 using dotMigrata.Core.Enums;
 using dotMigrata.Core.Values;
 using dotMigrata.Generator;
-using static dotMigrata.Generator.AttributeValueBuilder;
 
 // Define your custom person type (as shown in previous example)
 public sealed class DemographicPerson : PersonBase
@@ -557,11 +551,11 @@ collection.Add(new GeneratorConfig
     Count = 10000,
     FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
     {
-        [incomeFactor] = Attribute("IncomeSensitivity").InRange(3, 8),
-        [educationFactor] = Attribute("EducationSensitivity").InRange(2, 7)
+        [incomeFactor] = ValueSpecification.InRange(3, 8),
+        [educationFactor] = ValueSpecification.InRange(2, 7)
     },
-    MovingWillingness = MovingWillingness().InRange(0.4, 0.7),
-    RetentionRate = RetentionRate().InRange(0.3, 0.6),
+    MovingWillingness = ValueSpecification.InRange(0.4, 0.7),
+    RetentionRate = ValueSpecification.InRange(0.3, 0.6),
 
     // PersonFactory receives: sensitivities, willingness, retention, scaling, threshold, minAttraction, tags
     // and returns a PersonBase-derived instance with custom properties set
