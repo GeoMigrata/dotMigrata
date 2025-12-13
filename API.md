@@ -215,7 +215,6 @@ A collection of person specifications that can be used to generate a population.
 PersonCollection Add(PersonBase person)
 PersonCollection Add(PersonBase person, int count)
 PersonCollection Add<TPerson>(IPersonGenerator<TPerson> generator) where TPerson : PersonBase
-[Obsolete] PersonCollection Add(GeneratorConfig generator) // Deprecated, use StandardPersonGenerator
 IEnumerable<PersonBase> GenerateAllPersons(IEnumerable<FactorDefinition> factorDefinitions)
 int GetTotalCount()
 void Clear()
@@ -266,13 +265,6 @@ new StandardPersonGenerator(int seed) // Specific seed for reproducibility
 ```csharp
 IEnumerable<StandardPerson> Generate(IEnumerable<FactorDefinition> factorDefinitions)
 ```
-
-### GeneratorConfig (Deprecated)
-
-**This class is deprecated in v0.5.2-beta. Use `StandardPersonGenerator` instead.**
-
-For backward compatibility, `GeneratorConfig` is still available but marked as obsolete. New code should use
-`StandardPersonGenerator` for StandardPerson or implement `IPersonGenerator<TPerson>` for custom person types.
 
 ### ValueSpecification
 

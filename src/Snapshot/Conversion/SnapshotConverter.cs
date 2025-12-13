@@ -209,25 +209,26 @@ public static class SnapshotConverter
                 if (factorLookup.TryGetValue(spec.Id, out var factor))
                     factorSpecs[factor] = ConvertSensitivitySpec(spec);
 
-        var finalConfig = new GeneratorConfig(generator.SeedSpecified ? generator.Seed : Random.Shared.Next())
-        {
-            Count = generator.Count,
-            FactorSensitivities = factorSpecs,
-            MovingWillingness = ConvertValueSpec(generator.MovingWillingness, 0.5),
-            RetentionRate = ConvertValueSpec(generator.RetentionRate, 0.5),
-            SensitivityScaling = generator.SensitivityScaling != null
-                ? ConvertValueSpec(generator.SensitivityScaling, 1.0)
-                : null,
-            AttractionThreshold = generator.AttractionThreshold != null
-                ? ConvertValueSpec(generator.AttractionThreshold, 0.0)
-                : null,
-            MinimumAcceptableAttraction = generator.MinimumAcceptableAttraction != null
-                ? ConvertValueSpec(generator.MinimumAcceptableAttraction, 0.0)
-                : null,
-            Tags = ParseTags(generator.Tags)
-        };
+        var standardGenerator =
+            new StandardPersonGenerator(generator.SeedSpecified ? generator.Seed : Random.Shared.Next())
+            {
+                Count = generator.Count,
+                FactorSensitivities = factorSpecs,
+                MovingWillingness = ConvertValueSpec(generator.MovingWillingness, 0.5),
+                RetentionRate = ConvertValueSpec(generator.RetentionRate, 0.5),
+                SensitivityScaling = generator.SensitivityScaling != null
+                    ? ConvertValueSpec(generator.SensitivityScaling, 1.0)
+                    : null,
+                AttractionThreshold = generator.AttractionThreshold != null
+                    ? ConvertValueSpec(generator.AttractionThreshold, 0.0)
+                    : null,
+                MinimumAcceptableAttraction = generator.MinimumAcceptableAttraction != null
+                    ? ConvertValueSpec(generator.MinimumAcceptableAttraction, 0.0)
+                    : null,
+                Tags = ParseTags(generator.Tags)
+            };
 
-        return finalConfig.GeneratePersons(allFactors);
+        return standardGenerator.Generate(allFactors);
     }
 
     private static ValueSpecification ConvertValueSpec(ValueSpecXml? spec, double defaultValue)

@@ -55,20 +55,6 @@ public sealed class PersonCollection
     }
 
     /// <summary>
-    /// Adds a generator configuration to this collection.
-    /// </summary>
-    /// <param name="generator">The generator configuration.</param>
-    /// <returns>This collection for method chaining.</returns>
-    [Obsolete(
-        "Use Add(IPersonGenerator<TPerson>) or Add(StandardPersonGenerator) instead. GeneratorConfig is deprecated.")]
-    public PersonCollection Add(GeneratorConfig generator)
-    {
-        ArgumentNullException.ThrowIfNull(generator);
-        _specifications.Add(PersonSpecification.FromGenerator(generator));
-        return this;
-    }
-
-    /// <summary>
     /// Generates all persons from all specifications in this collection.
     /// </summary>
     /// <param name="factorDefinitions">The factor definitions to use for person generation.</param>

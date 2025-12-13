@@ -6,7 +6,7 @@
 
 - **`AttributeValueBuilder` removed** - Use `ValueSpecification` static methods directly instead of
   `Attribute("name").InRange()` pattern
-- **`GeneratorConfig` deprecated** - Replaced with `StandardPersonGenerator` implementing
+- **`GeneratorConfig` removed** - Replaced with `StandardPersonGenerator` implementing
   `IPersonGenerator<StandardPerson>`
 - **FeedbackStrategy constructors changed** - Now use `FactorDefinition` parameter instead of `string factorName`
 - **World enforces single person type** - Throws `WorldValidationException` if mixing different person types

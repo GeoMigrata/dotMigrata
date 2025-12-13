@@ -75,20 +75,6 @@ public sealed class PersonSpecification
     }
 
     /// <summary>
-    /// Creates a specification from a generator configuration (deprecated).
-    /// </summary>
-    /// <param name="generator">The generator configuration.</param>
-    /// <returns>A person specification.</returns>
-    [Obsolete("Use FromGenerator(IPersonGenerator<TPerson>) instead. GeneratorConfig is deprecated.")]
-    public static PersonSpecification FromGenerator(GeneratorConfig generator)
-    {
-        ArgumentNullException.ThrowIfNull(generator);
-        // Wrap the old GeneratorConfig in an adapter
-        var adapter = new GeneratorConfigAdapter(generator);
-        return new PersonSpecification(null, adapter, generator.Count);
-    }
-
-    /// <summary>
     /// Generates persons according to this specification.
     /// </summary>
     /// <param name="factorDefinitions">Factor definitions for the world.</param>
@@ -134,19 +120,6 @@ public sealed class PersonSpecification
             // Generate from generator
             foreach (var person in _generator.Generate(factorDefinitions))
                 yield return person;
-        }
-    }
-
-    /// <summary>
-    /// Adapter to wrap old GeneratorConfig as IPersonGenerator for backward compatibility.
-    /// </summary>
-    private sealed class GeneratorConfigAdapter(GeneratorConfig config) : IPersonGenerator<PersonBase>
-    {
-        public int Count => config.Count;
-
-        public IEnumerable<PersonBase> Generate(IEnumerable<FactorDefinition> factorDefinitions)
-        {
-            return config.GeneratePersons(factorDefinitions);
         }
     }
 }
