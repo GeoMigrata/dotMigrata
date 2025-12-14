@@ -37,6 +37,8 @@ public sealed class SimulationBuilder
     private int? _randomSeed;
     private SimulationConfig _simulationConfig = SimulationConfig.Default;
     private IStabilityCriteria? _stabilityCriteria;
+    private bool _useParallelEvents = true;
+    private int? _eventParallelism;
 
     /// <summary>
     /// Creates a new <see cref="SimulationBuilder" /> instance.
@@ -366,6 +368,28 @@ public sealed class SimulationBuilder
     }
 
     /// <summary>
+    /// Configures whether events should execute in parallel for better performance.
+    /// </summary>
+    /// <param name="useParallel">True to enable parallel event execution; false for sequential.</param>
+    /// <param name="maxDegreeOfParallelism">
+    /// Optional maximum degree of parallelism. If null, uses system default.
+    /// </param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when <paramref name="maxDegreeOfParallelism" /> is less than or equal to 0.
+    /// </exception>
+    public SimulationBuilder WithParallelEvents(bool useParallel = true, int? maxDegreeOfParallelism = null)
+    {
+        if (maxDegreeOfParallelism is <= 0)
+            throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism),
+                "Max degree of parallelism must be greater than 0.");
+
+        _useParallelEvents = useParallel;
+        _eventParallelism = maxDegreeOfParallelism;
+        return this;
+    }
+
+    /// <summary>
     /// Builds the configured simulation engine.
     /// </summary>
     /// <returns>A configured <see cref="SimulationEngine" /> instance.</returns>
@@ -402,7 +426,7 @@ public sealed class SimulationBuilder
 
         // Add event stage if events are configured
         if (_events.Count > 0)
-            stages.Add(new EventStage(_events));
+            stages.Add(new EventStage(_events, _useParallelEvents, _eventParallelism));
 
         return stages;
     }

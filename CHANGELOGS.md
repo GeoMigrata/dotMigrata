@@ -1,4 +1,91 @@
-﻿## Version 0.6.0-beta Highlights
+﻿## Version 0.6.1-beta Highlights
+
+**Version 0.6.1-beta** addresses Priority 1-2 improvements from the framework analysis, focusing on configuration
+robustness, parallel execution, and extensibility.
+
+### Configuration Improvements
+
+- **SimulationConfig validation in constructor** - All properties now validate during initialization, ensuring
+  configurations are always valid
+- **Proper validation feedback** - Individual properties throw `ArgumentOutOfRangeException` immediately on invalid
+  values
+- **Cross-property validation** - `Validate()` method now only checks cross-property constraints (e.g.,
+  MinTicksBeforeStabilityCheck < MaxTicks)
+
+### Performance Enhancements
+
+- **Parallel event execution** - EventStage now supports parallel execution for better performance with multiple events
+- **Configurable parallelism** - New `WithParallelEvents(bool, int?)` builder method to control parallel behavior
+- **Default parallel-on** - Events execute in parallel by default (can be disabled for deterministic execution)
+
+### Extensibility - Custom Transform Functions
+
+- **ITransformFunction interface** - Allows custom normalization functions beyond built-in Linear/Log/Sigmoid
+- **TransformFunctions static class** - Built-in implementations: `TransformFunctions.Linear`, `.Logarithmic`,
+  `.Sigmoid`
+- **FactorDefinition.TransformFunction** - New property for custom transforms (takes precedence over enum-based
+  Transform)
+- **Backward compatible** - Existing `TransformType` enum still works, custom functions are opt-in
+
+### API Updates
+
+**New SimulationBuilder methods:**
+
+```csharp
+builder.WithParallelEvents(useParallel: true, maxDegreeOfParallelism: 4);  // Configure parallel event execution
+```
+
+**Custom transform example:**
+
+```csharp
+// Built-in transforms via new interface
+var factor1 = new FactorDefinition
+{
+    DisplayName = "Income",
+    Type = FactorType.Positive,
+    MinValue = 20000,
+    MaxValue = 100000,
+    TransformFunction = TransformFunctions.Logarithmic  // Using interface
+};
+
+// Custom transform function
+public class ExponentialTransform : ITransformFunction
+{
+    public string Name => "Exponential";
+
+    public double Transform(double value, double min, double max)
+    {
+        var range = max - min;
+        if (range == 0) return 0;
+        var normalized = (value - min) / range;
+        return Math.Pow(normalized, 2);  // Emphasize higher values
+    }
+}
+
+var factor2 = new FactorDefinition
+{
+    DisplayName = "Quality",
+    Type = FactorType.Positive,
+    MinValue = 0,
+    MaxValue = 100,
+    TransformFunction = new ExponentialTransform()  // Custom implementation
+};
+```
+
+### Breaking Changes
+
+None - All changes are backward compatible. Existing code continues to work without modifications.
+
+### Architecture Benefits
+
+1. **Type-Safe Configuration** - Invalid configurations fail fast during construction, not at runtime
+2. **Better Performance** - Parallel event execution leverages multi-core systems
+3. **Extensible Transforms** - Researchers can implement domain-specific normalization functions
+4. **Lightweight** - ~150 LOC added, no new dependencies
+
+---
+
+## Version 0.6.0-beta Highlights
 
 **Version 0.6.0-beta** introduces a comprehensive **Event System** as a core simulation mechanism alongside cities,
 factors, and persons.
