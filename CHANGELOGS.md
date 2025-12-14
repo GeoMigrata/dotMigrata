@@ -1,4 +1,74 @@
-﻿## Version 0.6.1-beta Highlights
+﻿## Version 0.6.2-beta Highlights
+
+**Version 0.6.2-beta** adds comprehensive snapshot persistence for events, configurations, and custom transforms.
+
+### Snapshot System Enhancements
+
+- **Event persistence** - SimulationEvents with triggers and effects are now serialized to snapshots
+- **Configuration persistence** - SimulationConfig and StandardModelConfig included in snapshots
+- **Custom transform support** - FactorDefinition now persists custom ITransformFunction names
+- **Snapshot version bump** - Updated to v0.6 format with backward compatibility
+
+### New Snapshot Models
+
+- `SimulationEventXml` - Persists event display name, description, completion status, trigger, and effect
+- `EventTriggerXml` - Supports Tick, Periodic, Continuous trigger types (ConditionalTrigger with limitations)
+- `EventEffectXml` - Supports FactorChange, Feedback, and Composite effects
+- `SimulationConfigXml` - All simulation parameters
+- `StandardModelConfigXml` - All model parameters including parallelism settings
+- `FactorDefXml.CustomTransformName` - Stores custom transform function names
+
+### Limitations & Notes
+
+**ConditionalTrigger Persistence:**
+
+- Conditional triggers with custom lambda functions cannot be fully serialized
+- Condition expressions stored as strings (for documentation)
+- Must be manually reconstructed when loading snapshots with conditional events
+
+**Custom Transform Persistence:**
+
+- Built-in transforms (Linear, Logarithmic, Sigmoid) fully supported
+- Custom ITransformFunction implementations store name only
+- Falls back to Linear transform if custom transform unavailable during load
+- Recommendation: Use built-in transforms or document custom transforms separately
+
+**Event Effect Persistence:**
+
+- FactorChangeEffect fully supported with all application types and durations
+- FeedbackEffect stores strategy name (manual reconstruction needed)
+- CompositeEffect supported recursively
+
+### API Updates
+
+**Snapshot version:**
+
+```csharp
+var snapshot = SnapshotConverter.ToSnapshot(world);
+// snapshot.Version == "0.6"
+// snapshot.Events contains all active SimulationEvents
+// snapshot.SimulationConfig contains simulation parameters
+// snapshot.ModelConfig contains model parameters
+```
+
+**Loading with custom transforms:**
+
+```csharp
+var world = SnapshotConverter.ToWorld(snapshot);
+// Built-in custom transforms automatically restored
+// Custom implementations must be reapplied manually after load
+```
+
+### Architecture Benefits
+
+1. **Full Simulation State** - Snapshots now capture complete simulation state including events and configs
+2. **Reproducibility** - Events and configurations ensure deterministic replay
+3. **Backward Compatible** - Old v0.5 snapshots still loadable (missing fields default)
+4. **Lightweight** - ~200 LOC added, no new dependencies
+
+---
+
+## Version 0.6.1-beta Highlights
 
 **Version 0.6.1-beta** addresses Priority 1-2 improvements from the framework analysis, focusing on configuration
 robustness, parallel execution, and extensibility.

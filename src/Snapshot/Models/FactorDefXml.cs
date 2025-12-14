@@ -51,4 +51,16 @@ public class FactorDefXml
     /// </remarks>
     [XmlAttribute("Transform")]
     public string? Transform { get; set; }
+
+    /// <summary>
+    /// Gets or sets the custom transform function name.
+    /// Used when a custom ITransformFunction is applied (v0.6.1+).
+    /// </summary>
+    /// <remarks>
+    /// Built-in transforms map to: "Linear", "Logarithmic", "Sigmoid".
+    /// Custom transforms store their name but cannot be fully persisted.
+    /// When loading, falls back to Linear if custom transform is not available.
+    /// </remarks>
+    [XmlAttribute("CustomTransform")]
+    public string? CustomTransformName { get; set; }
 }

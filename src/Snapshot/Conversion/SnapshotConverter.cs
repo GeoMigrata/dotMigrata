@@ -1,6 +1,7 @@
 ﻿using dotMigrata.Core.Entities;
 using dotMigrata.Core.Enums;
 using dotMigrata.Core.Values;
+using dotMigrata.Core.Values.Interfaces;
 using dotMigrata.Generator;
 using dotMigrata.Snapshot.Enums;
 using dotMigrata.Snapshot.Models;
@@ -131,13 +132,25 @@ public static class SnapshotConverter
             _ => throw new InvalidOperationException($"Unknown transform type: {def.Transform}")
         };
 
+        // Handle custom transform functions (v0.6.1+)
+        ITransformFunction? customTransform = null;
+        if (!string.IsNullOrEmpty(def.CustomTransformName))
+            customTransform = def.CustomTransformName.ToUpperInvariant() switch
+            {
+                "LINEAR" => TransformFunctions.Linear,
+                "LOGARITHMIC" => TransformFunctions.Logarithmic,
+                "SIGMOID" => TransformFunctions.Sigmoid,
+                _ => null // Custom transforms cannot be persisted; falls back to enum-based transform
+            };
+
         return new FactorDefinition
         {
             DisplayName = def.DisplayName,
             Type = factorType,
             MinValue = def.Min,
             MaxValue = def.Max,
-            Transform = transform
+            Transform = transform,
+            TransformFunction = customTransform
         };
     }
 
@@ -396,7 +409,8 @@ public static class SnapshotConverter
             Type = factor.Type.ToString(),
             Min = factor.MinValue,
             Max = factor.MaxValue,
-            Transform = factor.Transform?.ToString()
+            Transform = factor.Transform?.ToString(),
+            CustomTransformName = factor.TransformFunction?.Name
         };
     }
 

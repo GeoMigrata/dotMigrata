@@ -7,7 +7,7 @@ namespace dotMigrata.Snapshot.Models;
 /// Root snapshot model with XML serialization support.
 /// </summary>
 /// <remarks>
-///     <para>Simplified XML format (v2.0) with cleaner structure:</para>
+///     <para>Snapshot format v0.6+ with support for events and configurations:</para>
 ///     <list type="bullet">
 ///         <item>
 ///             <description>Single namespace for all elements</description>
@@ -16,18 +16,24 @@ namespace dotMigrata.Snapshot.Models;
 ///             <description>Attribute-based configuration for scalar values</description>
 ///         </item>
 ///         <item>
+///             <description>Event system persistence</description>
+///         </item>
+///         <item>
+///             <description>Simulation and model configuration persistence</description>
+///         </item>
+///         <item>
 ///             <description>Consistent naming conventions</description>
 ///         </item>
 ///     </list>
 /// </remarks>
-[XmlRoot("Snapshot", Namespace = "http://geomigrata.pages.dev/snapshot")]
+[XmlRoot("Snapshot", Namespace = "https://geomigrata.pages.dev/snapshot")]
 public sealed class WorldSnapshotXml
 {
     /// <summary>
     /// Gets the snapshot format version for compatibility tracking.
     /// </summary>
     [XmlAttribute("Version")]
-    public string Version { get; init; } = "0.5";
+    public string Version { get; init; } = "0.6";
 
     /// <summary>
     /// Gets the unique identifier for this snapshot.
@@ -60,10 +66,29 @@ public sealed class WorldSnapshotXml
     public int CurrentStep { get; init; }
 
     /// <summary>
+    /// Gets the simulation configuration.
+    /// </summary>
+    [XmlElement("SimulationConfig")]
+    public SimulationConfigXml? SimulationConfig { get; init; }
+
+    /// <summary>
+    /// Gets the standard model configuration.
+    /// </summary>
+    [XmlElement("ModelConfig")]
+    public StandardModelConfigXml? ModelConfig { get; init; }
+
+    /// <summary>
     /// Gets the world state containing cities, factors, and population.
     /// </summary>
     [XmlElement("World")]
     public WorldStateXml? World { get; init; }
+
+    /// <summary>
+    /// Gets the simulation events.
+    /// </summary>
+    [XmlArray("Events")]
+    [XmlArrayItem("Event")]
+    public List<SimulationEventXml>? Events { get; init; }
 
     /// <summary>
     /// Gets the simulation steps for reproducibility (deterministic re-execution).
