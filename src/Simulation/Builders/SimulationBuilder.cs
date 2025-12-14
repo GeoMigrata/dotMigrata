@@ -10,6 +10,7 @@ using dotMigrata.Simulation.Events;
 using dotMigrata.Simulation.Events.Effects;
 using dotMigrata.Simulation.Events.Enums;
 using dotMigrata.Simulation.Events.Interfaces;
+using dotMigrata.Simulation.Events.Triggers;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
 using dotMigrata.Simulation.Pipeline;

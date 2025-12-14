@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using dotMigrata.Simulation.Events.Interfaces;
+using dotMigrata.Simulation.Events.Triggers;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
 

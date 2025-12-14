@@ -11,25 +11,27 @@ factors, and persons.
 
 ### New Features - Event System
 
-- **`ISimulationEvent`** - Core abstraction for simulation events that modify world state
-- **Event Triggers** - Multiple trigger types for flexible event scheduling:
+- **`ISimulationEvent`** - Core abstraction for simulation events that modify world state (in
+  `dotMigrata.Simulation.Events.Interfaces`)
+- **Event Triggers** (`dotMigrata.Simulation.Events.Triggers`) - Multiple trigger types for flexible event scheduling:
   - `TickTrigger` - Fire once at a specific tick
   - `PeriodicTrigger` - Fire repeatedly at regular intervals
   - `ContinuousTrigger` - Fire continuously within a time window
   - `ConditionalTrigger` - Fire when custom conditions are met (extension point for ECA patterns)
-- **Event Effects** - Flexible effect system for factor modifications:
+- **Event Effects** (`dotMigrata.Simulation.Events.Effects`) - Flexible effect system for factor modifications:
   - `FactorChangeEffect` - Change city factor values with multiple application types
   - `FeedbackEffect` - Adapter for existing feedback strategies (backward compatible)
   - `CompositeEffect` - Apply multiple effects simultaneously
-- **Effect Application Types**:
-  - `Absolute` - Set factor to exact value
-  - `Delta` - Add/subtract from current value
-  - `Multiply` - Multiply current value
-  - `LinearTransition` - Transition linearly over duration
-  - `LogarithmicTransition` - Transition logarithmically (fast then slow)
+- **Effect Application Types** (`dotMigrata.Simulation.Events.Enums`):
+  - `EffectApplicationType.Absolute` - Set factor to exact value
+  - `EffectApplicationType.Delta` - Add/subtract from current value
+  - `EffectApplicationType.Multiply` - Multiply current value
+  - `EffectApplicationType.LinearTransition` - Transition linearly over duration
+  - `EffectApplicationType.LogarithmicTransition` - Transition logarithmically (fast then slow)
 - **ValueSpecification Integration** - Reuses existing infrastructure for flexible value generation (fixed, range,
   approximate)
-- **EventStage** - Pipeline stage that executes events based on their triggers
+- **EventStage** (`dotMigrata.Simulation.Events.EventStage`) - Pipeline stage that executes events based on their
+  triggers
 - **Type-Safe Design** - Events use object references (FactorDefinition, City) instead of string IDs
 
 ### Builder API Updates
@@ -51,6 +53,10 @@ builder.WithFeedback(strategy)  // Now creates periodic events internally
 ### Usage Examples
 
 ```csharp
+using dotMigrata.Simulation.Events.Effects;
+using dotMigrata.Simulation.Events.Enums;
+using dotMigrata.Simulation.Events.Triggers;
+
 // One-time event at tick 50
 builder.WithFactorChange(
     "Earthquake",
@@ -77,6 +83,8 @@ builder.WithFactorChange(
     EffectDuration.Over(20));
 
 // Conditional event (extension point for complex ECA patterns)
+using dotMigrata.Simulation.Events;
+
 builder.WithEvent(new SimulationEvent(
     "Congestion Response",
     new ConditionalTrigger(
@@ -113,6 +121,11 @@ builder.WithFeedback(strategy)  // Still works! Converted to events internally
 **New event-based approach:**
 
 ```csharp
+using dotMigrata.Simulation.Events;
+using dotMigrata.Simulation.Events.Effects;
+using dotMigrata.Simulation.Events.Enums;
+using dotMigrata.Simulation.Events.Triggers;
+
 builder.WithEvent(new SimulationEvent(
     $"Feedback: {strategy.Name}",
     new PeriodicTrigger(10),

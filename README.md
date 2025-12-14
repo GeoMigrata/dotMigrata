@@ -132,19 +132,23 @@ Implements a pipeline-based simulation engine:
 
 Core event system for dynamic factor modifications:
 
-- `ISimulationEvent`, `SimulationEvent` - Event abstractions and implementations
-- `IEventTrigger` - Trigger interface with multiple implementations:
+- `ISimulationEvent`, `SimulationEvent` (`dotMigrata.Simulation.Events`, `dotMigrata.Simulation.Events.Interfaces`) -
+  Event abstractions and implementations
+- `IEventTrigger` (`dotMigrata.Simulation.Events.Interfaces`) - Trigger interface with multiple implementations under
+  `dotMigrata.Simulation.Events.Triggers`:
     - `TickTrigger` - One-time execution at specific tick
     - `PeriodicTrigger` - Repeated execution at intervals
     - `ContinuousTrigger` - Continuous execution within time window
     - `ConditionalTrigger` - Condition-based execution (extension point for ECA patterns)
-- `IEventEffect` - Effect interface with implementations:
+- `IEventEffect` (`dotMigrata.Simulation.Events.Interfaces`) - Effect interface with implementations under
+  `dotMigrata.Simulation.Events.Effects`:
     - `FactorChangeEffect` - Modify city factor values (absolute, delta, multiply, transitions)
     - `FeedbackEffect` - Adapter for feedback strategies
     - `CompositeEffect` - Multiple effects in sequence
-- `EffectApplicationType` - Application types (absolute, delta, multiply, linear/logarithmic transitions)
-- `EffectDuration` - Duration specification (instant or over N ticks)
-- `EventStage` - Pipeline stage for event execution
+- `EffectApplicationType` (`dotMigrata.Simulation.Events.Enums`) - Application types (absolute, delta, multiply,
+  linear/logarithmic transitions)
+- `EffectDuration` (`dotMigrata.Simulation.Events.Effects`) - Duration specification (instant or over N ticks)
+- `EventStage` (`dotMigrata.Simulation.Events.EventStage`) - Pipeline stage for event execution
 
 ### Generator Layer (`/src/Generator`)
 
