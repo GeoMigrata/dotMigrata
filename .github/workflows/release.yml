@@ -11,11 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Restore strong-name key
-        run: |
-          mkdir -p build
-          echo "${{ secrets.SNK_KEY_BASE64 }}" | base64 --decode > build/GeoMigrata.snk
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -23,6 +18,11 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+
+      - name: Restore strong-name key
+        run: |
+          mkdir -p dotMigrata/build
+          echo "${{ secrets.SNK_KEY_BASE64 }}" | base64 --decode > dotMigrata/build/GeoMigrata.snk
 
       - name: Restore
         run: dotnet restore
