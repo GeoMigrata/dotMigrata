@@ -4,7 +4,6 @@ using dotMigrata.Simulation.Builders;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Pipeline;
 using dotMigrata.Simulation.Stability;
-using dotMigrata.Snapshot.Migration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -37,9 +36,6 @@ public static class ServiceCollectionExtensions
 
             // Stability criteria
             services.TryAddSingleton<IStabilityCriteria, DefaultStabilityCriteria>();
-
-            // Snapshot migration manager
-            services.TryAddSingleton<SnapshotMigrationManager>();
 
             // Simulation stages
             services.TryAddTransient<MigrationDecisionStage>();

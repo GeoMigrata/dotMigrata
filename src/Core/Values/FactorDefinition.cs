@@ -68,22 +68,12 @@ public record FactorDefinition
     public ValueRange Range => _range;
 
     /// <summary>
-    /// Gets or initializes the optional transformation type for normalization.
+    /// Gets or initializes the transformation function for normalization.
     /// When null, linear normalization is used.
     /// </summary>
     /// <remarks>
-    /// For backward compatibility with enum-based transforms.
-    /// Prefer using <see cref="TransformFunction"/> for extensibility.
-    /// </remarks>
-    public TransformType? Transform { get; init; }
-
-    /// <summary>
-    /// Gets or initializes the custom transformation function for normalization.
-    /// When set, this takes precedence over <see cref="Transform" />.
-    /// </summary>
-    /// <remarks>
-    /// Allows custom normalization functions beyond the built-in enum types.
-    /// Use <see cref="TransformFunctions" /> for built-in implementations or provide your own.
+    /// Use <see cref="TransformFunctions"/> for built-in implementations (Linear, Logarithmic, Sigmoid)
+    /// or provide your own implementation of <see cref="ITransformFunction"/>.
     /// </remarks>
     public ITransformFunction? TransformFunction { get; init; }
 
@@ -94,12 +84,14 @@ public record FactorDefinition
     /// <returns>A normalized value between 0 and 1.</returns>
     internal double Normalize(double rawValue)
     {
-        // Custom transform function takes precedence
-        if (TransformFunction == null)
-            return _range.Normalize(rawValue, Transform);
-
         var clamped = Math.Clamp(rawValue, _range.Min, _range.Max);
-        return TransformFunction.Transform(clamped, _range.Min, _range.Max);
+
+        if (TransformFunction != null)
+            return TransformFunction.Transform(clamped, _range.Min, _range.Max);
+
+        // Default to linear normalization
+        var range = _range.Max - _range.Min;
+        return range == 0 ? 0 : (clamped - _range.Min) / range;
 
         // Fall back to enum-based transform for backward compatibility
     }

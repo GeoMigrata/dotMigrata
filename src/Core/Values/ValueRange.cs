@@ -1,16 +1,10 @@
-﻿using dotMigrata.Core.Enums;
-
-namespace dotMigrata.Core.Values;
+﻿namespace dotMigrata.Core.Values;
 
 /// <summary>
 /// Represents a value range with minimum and maximum bounds.
 /// </summary>
 /// <param name="Min">The minimum value of the range.</param>
 /// <param name="Max">The maximum value of the range.</param>
-/// <remarks>
-/// This type provides normalization capabilities with various transformation types.
-/// Use the <see cref="IsValid" /> property to check if the range is valid before use.
-/// </remarks>
 public readonly record struct ValueRange(double Min, double Max)
 {
     /// <summary>
@@ -44,33 +38,6 @@ public readonly record struct ValueRange(double Min, double Max)
     }
 
     /// <summary>
-    /// Normalizes the specified value to the 0-1 range using the specified transformation.
-    /// </summary>
-    /// <param name="value">The value to normalize.</param>
-    /// <param name="transform">The transformation type to apply, or <see langword="null" /> for linear transformation.</param>
-    /// <returns>A normalized value between 0 and 1.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when this range is invalid.</exception>
-    public double Normalize(double value, TransformType? transform = null)
-    {
-        if (!IsValid)
-            throw new InvalidOperationException("Cannot normalize with an invalid range.");
-
-        var clamped = Math.Clamp(value, Min, Max);
-        var range = Size;
-
-        if (range == 0)
-            return 0;
-
-        return transform switch
-        {
-            TransformType.Linear => (clamped - Min) / range,
-            TransformType.Log => NormalizeLogarithmic(clamped, range),
-            TransformType.Sigmoid => NormalizeSigmoid(clamped, range),
-            _ => (clamped - Min) / range
-        };
-    }
-
-    /// <summary>
     /// Denormalizes a 0-1 value back to the original range.
     /// </summary>
     /// <param name="normalized">The normalized value in the range 0-1.</param>
@@ -100,21 +67,5 @@ public readonly record struct ValueRange(double Min, double Max)
     public bool Contains(double value)
     {
         return value >= Min && value <= Max;
-    }
-
-    private double NormalizeLogarithmic(double clamped, double range)
-    {
-        const double delta = 1e-6; // small offset to avoid log(0)
-        var numerator = Math.Log(clamped - Min + delta);
-        var denominator = Math.Log(range + delta);
-        return denominator != 0 ? numerator / denominator : 0.0;
-    }
-
-    private double NormalizeSigmoid(double clamped, double range)
-    {
-        const double steepness = 10.0;
-        var linear = (clamped - Min) / range;
-        var centered = (linear - 0.5) * steepness;
-        return 1.0 / (1.0 + Math.Exp(-centered));
     }
 }

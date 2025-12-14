@@ -2,7 +2,6 @@
 using dotMigrata.Core.Values;
 using dotMigrata.Generator;
 using dotMigrata.Logic.Calculators;
-using dotMigrata.Logic.Feedback;
 using dotMigrata.Logic.Interfaces;
 using dotMigrata.Logic.Models;
 using dotMigrata.Simulation.Engine;
@@ -10,7 +9,6 @@ using dotMigrata.Simulation.Events;
 using dotMigrata.Simulation.Events.Effects;
 using dotMigrata.Simulation.Events.Enums;
 using dotMigrata.Simulation.Events.Interfaces;
-using dotMigrata.Simulation.Events.Triggers;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
 using dotMigrata.Simulation.Pipeline;
@@ -306,53 +304,7 @@ public sealed class SimulationBuilder
     }
 
     /// <summary>
-    /// Adds a feedback strategy as a periodic event.
-    /// </summary>
-    /// <param name="strategy">The feedback strategy to add.</param>
-    /// <returns>This builder for method chaining.</returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="strategy" /> is <see langword="null" />.
-    /// </exception>
-    /// <remarks>
-    /// Feedback strategies are converted to periodic events for unified handling.
-    /// Use <see cref="WithEventInterval"/> to control the feedback interval.
-    /// </remarks>
-    public SimulationBuilder WithFeedback(IFeedbackStrategy strategy)
-    {
-        ArgumentNullException.ThrowIfNull(strategy);
-
-        var effect = new FeedbackEffect(strategy);
-        var trigger = new PeriodicTrigger(_defaultEventInterval);
-        var evt = new SimulationEvent(
-            $"Feedback: {strategy.Name}",
-            trigger,
-            effect,
-            $"Feedback strategy: {strategy.Name}");
-
-        _events.Add(evt);
-        return this;
-    }
-
-    /// <summary>
-    /// Adds multiple feedback strategies as periodic events.
-    /// </summary>
-    /// <param name="strategies">The feedback strategies to add.</param>
-    /// <returns>This builder for method chaining.</returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="strategies" /> is <see langword="null" />.
-    /// </exception>
-    public SimulationBuilder WithFeedback(IEnumerable<IFeedbackStrategy> strategies)
-    {
-        ArgumentNullException.ThrowIfNull(strategies);
-
-        foreach (var strategy in strategies)
-            WithFeedback(strategy);
-
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the default interval for periodic events (e.g., feedback).
+    /// Sets the default interval for periodic events.
     /// </summary>
     /// <param name="interval">The interval in ticks between executions.</param>
     /// <returns>This builder for method chaining.</returns>

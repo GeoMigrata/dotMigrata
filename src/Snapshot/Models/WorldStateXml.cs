@@ -6,7 +6,7 @@ namespace dotMigrata.Snapshot.Models;
 /// World state within snapshot.
 /// </summary>
 /// <remarks>
-/// Contains all simulation data: factor definitions, population templates, and cities.
+/// Contains all simulation data: factor definitions, population templates, cities, and events.
 /// </remarks>
 public class WorldStateXml
 {
@@ -36,4 +36,12 @@ public class WorldStateXml
     [XmlArray("Cities")]
     [XmlArrayItem("City")]
     public List<CityXml>? Cities { get; set; }
+
+    /// <summary>
+    /// Gets or sets the simulation events in this world.
+    /// Events are placed here because they reference factors defined in this world.
+    /// </summary>
+    [XmlArray("Events")]
+    [XmlArrayItem("Event")]
+    public List<SimulationEventXml>? Events { get; set; }
 }

@@ -77,7 +77,7 @@ public static class SnapshotConverter
 
         return new WorldSnapshotXml
         {
-            Version = "2.0",
+            Version = "0.6",
             Id = Guid.NewGuid().ToString(),
             Status = status,
             CreatedAt = DateTime.UtcNow,
@@ -123,24 +123,15 @@ public static class SnapshotConverter
             _ => throw new InvalidOperationException($"Unknown factor type: {def.Type}")
         };
 
-        TransformType? transform = def.Transform?.ToUpperInvariant() switch
-        {
-            "LINEAR" => TransformType.Linear,
-            "LOG" => TransformType.Log,
-            "SIGMOID" => TransformType.Sigmoid,
-            null or "" => null,
-            _ => throw new InvalidOperationException($"Unknown transform type: {def.Transform}")
-        };
-
-        // Handle custom transform functions (v0.6.1+)
-        ITransformFunction? customTransform = null;
+        // Handle transform functions (v0.6.3+)
+        ITransformFunction? transformFunction = null;
         if (!string.IsNullOrEmpty(def.CustomTransformName))
-            customTransform = def.CustomTransformName.ToUpperInvariant() switch
+            transformFunction = def.CustomTransformName.ToUpperInvariant() switch
             {
                 "LINEAR" => TransformFunctions.Linear,
                 "LOGARITHMIC" => TransformFunctions.Logarithmic,
                 "SIGMOID" => TransformFunctions.Sigmoid,
-                _ => null // Custom transforms cannot be persisted; falls back to enum-based transform
+                _ => null // Unknown custom transforms fallback to linear (default)
             };
 
         return new FactorDefinition
@@ -149,8 +140,7 @@ public static class SnapshotConverter
             Type = factorType,
             MinValue = def.Min,
             MaxValue = def.Max,
-            Transform = transform,
-            TransformFunction = customTransform
+            TransformFunction = transformFunction
         };
     }
 
@@ -409,7 +399,6 @@ public static class SnapshotConverter
             Type = factor.Type.ToString(),
             Min = factor.MinValue,
             Max = factor.MaxValue,
-            Transform = factor.Transform?.ToString(),
             CustomTransformName = factor.TransformFunction?.Name
         };
     }

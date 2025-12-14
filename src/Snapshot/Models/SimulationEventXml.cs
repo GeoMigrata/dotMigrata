@@ -8,6 +8,12 @@ namespace dotMigrata.Snapshot.Models;
 public sealed class SimulationEventXml
 {
     /// <summary>
+    /// Gets or sets the unique identifier for this event.
+    /// </summary>
+    [XmlAttribute("Id")]
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the display name of the event.
     /// </summary>
     [XmlAttribute("Name")]
@@ -32,8 +38,9 @@ public sealed class SimulationEventXml
     public EventTriggerXml? Trigger { get; set; }
 
     /// <summary>
-    /// Gets or sets the effect configuration for this event.
+    /// Gets or sets the effects of this event.
     /// </summary>
-    [XmlElement("Effect")]
-    public EventEffectXml? Effect { get; set; }
+    [XmlArray("Effects")]
+    [XmlArrayItem("Effect")]
+    public List<EventEffectXml>? Effects { get; set; }
 }

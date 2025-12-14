@@ -58,7 +58,9 @@ public readonly record struct SensitivityValue : IRangedValue, INormalizable
     /// <returns>A <see cref="NormalizedValue" /> between 0 and 1.</returns>
     public NormalizedValue Normalize()
     {
-        var normalized = _range.Normalize(Value);
+        var rangeSize = _range.Max - _range.Min;
+        var clamped = Math.Clamp(Value, _range.Min, _range.Max);
+        var normalized = rangeSize == 0 ? 0 : (clamped - _range.Min) / rangeSize;
         return NormalizedValue.FromRatio(normalized);
     }
 

@@ -1,4 +1,78 @@
-﻿## Version 0.6.2-beta Highlights
+﻿## Version 0.6.3-beta Highlights
+
+**Version 0.6.3-beta** refines the event system snapshot persistence, removes obsolete code, and completes the migration
+to modern extensible architecture.
+
+### Event System Snapshot Improvements
+
+- **Event IDs** - Added `Id` attribute to `SimulationEventXml` for unique identification
+- **Multiple Effects** - Changed from single `Effect` to `Effects` array using `<Effects>` container
+- **Factor ID References** - Event effects now use `FactorId` instead of `FactorName` to reference factors
+- **Events in World** - Moved events from root `<Events>` to `<World><Events>` (events reference world factors)
+
+### XML Structure Updates
+
+**Before (v0.6.2):**
+
+```xml
+
+<Snapshot>
+    <World>
+        <Factors>...</Factors>
+        <Cities>...</Cities>
+    </World>
+    <Events>
+        <Event Name="Earthquake">
+            <Effect Factor="infrastructure"
+            .../>
+        </Event>
+    </Events>
+</Snapshot>
+```
+
+**After (v0.6.3):**
+
+```xml
+
+<Snapshot>
+    <World>
+        <Factors>
+            <Factor Id="infrastructure"
+            .../>
+        </Factors>
+        <Cities>...</Cities>
+        <Events>
+            <Event Id="earthquake_2024" Name="Earthquake">
+                <Effects>
+                    <Effect FactorId="infrastructure"
+                    .../>
+                    <Effect FactorId="housing"
+                    .../>
+                </Effects>
+            </Event>
+        </Events>
+    </World>
+</Snapshot>
+```
+
+### Key Benefits
+
+1. **Consistent ID Pattern** - Events follow same ID-based reference pattern as Factors and Collections
+2. **Multiple Effects Support** - Single event can apply multiple effects simultaneously
+3. **Logical Structure** - Events grouped with World (their scope and factor references)
+4. **Type-Safe Resolution** - IDs resolved to object references during deserialization
+
+### Architecture Changes
+
+- `SimulationEventXml.Id` - Unique identifier for event
+- `SimulationEventXml.Effects` - Array instead of single effect
+- `EventEffectXml.FactorId` - References factor by ID (was FactorName)
+- `WorldStateXml.Events` - Events now part of World element
+- `WorldSnapshotXml` - Events removed from root, now in World
+
+---
+
+## Version 0.6.2-beta Highlights
 
 **Version 0.6.2-beta** adds comprehensive snapshot persistence for events, configurations, and custom transforms.
 

@@ -44,23 +44,13 @@ public class FactorDefXml
     public double Max { get; set; }
 
     /// <summary>
-    /// Gets or sets the transformation type for normalization.
+    /// Gets or sets the transform function name (v0.6.1+).
     /// </summary>
     /// <remarks>
-    /// Supported values: "Linear" (default), "Log", "Sigmoid".
+    /// Built-in transforms: "Linear", "Logarithmic", "Sigmoid".
+    /// Custom transforms store their name but must be provided at load time.
+    /// When null or unrecognized, defaults to Linear.
     /// </remarks>
     [XmlAttribute("Transform")]
-    public string? Transform { get; set; }
-
-    /// <summary>
-    /// Gets or sets the custom transform function name.
-    /// Used when a custom ITransformFunction is applied (v0.6.1+).
-    /// </summary>
-    /// <remarks>
-    /// Built-in transforms map to: "Linear", "Logarithmic", "Sigmoid".
-    /// Custom transforms store their name but cannot be fully persisted.
-    /// When loading, falls back to Linear if custom transform is not available.
-    /// </remarks>
-    [XmlAttribute("CustomTransform")]
     public string? CustomTransformName { get; set; }
 }

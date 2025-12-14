@@ -14,10 +14,11 @@ public sealed class EventEffectXml
     public string Type { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the factor name being modified (for FactorChangeEffect).
+    /// Gets or sets the factor ID being modified (for FactorChangeEffect).
+    /// References a factor definition by its Id attribute.
     /// </summary>
-    [XmlAttribute("Factor")]
-    public string? FactorName { get; set; }
+    [XmlAttribute("FactorId")]
+    public string? FactorId { get; set; }
 
     /// <summary>
     /// Gets or sets the application type (for FactorChangeEffect).
