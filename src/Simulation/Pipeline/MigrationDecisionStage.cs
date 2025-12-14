@@ -15,7 +15,7 @@ namespace dotMigrata.Simulation.Pipeline;
 /// Performance characteristics: O(n) where n is the number of persons.
 /// </remarks>
 [DebuggerDisplay("Stage: {Name}, Ready: true")]
-public sealed class MigrationDecisionStage : ISimulationStage
+public sealed class MigrationDecisionStage : ISimulationStage, IDisposable
 {
     /// <summary>
     /// Gets the constant name identifier for this stage.
@@ -24,6 +24,7 @@ public sealed class MigrationDecisionStage : ISimulationStage
 
     private readonly IAttractionCalculator _attractionCalculator;
     private readonly IMigrationCalculator _migrationCalculator;
+    private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the MigrationDecisionStage.
@@ -42,10 +43,25 @@ public sealed class MigrationDecisionStage : ISimulationStage
     /// <inheritdoc />
     public string Name => StageName;
 
+    /// <summary>
+    /// Releases resources used by this stage.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+
+        if (_migrationCalculator is IDisposable disposableMigration)
+            disposableMigration.Dispose();
+
+        _disposed = true;
+    }
+
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Task ExecuteAsync(SimulationContext context)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        
         // Calculate all migration decisions using configured parallel processing settings
         var flows = _migrationCalculator
             .CalculateAllMigrationFlows(context.World, _attractionCalculator)

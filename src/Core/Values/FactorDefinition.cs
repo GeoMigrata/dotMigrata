@@ -92,7 +92,5 @@ public record FactorDefinition
         // Default to linear normalization
         var range = _range.Max - _range.Min;
         return range == 0 ? 0 : (clamped - _range.Min) / range;
-
-        // Fall back to enum-based transform for backward compatibility
     }
 }

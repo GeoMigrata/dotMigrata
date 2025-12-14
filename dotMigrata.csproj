@@ -35,6 +35,11 @@
         <RootNamespace>dotMigrata</RootNamespace>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <SignAssembly>true</SignAssembly>
+        <AssemblyOriginatorKeyFile>build/GeoMigrata.snk</AssemblyOriginatorKeyFile>
+    </PropertyGroup>
+
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1" />

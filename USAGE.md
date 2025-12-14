@@ -132,11 +132,24 @@ var world = new World([cityA, cityB], allFactors)
 
 ### Step 5: Configure Simulation Engine
 
-Set up the simulation pipeline with calculators and observers.
+Set up the simulation using the fluent builder API (recommended approach).
 
 ```csharp
+using dotMigrata.Simulation.Builders;
+
+var engine = SimulationBuilder.Create()
+    .WithConsoleOutput()
+    .ConfigureSimulation(s => s.MaxTicks(100))
+    .Build();
+```
+
+Alternatively, for advanced scenarios with custom calculators:
+
+```csharp
+using dotMigrata.Simulation.Pipeline;
+
 var attractionCalc = new StandardAttractionCalculator();
-var migrationCalc = new StandardMigrationCalculator();
+using var migrationCalc = new StandardMigrationCalculator();
 
 List<ISimulationStage> stages =
 [
@@ -157,6 +170,9 @@ var result = await engine.RunAsync(world);
 
 Console.WriteLine($"Simulation completed after {result.CurrentTick} ticks");
 Console.WriteLine($"Final population: {result.World.Population:N0} persons");
+
+// Dispose the engine to release resources
+await engine.DisposeAsync();
 ```
 
 ## Value Specifications
@@ -672,10 +688,8 @@ You can configure the simulation execution and model parameters using modern C# 
 ```csharp
 using dotMigrata.Logic.Calculators;
 using dotMigrata.Logic.Models;
-using dotMigrata.Simulation.Engine;
-using dotMigrata.Simulation.Interfaces;
+using dotMigrata.Simulation.Builders;
 using dotMigrata.Simulation.Models;
-using dotMigrata.Simulation.Pipeline;
 
 // Configure model parameters
 StandardModelConfig modelConfig = new()
@@ -697,19 +711,26 @@ SimulationConfig simConfig = new()
     MinTicksBeforeStabilityCheck = 20
 };
 
-// Create calculators with custom configuration
-var attractionCalc = new StandardAttractionCalculator(modelConfig);
-var migrationCalc = new StandardMigrationCalculator(modelConfig);
-
-// Create simulation engine with custom configuration
-List<ISimulationStage> stages =
-[
-    new MigrationDecisionStage(migrationCalc, attractionCalc),
-    new MigrationExecutionStage()
-];
-
-var engine = new SimulationEngine(stages, simConfig);
-engine.AddObserver(new ConsoleObserver(colored: true));
+// Create simulation engine with custom configuration using builder (recommended)
+var engine = SimulationBuilder.Create()
+    .ConfigureModel(m => 
+    {
+        m.CapacitySteepness = 5.0;
+        m.DistanceDecayLambda = 0.001;
+        m.MigrationProbabilitySteepness = 10.0;
+        m.MigrationProbabilityThreshold = 0.0;
+        m.FactorSmoothingAlpha = 0.2;
+    })
+    .ConfigureSimulation(s => 
+    {
+        s.MaxTicks = 500;
+        s.CheckStability = true;
+        s.StabilityThreshold = 100;
+        s.StabilityCheckInterval = 5;
+        s.MinTicksBeforeStabilityCheck = 20;
+    })
+    .WithConsoleOutput()
+    .Build();
 
 // Run simulation
 var result = await engine.RunAsync(world);

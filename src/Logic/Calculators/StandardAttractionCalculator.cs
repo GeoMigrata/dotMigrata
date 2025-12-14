@@ -24,7 +24,6 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
         _config = (config ?? StandardModelConfig.Default).Validate();
     }
 
-
     /// <inheritdoc />
     public AttractionResult CalculateAttraction(City city, PersonBase person, City? originCity = null)
     {

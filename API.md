@@ -206,7 +206,6 @@ A collection of person specifications that can be used to generate a population.
 
 **Properties:**
 
-- `IdPrefix` (string) - ID prefix for generated persons (default: "P")
 - `SpecificationCount` (int) - Number of specifications in the collection
 
 **Methods:**
@@ -442,7 +441,25 @@ void OnError(SimulationContext context, Exception exception)
 
 ### Creating a Simulation
 
-To create and run a simulation:
+To create and run a simulation, the recommended approach is to use the `SimulationBuilder`:
+
+```csharp
+using dotMigrata.Simulation.Builders;
+
+// Create and configure simulation using the fluent builder API
+var engine = SimulationBuilder.Create()
+    .WithConsoleOutput()
+    .ConfigureSimulation(s => s.MaxTicks(100))
+    .Build();
+
+// Run simulation
+var result = await engine.RunAsync(world);
+
+// Release resources
+await engine.DisposeAsync();
+```
+
+For advanced scenarios with custom calculators and stages:
 
 ```csharp
 using dotMigrata.Logic.Calculators;
@@ -453,7 +470,7 @@ using dotMigrata.Simulation.Models;
 
 // Create calculators
 var attractionCalc = new StandardAttractionCalculator();
-var migrationCalc = new StandardMigrationCalculator();
+using var migrationCalc = new StandardMigrationCalculator();
 
 // Create pipeline stages
 var stages = new List<ISimulationStage>
@@ -471,6 +488,9 @@ engine.AddObserver(new ConsoleObserver(colored: true));
 
 // Run simulation
 var result = await engine.RunAsync(world);
+
+// Release resources
+await engine.DisposeAsync();
 ```
 
 ### Standard Pipeline Stages

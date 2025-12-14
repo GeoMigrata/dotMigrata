@@ -11,12 +11,13 @@ namespace dotMigrata.Logic.Calculators;
 /// Uses parallel processing for performance with large populations.
 /// Thread-safe implementation using ThreadLocal for random number generation.
 /// </summary>
-public class StandardMigrationCalculator : IMigrationCalculator
+public sealed class StandardMigrationCalculator : IMigrationCalculator, IDisposable
 {
     private readonly StandardModelConfig _config;
 
     // Thread-local random for thread-safe parallel processing
     private readonly ThreadLocal<Random> _threadLocalRandom;
+    private int _disposed;
 
     /// <summary>
     /// Initializes a new instance of the StandardMigrationCalculator.
@@ -26,20 +27,37 @@ public class StandardMigrationCalculator : IMigrationCalculator
     /// <exception cref="Core.Exceptions.ConfigurationException">Thrown when the configuration is invalid.</exception>
     public StandardMigrationCalculator(StandardModelConfig? config = null, int? seed = null)
     {
-        _config = config ?? StandardModelConfig.Default.Validate();
-        var seed1 = seed;
+        _config = (config ?? StandardModelConfig.Default).Validate();
 
         // Create thread-local random with optional seeding for reproducibility
         _threadLocalRandom = new ThreadLocal<Random>(() =>
         {
-            if (!seed1.HasValue) return new Random();
+            if (!seed.HasValue) return new Random();
             // Use seed combined with thread ID for reproducible but different per-thread values
-            var threadSeed = seed1.Value ^ Environment.CurrentManagedThreadId;
+            var threadSeed = seed.Value ^ Environment.CurrentManagedThreadId;
             return new Random(threadSeed);
         }, false);
     }
 
-    private Random Random => _threadLocalRandom.Value!;
+    private Random Random
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed != 0, this);
+            return _threadLocalRandom.Value!;
+        }
+    }
+
+    /// <summary>
+    /// Releases resources used by the StandardMigrationCalculator.
+    /// </summary>
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return;
+
+        _threadLocalRandom.Dispose();
+    }
 
     /// <inheritdoc />
     public MigrationFlow? CalculateMigrationDecision(
@@ -47,6 +65,8 @@ public class StandardMigrationCalculator : IMigrationCalculator
         IEnumerable<City> destinationCities,
         IDictionary<City, AttractionResult> attractionResults)
     {
+        ObjectDisposedException.ThrowIf(_disposed != 0, this);
+        
         var originCity = person.CurrentCity;
         if (originCity == null)
             return null;
@@ -121,6 +141,8 @@ public class StandardMigrationCalculator : IMigrationCalculator
         World world,
         IAttractionCalculator attractionCalculator)
     {
+        ObjectDisposedException.ThrowIf(_disposed != 0, this);
+        
         var allPersons = world.AllPersons.ToList();
 
         // Configure parallel or sequential processing based on config
