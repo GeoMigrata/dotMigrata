@@ -1,4 +1,120 @@
-﻿## Version 0.6.3-beta Highlights
+﻿## Version 0.6.4-beta Highlights
+
+**Version 0.6.4-beta** adds complete support for custom person types in snapshots through a type discriminator pattern,
+enabling full serialization/deserialization of custom person implementations.
+
+### Custom Person Snapshot Support
+
+- **Type Discriminator Pattern** - `PersonType` attribute specifies which concrete person type to create
+- **PersonTypeRegistry** - Central registry for custom person type serializers
+- **ICustomPersonSerializer<TPerson>** - Interface for custom person serialization logic
+- **ICustomGeneratorSerializer<TPerson, TGenerator>** - Interface for custom generator serialization
+- **CustomProperties Element** - Extensible XML element for type-specific properties
+- **Backward Compatible** - Defaults to "StandardPerson" when `PersonType` not specified
+
+### XML Structure Updates
+
+**Before (v0.6.3):**
+
+```xml
+
+<Person Count="1000" Willingness="0.7" Retention="0.4">
+    <Sensitivities>
+        <S Id="income" Value="8.5"/>
+    </Sensitivities>
+</Person>
+```
+
+**After (v0.6.4):**
+
+```xml
+
+<Person Count="1000" PersonType="DemographicPerson" Willingness="0.7" Retention="0.4">
+    <Sensitivities>
+        <S Id="income" Value="8.5"/>
+    </Sensitivities>
+    <CustomProperties>
+        <Age>28</Age>
+        <Income>75000</Income>
+        <Education>Master</Education>
+    </CustomProperties>
+</Person>
+```
+
+### API Changes
+
+**New Interfaces:**
+
+```csharp
+public interface ICustomPersonSerializer<TPerson> where TPerson : PersonBase
+{
+    TPerson CreateFromTemplate(PersonTemplateXml template, ...);
+    XmlElement? SerializeCustomProperties(TPerson person, XmlDocument doc);
+}
+
+public interface ICustomGeneratorSerializer<TPerson, TGenerator> 
+    where TPerson : PersonBase
+    where TGenerator : IPersonGenerator<TPerson>
+{
+    TGenerator CreateFromXml(GeneratorXml generatorXml, ...);
+    XmlElement? SerializeCustomProperties(TGenerator generator, XmlDocument doc);
+}
+```
+
+**New Registry:**
+
+```csharp
+PersonTypeRegistry.RegisterPersonType<TPerson>(string typeName, ICustomPersonSerializer<TPerson> serializer);
+PersonTypeRegistry.RegisterGeneratorType<TPerson, TGenerator>(string typeName, ICustomGeneratorSerializer<TPerson, TGenerator> serializer);
+```
+
+### Usage Example
+
+```csharp
+// 1. Implement serializer for custom person type
+public class DemographicPersonSerializer : ICustomPersonSerializer<DemographicPerson>
+{
+    public DemographicPerson CreateFromTemplate(PersonTemplateXml template, ...)
+    {
+        // Extract Age, Income from template.CustomProperties
+        return new DemographicPerson(...) { Age = ..., Income = ... };
+    }
+
+    public XmlElement? SerializeCustomProperties(DemographicPerson person, XmlDocument doc)
+    {
+        // Create CustomProperties element with Age, Income
+        return customPropsElement;
+    }
+}
+
+// 2. Register at application startup
+PersonTypeRegistry.RegisterPersonType("DemographicPerson", new DemographicPersonSerializer());
+
+// 3. Use snapshots normally - custom persons preserved!
+var snapshot = SnapshotConverter.ToSnapshot(world);
+var loadedWorld = SnapshotConverter.ToWorld(snapshot); // Returns DemographicPerson instances
+```
+
+### Key Benefits
+
+1. **Full Custom Type Support** - Custom person types fully preserved in snapshots
+2. **Clean Extensibility** - CustomProperties keeps core schema simple
+3. **Type Safety** - Registry ensures type-safe deserialization
+4. **Zero Changes for Standard Use** - StandardPerson works without registration
+5. **Framework Alignment** - Matches lightweight, extensible design principles
+
+### Architecture Changes
+
+- `PersonTemplateXml.PersonType` - Type discriminator attribute (default: "StandardPerson")
+- `PersonTemplateXml.CustomProperties` - Arbitrary XML for custom properties
+- `GeneratorXml.PersonType` - Generator type discriminator
+- `GeneratorXml.CustomProperties` - Arbitrary XML for custom generator specs
+- `PersonTypeRegistry` - Static registry for serializer implementations
+- `SnapshotConverter` - Updated to use registry for person creation
+
+---
+
+## Version 0.6.3-beta Highlights
 
 **Version 0.6.3-beta** refines the event system snapshot persistence, removes obsolete code, and completes the migration
 to modern extensible architecture.

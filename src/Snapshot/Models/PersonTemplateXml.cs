@@ -1,4 +1,5 @@
-﻿using System.Xml.Serialization;
+﻿using System.Xml;
+using System.Xml.Serialization;
 
 namespace dotMigrata.Snapshot.Models;
 
@@ -16,6 +17,16 @@ public class PersonTemplateXml
     /// </summary>
     [XmlAttribute("Count")]
     public int Count { get; set; } = 1;
+
+    /// <summary>
+    /// Gets or sets the person type name (e.g., "StandardPerson", "DemographicPerson").
+    /// </summary>
+    /// <remarks>
+    /// Defaults to "StandardPerson" if not specified. For custom person types, specify the fully qualified type name
+    /// or register a custom factory with <see cref="Conversion.PersonTypeRegistry" />.
+    /// </remarks>
+    [XmlAttribute("PersonType")]
+    public string PersonType { get; set; } = "StandardPerson";
 
     /// <summary>
     /// Gets or sets the willingness to migrate (0-1).
@@ -59,4 +70,14 @@ public class PersonTemplateXml
     [XmlArray("Sensitivities")]
     [XmlArrayItem("S")]
     public List<FactorSensitivityXml>? FactorSensitivities { get; set; }
+
+    /// <summary>
+    /// Gets or sets custom properties for extended person types.
+    /// </summary>
+    /// <remarks>
+    /// This element contains arbitrary XML elements for custom person type properties.
+    /// Custom person types should implement ICustomPersonSerializer to handle serialization.
+    /// </remarks>
+    [XmlAnyElement]
+    public XmlElement? CustomProperties { get; set; }
 }

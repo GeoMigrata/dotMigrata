@@ -745,6 +745,100 @@ var outputSnapshot = SnapshotConverter.ToSnapshot(result.World, SnapshotStatus.C
 XmlSnapshotSerializer.SerializeToFile(outputSnapshot, "output.xml");
 ```
 
+### Custom Person Types in Snapshots (v0.6.4+)
+
+The snapshot system supports custom person types through a type discriminator pattern.
+
+#### PersonTypeRegistry
+
+Static registry for custom person type serializers.
+
+**Methods:**
+
+```csharp
+static void RegisterPersonType<TPerson>(string typeName, ICustomPersonSerializer<TPerson> serializer)
+static void RegisterGeneratorType<TPerson, TGenerator>(string typeName, ICustomGeneratorSerializer<TPerson, TGenerator> serializer)
+```
+
+**Example:**
+
+```csharp
+using dotMigrata.Snapshot.Conversion;
+
+// Register at application startup
+PersonTypeRegistry.RegisterPersonType("DemographicPerson", new DemographicPersonSerializer());
+PersonTypeRegistry.RegisterGeneratorType<DemographicPerson, DemographicPersonGenerator>(
+    "DemographicPerson", new DemographicGeneratorSerializer());
+```
+
+#### ICustomPersonSerializer<TPerson>
+
+Defines serialization for custom person types.
+
+**Methods:**
+
+```csharp
+TPerson CreateFromTemplate(PersonTemplateXml template, Dictionary<FactorDefinition, double> sensitivities, List<string> tags)
+XmlElement? SerializeCustomProperties(TPerson person, XmlDocument doc)
+```
+
+**Implementation Example:**
+
+```csharp
+public class DemographicPersonSerializer : ICustomPersonSerializer<DemographicPerson>
+{
+    public DemographicPerson CreateFromTemplate(
+        PersonTemplateXml template,
+        Dictionary<FactorDefinition, double> sensitivities,
+        List<string> tags)
+    {
+        // Extract custom properties from template.CustomProperties
+        int age = 30;
+        if (template.CustomProperties != null)
+        {
+            var ageNode = template.CustomProperties.SelectSingleNode("Age");
+            if (ageNode != null) age = int.Parse(ageNode.InnerText);
+        }
+
+        return new DemographicPerson(sensitivities)
+        {
+            MovingWillingness = NormalizedValue.FromRatio(template.MovingWillingness),
+            RetentionRate = NormalizedValue.FromRatio(template.RetentionRate),
+            Age = age,
+            Tags = tags
+        };
+    }
+
+    public XmlElement? SerializeCustomProperties(DemographicPerson person, XmlDocument doc)
+    {
+        var customProps = doc.CreateElement("CustomProperties");
+        var ageElem = doc.CreateElement("Age");
+        ageElem.InnerText = person.Age.ToString();
+        customProps.AppendChild(ageElem);
+        return customProps;
+    }
+}
+```
+
+#### ICustomGeneratorSerializer<TPerson, TGenerator>
+
+Defines serialization for custom person generators.
+
+**Methods:**
+
+```csharp
+TGenerator CreateFromXml(GeneratorXml generatorXml, Dictionary<FactorDefinition, ValueSpecification> factorSpecs, List<string> tags)
+XmlElement? SerializeCustomProperties(TGenerator generator, XmlDocument doc)
+```
+
+**Key Points:**
+
+- **StandardPerson**: Registered by default, no explicit registration needed
+- **Type discriminator**: `PersonType` XML attribute specifies the concrete type
+- **Custom properties**: `CustomProperties` XML element contains type-specific data
+- **Backward compatible**: Snapshots without `PersonType` default to "StandardPerson"
+- **Thread safety**: Register types during initialization before snapshot operations
+
 ## Simulation Builders
 
 ### SimulationBuilder

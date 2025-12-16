@@ -18,7 +18,7 @@
         <RepositoryType>git</RepositoryType>
         <PackageTags>gis;simulation;migration;population;geospatial;urban-planning;agent-based-model;city-evolution;geomigrata</PackageTags>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageReadmeFile>README.NUGET.md</PackageReadmeFile>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 
         <!-- Documentation -->
@@ -37,7 +37,7 @@
 
     <PropertyGroup>
         <SignAssembly>true</SignAssembly>
-        <AssemblyOriginatorKeyFile>build/GeoMigrata.snk</AssemblyOriginatorKeyFile>
+        <AssemblyOriginatorKeyFile>./build/GeoMigrata.snk</AssemblyOriginatorKeyFile>
     </PropertyGroup>
 
     <ItemGroup>

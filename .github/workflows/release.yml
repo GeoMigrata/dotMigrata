@@ -22,8 +22,8 @@ jobs:
       - name: Restore strong-name key
         working-directory: dotMigrata
         run: |
-          mkdir -p build
-          echo "${{ secrets.SNK_KEY_BASE64 }}" | base64 --decode > build/GeoMigrata.snk
+          mkdir -p ./build
+          echo "${{ secrets.SNK_KEY_BASE64 }}" | base64 --decode > ./build/GeoMigrata.snk
 
       - name: Restore
         working-directory: dotMigrata

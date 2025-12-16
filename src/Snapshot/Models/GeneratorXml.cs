@@ -1,4 +1,5 @@
-﻿using System.Xml.Serialization;
+﻿using System.Xml;
+using System.Xml.Serialization;
 
 namespace dotMigrata.Snapshot.Models;
 
@@ -15,6 +16,16 @@ public class GeneratorXml
     /// </summary>
     [XmlAttribute("Count")]
     public int Count { get; set; }
+
+    /// <summary>
+    /// Gets or sets the person type name (e.g., "StandardPerson", "DemographicPerson").
+    /// </summary>
+    /// <remarks>
+    /// Defaults to "StandardPerson" if not specified. For custom person types, specify the type name
+    /// and register a custom generator factory with <see cref="Conversion.PersonTypeRegistry" />.
+    /// </remarks>
+    [XmlAttribute("PersonType")]
+    public string PersonType { get; set; } = "StandardPerson";
 
     /// <summary>
     /// Gets or sets the random seed for reproducibility.
@@ -70,4 +81,14 @@ public class GeneratorXml
     /// </summary>
     [XmlElement("Tags")]
     public string? Tags { get; set; }
+
+    /// <summary>
+    /// Gets or sets custom property specifications for extended person types.
+    /// </summary>
+    /// <remarks>
+    /// This element contains arbitrary XML elements for custom person type property specifications.
+    /// Custom person generator types should implement ICustomGeneratorSerializer to handle serialization.
+    /// </remarks>
+    [XmlAnyElement]
+    public XmlElement? CustomProperties { get; set; }
 }

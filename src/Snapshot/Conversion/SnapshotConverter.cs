@@ -188,15 +188,8 @@ public static class SnapshotConverter
             // Create a copy of sensitivities for each person to ensure independence
             var personSensitivities = new Dictionary<FactorDefinition, double>(sensitivities);
 
-            yield return new StandardPerson(personSensitivities)
-            {
-                MovingWillingness = NormalizedValue.FromRatio(template.MovingWillingness),
-                RetentionRate = NormalizedValue.FromRatio(template.RetentionRate),
-                SensitivityScaling = template.SensitivityScaling,
-                AttractionThreshold = template.AttractionThreshold,
-                MinimumAcceptableAttraction = template.MinimumAcceptableAttraction,
-                Tags = tags.ToList()
-            };
+            // Use registry to create person of appropriate type
+            yield return PersonTypeRegistry.CreatePerson(template, personSensitivities, tags);
         }
     }
 
@@ -212,29 +205,15 @@ public static class SnapshotConverter
                 if (factorLookup.TryGetValue(spec.Id, out var factor))
                     factorSpecs[factor] = ConvertSensitivitySpec(spec);
 
-        var standardGenerator =
-            new StandardPersonGenerator(generator.SeedSpecified ? generator.Seed : Random.Shared.Next())
-            {
-                Count = generator.Count,
-                FactorSensitivities = factorSpecs,
-                MovingWillingness = ConvertValueSpec(generator.MovingWillingness, 0.5),
-                RetentionRate = ConvertValueSpec(generator.RetentionRate, 0.5),
-                SensitivityScaling = generator.SensitivityScaling != null
-                    ? ConvertValueSpec(generator.SensitivityScaling, 1.0)
-                    : null,
-                AttractionThreshold = generator.AttractionThreshold != null
-                    ? ConvertValueSpec(generator.AttractionThreshold, 0.0)
-                    : null,
-                MinimumAcceptableAttraction = generator.MinimumAcceptableAttraction != null
-                    ? ConvertValueSpec(generator.MinimumAcceptableAttraction, 0.0)
-                    : null,
-                Tags = ParseTags(generator.Tags)
-            };
+        var tags = ParseTags(generator.Tags);
 
-        return standardGenerator.Generate(allFactors);
+        // Use registry to create generator of appropriate type
+        var personGenerator = PersonTypeRegistry.CreateGenerator(generator, factorSpecs, tags);
+
+        return personGenerator.Generate(allFactors);
     }
 
-    private static ValueSpecification ConvertValueSpec(ValueSpecXml? spec, double defaultValue)
+    internal static ValueSpecification ConvertValueSpec(ValueSpecXml? spec, double defaultValue)
     {
         if (spec == null)
             return ValueSpecification.Fixed(defaultValue);

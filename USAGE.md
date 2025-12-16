@@ -648,38 +648,173 @@ Console.WriteLine($"Average age: {demographicPersons.Average(p => p.Age):F1}");
 
 ### Custom Person Types and Snapshots
 
-The snapshot system works with custom person types by using `PersonBase` throughout.
-However, note that:
+The snapshot system fully supports custom person types through the type discriminator pattern.
 
-- **XML snapshots store only StandardPerson properties** by default (willingness, retention, sensitivities, etc.)
-- **Custom properties are not persisted** in the current snapshot format
-- If you need to persist custom properties, you should:
-  1. Store your world state using standard .NET serialization (JSON, Binary, etc.)
-  2. Or extend the snapshot XML schema with custom elements for your person type
-  3. Or use generators with seeds to recreate custom persons deterministically
+### Using Custom Person Types with Snapshots
+
+**Version 0.6.4+** introduces complete support for custom person types in snapshots. You can now:
+
+- Save and load snapshots with custom person types
+- Implement custom serialization for additional properties
+- Use type-safe deserialization with the `PersonTypeRegistry`
+
+#### Default Behavior
+
+Without registration, snapshots default to `StandardPerson`:
 
 ```csharp
 using dotMigrata.Snapshot.Serialization;
 using dotMigrata.Snapshot.Conversion;
 
-// Converting a world with custom persons to snapshot
-var world = new World(cities, allFactors)
-{
-    DisplayName = "World with Custom Persons"
-};
-
-// This will work, but custom properties won't be saved
+// Converting a world to snapshot
 var snapshot = SnapshotConverter.ToSnapshot(world);
 XmlSnapshotSerializer.SerializeToFile(snapshot, "world-snapshot.xml");
 
-// When loading back, you'll get base PersonBase instances
-// Custom properties will be lost
+// Loading back - creates StandardPerson instances by default
 var loadedSnapshot = XmlSnapshotSerializer.DeserializeFromFile("world-snapshot.xml");
 var loadedWorld = SnapshotConverter.ToWorld(loadedSnapshot);
-
-// For reproducible custom person generation, use generators with seeds
-// Store the generator configuration instead of person instances
 ```
+
+#### Registering Custom Person Types
+
+To support custom person types in snapshots, implement the serializer interfaces and register:
+
+```csharp
+using dotMigrata.Snapshot.Conversion;
+using dotMigrata.Core.Entities;
+using dotMigrata.Core.Values;
+using System.Xml;
+
+// 1. Create a custom person serializer
+public class DemographicPersonSerializer : ICustomPersonSerializer<DemographicPerson>
+{
+    public DemographicPerson CreateFromTemplate(
+        PersonTemplateXml template,
+        Dictionary<FactorDefinition, double> sensitivities,
+        List<string> tags)
+    {
+        // Extract custom properties from XML
+        int age = 30; // default
+        double income = 50000; // default
+        string education = "Bachelor";
+
+        if (template.CustomProperties != null)
+        {
+            var ageNode = template.CustomProperties.SelectSingleNode("Age");
+            if (ageNode != null) age = int.Parse(ageNode.InnerText);
+
+            var incomeNode = template.CustomProperties.SelectSingleNode("Income");
+            if (incomeNode != null) income = double.Parse(incomeNode.InnerText);
+
+            var eduNode = template.CustomProperties.SelectSingleNode("Education");
+            if (eduNode != null) education = eduNode.InnerText;
+        }
+
+        return new DemographicPerson(sensitivities)
+        {
+            MovingWillingness = NormalizedValue.FromRatio(template.MovingWillingness),
+            RetentionRate = NormalizedValue.FromRatio(template.RetentionRate),
+            Age = age,
+            Income = income,
+            EducationLevel = education,
+            Tags = tags
+        };
+    }
+
+    public XmlElement? SerializeCustomProperties(DemographicPerson person, XmlDocument doc)
+    {
+        var customProps = doc.CreateElement("CustomProperties");
+
+        var ageElem = doc.CreateElement("Age");
+        ageElem.InnerText = person.Age.ToString();
+        customProps.AppendChild(ageElem);
+
+        var incomeElem = doc.CreateElement("Income");
+        incomeElem.InnerText = person.Income.ToString();
+        customProps.AppendChild(incomeElem);
+
+        var eduElem = doc.CreateElement("Education");
+        eduElem.InnerText = person.EducationLevel;
+        customProps.AppendChild(eduElem);
+
+        return customProps;
+    }
+}
+
+// 2. Register the custom person type at application startup
+PersonTypeRegistry.RegisterPersonType("DemographicPerson", new DemographicPersonSerializer());
+
+// 3. Now snapshots will correctly serialize/deserialize DemographicPerson
+var snapshot = SnapshotConverter.ToSnapshot(world);
+XmlSnapshotSerializer.SerializeToFile(snapshot, "demographic-world.xml");
+
+var loadedSnapshot = XmlSnapshotSerializer.DeserializeFromFile("demographic-world.xml");
+var loadedWorld = SnapshotConverter.ToWorld(loadedSnapshot); // Returns DemographicPerson instances!
+```
+
+#### Custom Person Type in XML
+
+The XML snapshot will include the `PersonType` attribute and custom properties:
+
+```xml
+
+<Person Count="1000" PersonType="DemographicPerson" Willingness="0.7" Retention="0.4">
+    <Sensitivities>
+        <S Id="income" Value="8.5"/>
+        <S Id="pollution" Value="-6.0"/>
+    </Sensitivities>
+    <CustomProperties>
+        <Age>28</Age>
+        <Income>75000</Income>
+        <Education>Master</Education>
+    </CustomProperties>
+</Person>
+```
+
+#### Using Custom Generators with Snapshots
+
+For generator-based populations, implement `ICustomGeneratorSerializer`:
+
+```csharp
+public class DemographicGeneratorSerializer : 
+    ICustomGeneratorSerializer<DemographicPerson, DemographicPersonGenerator>
+{
+    public DemographicPersonGenerator CreateFromXml(
+        GeneratorXml generatorXml,
+        Dictionary<FactorDefinition, ValueSpecification> factorSpecs,
+        List<string> tags)
+    {
+        // Create generator with custom specifications
+        return new DemographicPersonGenerator(generatorXml.Seed)
+        {
+            Count = generatorXml.Count,
+            FactorSensitivities = factorSpecs,
+            // ... set custom generator properties from generatorXml.CustomProperties
+            Tags = tags
+        };
+    }
+
+    public XmlElement? SerializeCustomProperties(
+        DemographicPersonGenerator generator, 
+        XmlDocument doc)
+    {
+        // Serialize custom generator specs if any
+        return null; // or return custom XML element
+    }
+}
+
+// Register generator serializer
+PersonTypeRegistry.RegisterGeneratorType<DemographicPerson, DemographicPersonGenerator>(
+    "DemographicPerson", 
+    new DemographicGeneratorSerializer());
+```
+
+### Key Points
+
+- **Register once**: Register custom types at application startup before loading/saving snapshots
+- **Type names**: Use consistent type names (e.g., "DemographicPerson") across registration and XML
+- **Backward compatible**: Existing snapshots without `PersonType` attribute default to "StandardPerson"
+- **Clean separation**: CustomProperties keeps core schema simple while allowing extensibility
 
 ## Configuring Simulation Parameters
 
