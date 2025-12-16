@@ -20,17 +20,14 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore strong-name key
-        working-directory: dotMigrata
         run: |
           mkdir -p ./build
           echo "${{ secrets.SNK_KEY_BASE64 }}" | base64 --decode > ./build/GeoMigrata.snk
 
       - name: Restore
-        working-directory: dotMigrata
         run: dotnet restore
 
       - name: Build
-        working-directory: dotMigrata
         run: dotnet build -c Release --no-restore
 
       - name: Test
