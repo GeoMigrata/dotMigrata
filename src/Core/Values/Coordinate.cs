@@ -1,10 +1,22 @@
-﻿namespace dotMigrata.Core.Values;
+﻿using dotMigrata.Core.Values.Interfaces;
+
+namespace dotMigrata.Core.Values;
 
 /// <summary>
 /// Represents a geographic coordinate using WGS84 datum (latitude and longitude).
 /// </summary>
+/// <remarks>
+/// Provides distance calculation using pluggable <see cref="Interfaces.IDistanceCalculator"/> strategies.
+/// Defaults to Haversine formula for backward compatibility and general use.
+/// </remarks>
 public readonly record struct Coordinate
 {
+    /// <summary>
+    /// Gets the default distance calculator (Haversine).
+    /// </summary>
+    public static IDistanceCalculator DefaultDistanceCalculator { get; set; } =
+        HaversineDistanceCalculator.Instance;
+
     /// <summary>
     /// Gets or initializes the longitude in degrees.
     /// Valid range: -180 to 180.
@@ -32,44 +44,48 @@ public readonly record struct Coordinate
     }
 
     /// <summary>
-    /// Computes the great-circle distance between this coordinate and another using the Haversine formula.
+    /// Computes the distance between this coordinate and another using the default distance calculator.
     /// </summary>
     /// <param name="other">Other coordinate to calculate distance to.</param>
     /// <returns>Distance in kilometers.</returns>
     public double DistanceTo(Coordinate other)
     {
-        return DistanceBetween(this, other);
+        return DefaultDistanceCalculator.CalculateDistance(this, other);
     }
 
     /// <summary>
-    /// Computes the great-circle distance between two coordinates using the Haversine formula.
+    /// Computes the distance between this coordinate and another using a specific distance calculator.
+    /// </summary>
+    /// <param name="other">Other coordinate to calculate distance to.</param>
+    /// <param name="calculator">The distance calculator to use.</param>
+    /// <returns>Distance in kilometers.</returns>
+    public double DistanceTo(Coordinate other, IDistanceCalculator calculator)
+    {
+        ArgumentNullException.ThrowIfNull(calculator);
+        return calculator.CalculateDistance(this, other);
+    }
+
+    /// <summary>
+    /// Computes the distance between two coordinates using the default distance calculator.
     /// </summary>
     /// <param name="c1">First coordinate.</param>
     /// <param name="c2">Second coordinate.</param>
     /// <returns>Distance in kilometers.</returns>
     public static double DistanceBetween(Coordinate c1, Coordinate c2)
     {
-        const double earthRadiusKm = 6371.0;
-
-        var lat1Rad = DegreesToRadians(c1.Latitude);
-        var lat2Rad = DegreesToRadians(c2.Latitude);
-        var deltaLat = DegreesToRadians(c2.Latitude - c1.Latitude);
-        var deltaLon = DegreesToRadians(c2.Longitude - c1.Longitude);
-
-        var sinDeltaLatHalf = Math.Sin(deltaLat * 0.5);
-        var sinDeltaLonHalf = Math.Sin(deltaLon * 0.5);
-
-        var a = sinDeltaLatHalf * sinDeltaLatHalf +
-                Math.Cos(lat1Rad) * Math.Cos(lat2Rad) *
-                sinDeltaLonHalf * sinDeltaLonHalf;
-
-        var c = 2.0 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-
-        return earthRadiusKm * c;
+        return DefaultDistanceCalculator.CalculateDistance(c1, c2);
     }
 
-    private static double DegreesToRadians(double degrees)
+    /// <summary>
+    /// Computes the distance between two coordinates using a specific distance calculator.
+    /// </summary>
+    /// <param name="c1">First coordinate.</param>
+    /// <param name="c2">Second coordinate.</param>
+    /// <param name="calculator">The distance calculator to use.</param>
+    /// <returns>Distance in kilometers.</returns>
+    public static double DistanceBetween(Coordinate c1, Coordinate c2, IDistanceCalculator calculator)
     {
-        return degrees * Math.PI / 180.0;
+        ArgumentNullException.ThrowIfNull(calculator);
+        return calculator.CalculateDistance(c1, c2);
     }
 }
