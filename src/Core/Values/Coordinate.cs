@@ -12,10 +12,17 @@ namespace dotMigrata.Core.Values;
 public readonly record struct Coordinate
 {
     /// <summary>
-    /// Gets the default distance calculator (Haversine).
+    /// Gets or sets the default distance calculator (Haversine by default).
     /// </summary>
-    public static IDistanceCalculator DefaultDistanceCalculator { get; set; } =
-        HaversineDistanceCalculator.Instance;
+    /// <remarks>
+    /// This property uses thread-safe operations for updates. 
+    /// For better design, prefer passing IDistanceCalculator via dependency injection or method parameters.
+    /// </remarks>
+    public static IDistanceCalculator DefaultDistanceCalculator
+    {
+        get => Volatile.Read(ref field);
+        set => Volatile.Write(ref field, value ?? throw new ArgumentNullException(nameof(value)));
+    } = HaversineDistanceCalculator.Instance;
 
     /// <summary>
     /// Gets or initializes the longitude in degrees.

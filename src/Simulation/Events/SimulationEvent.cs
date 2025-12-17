@@ -46,7 +46,7 @@ public sealed class SimulationEvent : ISimulationEvent
     public IEventEffect Effect { get; }
 
     /// <inheritdoc />
-    public bool IsCompleted => Interlocked.CompareExchange(ref _isCompleted, 0, 0) == 1;
+    public bool IsCompleted => Volatile.Read(ref _isCompleted) == 1;
 
     /// <inheritdoc />
     public void MarkCompleted()

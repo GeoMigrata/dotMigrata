@@ -40,7 +40,7 @@ public sealed class ConditionalTrigger : IEventTrigger
     public bool ShouldExecute(SimulationContext context)
     {
         if (CooldownTicks.HasValue &&
-            context.CurrentTick - _lastExecutedTick < CooldownTicks.Value)
+            context.CurrentTick - Volatile.Read(ref _lastExecutedTick) < CooldownTicks.Value)
             return false;
 
         return Condition(context);
