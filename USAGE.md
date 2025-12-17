@@ -49,7 +49,7 @@ var incomeFactor = new FactorDefinition
     Type = FactorType.Positive,
     MinValue = 20000,
     MaxValue = 100000,
-    Transform = null  // Linear normalization
+    TransformFunction = null  // Linear normalization
 };
 
 var pollutionFactor = new FactorDefinition
@@ -58,7 +58,7 @@ var pollutionFactor = new FactorDefinition
     Type = FactorType.Negative,
     MinValue = 0,
     MaxValue = 100,
-    Transform = null  // Linear normalization
+        TransformFunction = null  // Linear normalization
 };
 
 var allFactors = new[] { incomeFactor, pollutionFactor };
@@ -225,7 +225,7 @@ var incomeFactor = new FactorDefinition
     Type = FactorType.Positive,
     MinValue = 30000,
     MaxValue = 150000,
-    Transform = null
+    TransformFunction = null
 };
 
 var pollutionFactor = new FactorDefinition
@@ -234,7 +234,7 @@ var pollutionFactor = new FactorDefinition
     Type = FactorType.Negative,
     MinValue = 0,
     MaxValue = 100,
-    Transform = null
+    TransformFunction = null
 };
 
 var housingFactor = new FactorDefinition
@@ -243,7 +243,7 @@ var housingFactor = new FactorDefinition
     Type = FactorType.Negative,
     MinValue = 500,
     MaxValue = 3000,
-    Transform = null
+    TransformFunction = null
 };
 
 FactorDefinition[] allFactors = [incomeFactor, pollutionFactor, housingFactor];
@@ -351,7 +351,7 @@ var incomeFactor = new FactorDefinition
     Type = FactorType.Positive,
     MinValue = 20000,
     MaxValue = 100000,
-    Transform = null
+    TransformFunction = null
 };
 
 FactorDefinition[] allFactors = [incomeFactor];
@@ -926,7 +926,7 @@ WorldSnapshotXml snapshot = new()
                 Type = "Positive",
                 Min = 20000,
                 Max = 100000,
-                Transform = "Linear"
+                CustomTransformName = "Linear"
             },
             new FactorDefXml
             {
@@ -935,7 +935,7 @@ WorldSnapshotXml snapshot = new()
                 Type = "Negative",
                 Min = 0,
                 Max = 100,
-                Transform = "Linear"
+                CustomTransformName = "Linear"
             }
         ],
         

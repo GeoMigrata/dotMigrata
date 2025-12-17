@@ -8,9 +8,12 @@ namespace dotMigrata.Simulation.Events;
 /// <remarks>
 /// Events represent discrete occurrences that modify simulation state.
 /// They are fundamental mechanisms alongside cities, factors, and persons.
+/// Thread-safe implementation for parallel execution support.
 /// </remarks>
 public sealed class SimulationEvent : ISimulationEvent
 {
+    private int _isCompleted;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SimulationEvent" /> class.
     /// </summary>
@@ -43,11 +46,11 @@ public sealed class SimulationEvent : ISimulationEvent
     public IEventEffect Effect { get; }
 
     /// <inheritdoc />
-    public bool IsCompleted { get; private set; }
+    public bool IsCompleted => Interlocked.CompareExchange(ref _isCompleted, 0, 0) == 1;
 
     /// <inheritdoc />
     public void MarkCompleted()
     {
-        IsCompleted = true;
+        Interlocked.Exchange(ref _isCompleted, 1);
     }
 }

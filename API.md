@@ -173,7 +173,7 @@ Defines a city characteristic that influences migration.
 - `Type` (FactorType) - Positive or Negative
 - `MinValue` (double) - Minimum value for normalization
 - `MaxValue` (double) - Maximum value for normalization
-- `Transform` (TransformType?) - Normalization transform (Linear, Log, Sigmoid)
+- `TransformFunction` (ITransformFunction?) - Optional normalization transform function
 
 ### FactorValue
 
@@ -579,7 +579,7 @@ static WorldSnapshotXml? DeserializeFromFile(string filePath)
         <FactorDefinitions>
             <!-- c:FactorDefinition maps to FactorDefinition class in code -->
             <c:FactorDefinition Id="pollution" DisplayName="Pollution" Type="Negative" Min="0" Max="12"
-                                Transform="Linear"/>
+                                CustomTransformName="Linear"/>
         </FactorDefinitions>
 
         <!-- PersonCollections are snapshot-only constructs -->
@@ -700,12 +700,6 @@ Represents an individual person's migration decision.
 
 - `Positive` - Increases attraction (e.g., income)
 - `Negative` - Decreases attraction (e.g., pollution)
-
-### TransformType
-
-- `Linear` - Linear normalization
-- `Log` - Logarithmic normalization
-- `Sigmoid` - Sigmoid normalization
 
 ### SnapshotStatus
 

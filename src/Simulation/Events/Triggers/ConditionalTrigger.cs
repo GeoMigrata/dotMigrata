@@ -9,6 +9,7 @@ namespace dotMigrata.Simulation.Events.Triggers;
 /// <remarks>
 /// Supports optional cooldown to prevent rapid successive firings.
 /// This is an extension point for complex event-condition-action patterns.
+/// Thread-safe implementation using Interlocked operations for parallel execution.
 /// </remarks>
 public sealed class ConditionalTrigger : IEventTrigger
 {
@@ -48,6 +49,6 @@ public sealed class ConditionalTrigger : IEventTrigger
     /// <inheritdoc />
     public void OnExecuted(SimulationContext context)
     {
-        _lastExecutedTick = context.CurrentTick;
+        Interlocked.Exchange(ref _lastExecutedTick, context.CurrentTick);
     }
 }
