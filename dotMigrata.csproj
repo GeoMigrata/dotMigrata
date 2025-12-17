@@ -35,7 +35,7 @@
         <RootNamespace>dotMigrata</RootNamespace>
     </PropertyGroup>
 
-    <PropertyGroup>
+    <PropertyGroup Condition="Exists('./build/GeoMigrata.snk')">
         <SignAssembly>true</SignAssembly>
         <AssemblyOriginatorKeyFile>./build/GeoMigrata.snk</AssemblyOriginatorKeyFile>
     </PropertyGroup>
