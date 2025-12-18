@@ -1,4 +1,4 @@
-﻿# dotMigrata
+﻿﻿# dotMigrata
 
 [![.NET8.0](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
 [![.NET9.0](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
@@ -33,8 +33,9 @@ factors in an ongoing iterative process.
   characteristics. `PersonBase` is an abstract class defining essential migration properties, while `StandardPerson` is
   the concrete implementation with additional behavioral properties. Each person makes independent migration decisions
   based on their own preferences.
-- **FactorDefinition & FactorValue:** Define metadata for each factor, including direction (pull or push),
-  normalization, and value range. Factor values are normalized for internal calculations. Each city has a FactorValue
+- **FactorDefinition & FactorIntensity:** Define metadata for each factor, including direction (pull or push),
+  normalization, and value range. Factor intensities are stored as ValueSpec and evaluated lazily for calculations. Each
+  city has a FactorIntensity
   for every FactorDefinition in the world.
 - **PersonGenerator:** Module for generating large populations (10,000 to 1,000,000+) with randomized attributes using
   configurable distributions (normal distribution for sensitivities).
@@ -52,9 +53,9 @@ factors in an ongoing iterative process.
 ## Simulation Flow
 
 1. Initialize the world with cities, factor definitions, and persons.
-    - Each City must have FactorValues for all FactorDefinitions
+    - Each City must have FactorIntensities for all FactorDefinitions
     - Persons are generated with randomized sensitivities and attributes
-   - Each person (PersonBase/StandardPerson instance) is assigned to an initial city
+    - Each person (PersonBase/StandardPerson instance) is assigned to an initial city
 2. For each simulation step:
     - For each person, calculate attraction to all cities based on personal sensitivities
     - Each person independently decides whether to migrate based on attraction differences and personal willingness
@@ -108,7 +109,7 @@ Contains fundamental domain models:
 - `World`, `City` - Entity models
 - `PersonBase` - Abstract base class for all person types
 - `StandardPerson` - Standard implementation with migration-specific properties
-- `FactorDefinition`, `FactorValue` - Factor system models
+- `FactorDefinition`, `FactorIntensity` - Factor system models
 - `Coordinate` - Geographic coordinate model
 
 ### Logic Layer (`/src/Logic`)
@@ -211,7 +212,7 @@ Extend the framework by implementing these interfaces:
 Domain models available for use and extension:
 
 - **`World`**, **`City`**, **`PersonBase`**, **`StandardPerson`** - Core simulation entities
-- **`FactorDefinition`**, **`FactorValue`** - City characteristic system
+- **`FactorDefinition`**, **`FactorIntensity`** - City characteristic system
 - **`IPersonGenerator<TPerson>`**, **`StandardPersonGenerator`** - Population generation
 - **`SimulationContext`** - Runtime simulation state
 - **`AttractionResult`**, **`MigrationFlow`** - Calculation results

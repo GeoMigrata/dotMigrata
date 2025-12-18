@@ -1,4 +1,4 @@
-﻿# API Reference
+﻿﻿# API Reference
 
 This document provides a comprehensive reference for the public API of dotMigrata.
 
@@ -44,14 +44,14 @@ Represents a city with geographic location, factors, and individual persons.
 - `Area` (double, init) - Area in square kilometers (must be > 0)
 - `Location` (Coordinate, required) - Geographic coordinates
 - `Capacity` (int?, init) - Maximum population capacity (optional, null or 0 means no limit)
-- `FactorValues` (IReadOnlyList<FactorValue>) - Factor values for this city
+- `FactorIntensities` (IReadOnlyList<FactorIntensity>) - Factor intensities for this city
 - `Persons` (IReadOnlyList<PersonBase>) - Persons residing in this city (returns snapshot)
 - `Population` (int) - Total population (count of persons)
 
 **Methods:**
 
-- `UpdateFactorIntensity(FactorDefinition, IntensityValue)` - Updates a factor's intensity
-- `TryGetFactorValue(FactorDefinition, out FactorValue?)` - Gets a factor value
+- `UpdateFactorIntensity(FactorDefinition, ValueSpec)` - Updates a factor's intensity
+- `TryGetFactorIntensity(FactorDefinition, out FactorIntensity?)` - Gets a factor intensity
 - `AddPerson(PersonBase)` - Adds a person to this city (thread-safe)
 - `RemovePerson(PersonBase)` - Removes a person from this city (thread-safe, returns bool)
 
@@ -175,14 +175,19 @@ Defines a city characteristic that influences migration.
 - `MaxValue` (double) - Maximum value for normalization
 - `TransformFunction` (ITransformFunction?) - Optional normalization transform function
 
-### FactorValue
+### FactorIntensity
 
-Represents a factor's intensity value for a city.
+Represents the intensity value for a specific factor in a city.
 
 **Properties:**
 
-- `Definition` (FactorDefinition) - The factor definition
-- `Intensity` (double) - Raw intensity value
+- `Definition` (FactorDefinition) - The factor definition - Required
+- `Intensity` (ValueSpec) - The intensity value specification - Required
+
+**Methods:**
+
+- `ComputeIntensity(double? normalizedInput = null, bool useCache = false, Random? random = null)` - Computes the
+  concrete intensity value
 
 ### Coordinate
 
@@ -249,12 +254,12 @@ new StandardPersonGenerator(int seed) // Specific seed for reproducibility
 **Properties:**
 
 - `Count` (int) - Number of persons to generate - Required
-- `FactorSensitivities` (Dictionary<FactorDefinition, ValueSpecification>) - Factor sensitivity specifications
-- `MovingWillingness` (ValueSpecification) - Willingness specification - Required
-- `RetentionRate` (ValueSpecification) - Retention specification - Required
-- `SensitivityScaling` (ValueSpecification?) - Scaling specification - Optional (default: 1.0)
-- `AttractionThreshold` (ValueSpecification?) - Threshold specification - Optional (default: 0.0)
-- `MinimumAcceptableAttraction` (ValueSpecification?) - Min attraction specification - Optional (default: 0.0)
+- `FactorSensitivities` (Dictionary<FactorDefinition, ValueSpec>) - Factor sensitivity specifications
+- `MovingWillingness` (ValueSpec) - Willingness specification - Required
+- `RetentionRate` (ValueSpec) - Retention specification - Required
+- `SensitivityScaling` (ValueSpec?) - Scaling specification - Optional (default: 1.0)
+- `AttractionThreshold` (ValueSpec?) - Threshold specification - Optional (default: 0.0)
+- `MinimumAcceptableAttraction` (ValueSpec?) - Min attraction specification - Optional (default: 0.0)
 - `Tags` (IReadOnlyList<string>) - Tags to assign to all generated persons - Optional
 - `DefaultSensitivityRange` (ValueRange) - Default range for unspecified factors - Default: (-10.0, 10.0)
 - `SensitivityStdDev` (double) - Standard deviation for sensitivity normal distribution - Default: 3.0
@@ -265,7 +270,7 @@ new StandardPersonGenerator(int seed) // Specific seed for reproducibility
 IEnumerable<StandardPerson> Generate(IEnumerable<FactorDefinition> factorDefinitions)
 ```
 
-### ValueSpecification
+### ValueSpec
 
 Represents a value specification for attributes. Can be a fixed value, a random range, or an approximate value using
 normal distribution.
@@ -273,17 +278,17 @@ normal distribution.
 **Static Factory Methods:**
 
 ```csharp
-static ValueSpecification Fixed(double value)
-static ValueSpecification InRange(double min, double max)
-static ValueSpecification Approximately(double mean, double standardDeviation)
-static ValueSpecification Random()
-static ValueSpecification RandomWithScale(double scale)
+static ValueSpec Fixed(double value)
+static ValueSpec InRange(double min, double max)
+static ValueSpec Approximately(double mean, double standardDeviation)
+static ValueSpec Random()
+static ValueSpec RandomWithScale(double scale)
 ```
 
 **Methods:**
 
 ```csharp
-ValueSpecification WithScale(double scale)
+ValueSpec WithScale(double scale)
 ```
 
 **Properties:**
@@ -301,22 +306,22 @@ ValueSpecification WithScale(double scale)
 
 ```csharp
 // Fixed value - all persons get 5.0
-ValueSpecification.Fixed(5.0)
+ValueSpec.Fixed(5.0)
 
 // Random in range 0.3 to 0.8 (uniform distribution)
-ValueSpecification.InRange(0.3, 0.8)
+ValueSpec.InRange(0.3, 0.8)
 
 // Approximate value using normal distribution
-ValueSpecification.Approximately(mean: 0.5, standardDeviation: 0.1)
+ValueSpec.Approximately(mean: 0.5, standardDeviation: 0.1)
 
 // Random with default range
-ValueSpecification.Random()
+ValueSpec.Random()
 
 // Random with default range, scaled by 1.5 (bias higher)
-ValueSpecification.Random().WithScale(1.5)
+ValueSpec.Random().WithScale(1.5)
 
 // Random in range, scaled by 0.5 (bias lower)
-ValueSpecification.InRange(0.2, 0.8).WithScale(0.5)
+ValueSpec.InRange(0.2, 0.8).WithScale(0.5)
 ```
 
 ## Configuration
@@ -594,7 +599,7 @@ static WorldSnapshotXml? DeserializeFromFile(string filePath)
                     </FactorSensitivities>
                 </c:StandardPerson>
 
-                <!-- Generator uses ValueSpecifications for mass person generation -->
+                <!-- Generator uses ValueSpecs for mass person generation -->
                 <Generator Count="100000">
                     <Seed>42</Seed>
                     <FactorSensitivities>
@@ -631,7 +636,7 @@ static WorldSnapshotXml? DeserializeFromFile(string filePath)
 </Snapshot>
 ```
 
-**ValueSpecification Types:**
+**ValueSpec Types:**
 
 - `<Fixed Value="0.5"/>` - Fixed value for all generated persons
 - `<InRange Min="0.3" Max="0.8"/>` - Random value within range
@@ -821,7 +826,7 @@ Defines serialization for custom person generators.
 **Methods:**
 
 ```csharp
-TGenerator CreateFromXml(GeneratorXml generatorXml, Dictionary<FactorDefinition, ValueSpecification> factorSpecs, List<string> tags)
+TGenerator CreateFromXml(GeneratorXml generatorXml, Dictionary<FactorDefinition, ValueSpec> factorSpecs, List<string> tags)
 XmlElement? SerializeCustomProperties(TGenerator generator, XmlDocument doc)
 ```
 
@@ -882,16 +887,16 @@ var result = await engine.RunAsync(world);
 
 ### Value Specifications
 
-Version 3.0+ uses direct `ValueSpecification` static methods for type-safe value creation:
+Version 3.0+ uses direct `ValueSpec` static methods for type-safe value creation:
 
-**ValueSpecification Methods:**
+**ValueSpec Methods:**
 
 ```csharp
-// Use ValueSpecification static methods directly (no using static needed)
-ValueSpecification.Fixed(0.75)                      // Fixed value
-ValueSpecification.InRange(0.4, 0.8)                // Uniform distribution  
-ValueSpecification.Approximately(0.6, 0.15)         // Normal distribution
-ValueSpecification.RandomWithScale(1.5)             // Random with scale
+// Use ValueSpec static methods directly (no using static needed)
+ValueSpec.Fixed(0.75)                      // Fixed value
+ValueSpec.InRange(0.4, 0.8)                // Uniform distribution  
+ValueSpec.Approximately(0.6, 0.15)         // Normal distribution
+ValueSpec.RandomWithScale(1.5)             // Random with scale
 
 // Generic method for custom attributes
 Attribute("CustomAttribute").InRange(0, 100)

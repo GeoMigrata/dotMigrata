@@ -28,32 +28,12 @@ public static class ValueExtensions
         }
 
         /// <summary>
-        /// Converts a double to a SensitivityValue using the default range (-10 to +10).
+        /// Creates a fixed ValueSpec from this value.
         /// </summary>
-        /// <returns>A new SensitivityValue.</returns>
-        public SensitivityValue AsSensitivity()
+        /// <returns>A new ValueSpec with a fixed value.</returns>
+        public ValueSpec AsValueSpec()
         {
-            return SensitivityValue.FromRaw(value);
-        }
-
-        /// <summary>
-        /// Converts a double to a SensitivityValue with a custom range.
-        /// </summary>
-        /// <param name="minValue">The minimum allowed value.</param>
-        /// <param name="maxValue">The maximum allowed value.</param>
-        /// <returns>A new SensitivityValue.</returns>
-        public SensitivityValue AsSensitivity(double minValue, double maxValue)
-        {
-            return SensitivityValue.FromRaw(value, minValue, maxValue);
-        }
-
-        /// <summary>
-        /// Converts a double to an IntensityValue.
-        /// </summary>
-        /// <returns>A new IntensityValue.</returns>
-        public IntensityValue AsIntensity()
-        {
-            return IntensityValue.FromRaw(value);
+            return ValueSpec.Fixed(value);
         }
     }
 
@@ -70,21 +50,13 @@ public static class ValueExtensions
         }
 
         /// <summary>
-        /// Converts an int to a SensitivityValue using the default range (-10 to +10).
-        /// </summary>
-        /// <returns>A new SensitivityValue.</returns>
-        public SensitivityValue AsSensitivity()
-        {
-            return SensitivityValue.FromRaw(value);
-        }
-
-        /// <summary>
-        /// Converts an int to an IntensityValue.
+        /// Creates a fixed ValueSpec from this value.
         /// </summary>
         /// <returns>A new IntensityValue.</returns>
-        public IntensityValue AsIntensity()
+        /// <returns>A new ValueSpec with a fixed value.</returns>
+        public ValueSpec AsValueSpec()
         {
-            return IntensityValue.FromRaw(value);
+            return ValueSpec.Fixed(value);
         }
     }
 }

@@ -45,37 +45,41 @@ public static class ValuePresets
     public static class Sensitivity
     {
         /// <summary>Low positive sensitivity (2.0)</summary>
-        public static readonly SensitivityValue LowPositive = SensitivityValue.FromRaw(2.0);
+        public const double LowPositive = 2.0;
 
         /// <summary>Medium positive sensitivity (5.0)</summary>
-        public static readonly SensitivityValue MediumPositive = SensitivityValue.FromRaw(5.0);
+        public const double MediumPositive = 5.0;
 
         /// <summary>High positive sensitivity (8.0)</summary>
-        public static readonly SensitivityValue HighPositive = SensitivityValue.FromRaw(8.0);
+        public const double HighPositive = 8.0;
 
         /// <summary>Low negative sensitivity (-2.0)</summary>
-        public static readonly SensitivityValue LowNegative = SensitivityValue.FromRaw(-2.0);
+        public const double LowNegative = -2.0;
 
         /// <summary>Medium negative sensitivity (-5.0)</summary>
-        public static readonly SensitivityValue MediumNegative = SensitivityValue.FromRaw(-5.0);
+        public const double MediumNegative = -5.0;
 
         /// <summary>High negative sensitivity (-8.0)</summary>
-        public static readonly SensitivityValue HighNegative = SensitivityValue.FromRaw(-8.0);
+        public const double HighNegative = -8.0;
 
         /// <summary>Neutral sensitivity (0.0)</summary>
-        public static SensitivityValue Neutral => SensitivityValue.Zero;
+        public const double Neutral = 0.0;
     }
 
     /// <summary>
     /// Intensity value presets for common values.
     /// </summary>
+    /// <remarks>
+    /// Intensity values are now represented as ValueSpec instances.
+    /// Use ValueSpec.Fixed(value) to create intensity specifications.
+    /// </remarks>
     public static class Intensity
     {
         /// <summary>Zero intensity (0.0)</summary>
-        public static IntensityValue Zero => IntensityValue.Zero;
+        public const double Zero = 0.0;
 
         /// <summary>Unit intensity (1.0)</summary>
-        public static IntensityValue One => IntensityValue.One;
+        public const double One = 1.0;
     }
 
     /// <summary>

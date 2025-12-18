@@ -1,4 +1,4 @@
-﻿# Usage Guide
+﻿﻿# Usage Guide
 
 This guide provides detailed examples and usage instructions for dotMigrata.
 
@@ -75,14 +75,14 @@ collection.Add(new StandardPersonGenerator
 {
     Count = 100000,
     // Use FactorDefinition references for type safety
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
+    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpec>
     {
-        [incomeFactor] = ValueSpecification.InRange(3, 8),        // Sensitivity to income
-        [pollutionFactor] = ValueSpecification.InRange(-7, -3)    // Negative sensitivity to pollution
+        [incomeFactor] = ValueSpec.InRange(3, 8),        // Sensitivity to income
+        [pollutionFactor] = ValueSpec.InRange(-7, -3)    // Negative sensitivity to pollution
     },
-    // Direct ValueSpecification methods for person behavioral properties
-    MovingWillingness = ValueSpecification.InRange(0.4, 0.7),
-    RetentionRate = ValueSpecification.InRange(0.3, 0.6),
+    // Direct ValueSpec methods for person behavioral properties
+    MovingWillingness = ValueSpec.InRange(0.4, 0.7),
+    RetentionRate = ValueSpec.InRange(0.3, 0.6),
     Tags = ["urban_resident"]
 });
 ```
@@ -94,8 +94,8 @@ Create cities with factor values and assign the generated population. Again, use
 ```csharp
 var cityA = new City(
     factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 50000 },    // Reference the object
-        new FactorValue { Definition = pollutionFactor, Intensity = 30 }      // Not a string
+        new FactorIntensity { Definition = incomeFactor, Intensity = ValueSpec.Fixed(50000) },    // Reference the object
+        new FactorIntensity { Definition = pollutionFactor, Intensity = ValueSpec.Fixed(30) }      // Not a string
     ],
     persons: collection.GenerateAllPersons(allFactors))
 {
@@ -107,8 +107,8 @@ var cityA = new City(
 
 var cityB = new City(
     factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 40000 },
-        new FactorValue { Definition = pollutionFactor, Intensity = 20 }
+        new FactorIntensity { Definition = incomeFactor, Intensity = ValueSpec.Fixed(40000) },
+        new FactorIntensity { Definition = pollutionFactor, Intensity = ValueSpec.Fixed(20) }
     ],
     persons: [])  // Empty initially
 {
@@ -182,27 +182,27 @@ The framework provides several ways to specify values for person attributes:
 ### Fixed Values
 
 ```csharp
-ValueSpecification.Fixed(0.75)  // All persons get exactly 0.75
+ValueSpec.Fixed(0.75)  // All persons get exactly 0.75
 ```
 
 ### Range Values (Uniform Distribution)
 
 ```csharp
-ValueSpecification.InRange(0.4, 0.8)  // Uniformly distributed between 0.4 and 0.8
+ValueSpec.InRange(0.4, 0.8)  // Uniformly distributed between 0.4 and 0.8
 ```
 
 ### Approximate Values (Normal Distribution)
 
 ```csharp
 // Values sampled from normal distribution with mean=0.6, stddev=0.15
-ValueSpecification.Approximately(mean: 0.6, standardDeviation: 0.15)
+ValueSpec.Approximately(mean: 0.6, standardDeviation: 0.15)
 ```
 
 ### Random with Scale
 
 ```csharp
 // Scale > 1.0 biases toward higher values, < 1.0 toward lower values
-ValueSpecification.RandomWithScale(scale: 1.5)
+ValueSpec.RandomWithScale(scale: 1.5)
 ```
 
 ## PersonCollection System
@@ -284,15 +284,15 @@ collection.Add(new StandardPersonGenerator(seed: 42)
 {
     Count = 100_000,
     // Use FactorDefinition references for type safety
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
+    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpec>
     {
-        [incomeFactor] = ValueSpecification.InRange(3, 15),  // Custom range for Income sensitivity
-        [pollutionFactor] = ValueSpecification.Fixed(-5.0)      // Fixed value - all persons get -5.0
+        [incomeFactor] = ValueSpec.InRange(3, 15),  // Custom range for Income sensitivity
+        [pollutionFactor] = ValueSpec.Fixed(-5.0)      // Fixed value - all persons get -5.0
         // Note: housingFactor sensitivity will use default range with normal distribution
     },
-    // Direct ValueSpecification methods for person behavioral properties
-    MovingWillingness = ValueSpecification.InRange(0.6, 0.9),
-    RetentionRate = ValueSpecification.InRange(0.3, 0.6),
+    // Direct ValueSpec methods for person behavioral properties
+    MovingWillingness = ValueSpec.InRange(0.6, 0.9),
+    RetentionRate = ValueSpec.InRange(0.3, 0.6),
     Tags = ["young_professional", "tech_worker"]
 });
 
@@ -301,9 +301,9 @@ IEnumerable<PersonBase> persons = collection.GenerateAllPersons(allFactors);
 
 var city = new City(
     factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 80000 },
-        new FactorValue { Definition = pollutionFactor, Intensity = 30 },
-        new FactorValue { Definition = housingFactor, Intensity = 2500 }
+        new FactorIntensity { Definition = incomeFactor, Intensity = ValueSpec.Fixed(80000 },
+        new FactorIntensity { Definition = pollutionFactor, Intensity = ValueSpec.Fixed(30) },
+        new FactorIntensity { Definition = housingFactor, Intensity = ValueSpec.Fixed(2500 }
     ],
     persons: persons)
 {
@@ -363,13 +363,13 @@ var collection = new PersonCollection();
 collection.Add(new StandardPersonGenerator(seed: 42)
 {
     Count = 50000,
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
+    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpec>
     {
-        [incomeFactor] = ValueSpecification.InRange(5, 9)  // Use FactorDefinition reference
+        [incomeFactor] = ValueSpec.InRange(5, 9)  // Use FactorDefinition reference
     },
-    // Direct ValueSpecification methods for person behavioral properties
-    MovingWillingness = ValueSpecification.InRange(0.4, 0.7),
-    RetentionRate = ValueSpecification.InRange(0.3, 0.6),
+    // Direct ValueSpec methods for person behavioral properties
+    MovingWillingness = ValueSpec.InRange(0.4, 0.7),
+    RetentionRate = ValueSpec.InRange(0.3, 0.6),
     // Advanced generator options
     DefaultSensitivityRange = new ValueRange(-10.0, 10.0),  // Default range for unspecified factors
     SensitivityStdDev = 3.0  // Standard deviation for normal distribution
@@ -380,7 +380,7 @@ IEnumerable<PersonBase> persons = collection.GenerateAllPersons(allFactors);
 // Add persons to city
 var city = new City(
     factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 80000 }
+        new FactorIntensity { Definition = incomeFactor, Intensity = ValueSpec.Fixed(80000 }
     ],
     persons: persons)
 {
@@ -553,11 +553,11 @@ public sealed class DemographicPersonGenerator : IPersonGenerator<DemographicPer
     }
 
     public required int Count { get; init; }
-    public required ValueSpecification MovingWillingness { get; init; }
-    public required ValueSpecification RetentionRate { get; init; }
-    public required ValueSpecification Age { get; init; }
-    public required ValueSpecification Income { get; init; }
-    public Dictionary<FactorDefinition, ValueSpecification> FactorSensitivities { get; init; } = [];
+    public required ValueSpec MovingWillingness { get; init; }
+    public required ValueSpec RetentionRate { get; init; }
+    public required ValueSpec Age { get; init; }
+    public required ValueSpec Income { get; init; }
+    public Dictionary<FactorDefinition, ValueSpec> FactorSensitivities { get; init; } = [];
     public IReadOnlyList<string> Tags { get; init; } = [];
 
     public IEnumerable<DemographicPerson> Generate(IEnumerable<FactorDefinition> factorDefinitions)
@@ -594,7 +594,7 @@ public sealed class DemographicPersonGenerator : IPersonGenerator<DemographicPer
         }
     }
 
-    private double GenerateValue(ValueSpecification spec)
+    private double GenerateValue(ValueSpec spec)
     {
         if (spec.IsFixed) return spec.FixedValue!.Value;
         if (spec.HasRange)
@@ -621,14 +621,14 @@ var collection = new PersonCollection();
 collection.Add(new DemographicPersonGenerator(seed: 42)
 {
     Count = 10000,
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
+    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpec>
     {
-        [incomeFactor] = ValueSpecification.InRange(3, 8)
+        [incomeFactor] = ValueSpec.InRange(3, 8)
     },
-    MovingWillingness = ValueSpecification.InRange(0.4, 0.7),
-    RetentionRate = ValueSpecification.InRange(0.3, 0.6),
-    Age = ValueSpecification.InRange(18, 65),
-    Income = ValueSpecification.InRange(25000, 120000),
+    MovingWillingness = ValueSpec.InRange(0.4, 0.7),
+    RetentionRate = ValueSpec.InRange(0.3, 0.6),
+    Age = ValueSpec.InRange(18, 65),
+    Income = ValueSpec.InRange(25000, 120000),
     Tags = ["demographic_study"]
 });
 
@@ -781,7 +781,7 @@ public class DemographicGeneratorSerializer :
 {
     public DemographicPersonGenerator CreateFromXml(
         GeneratorXml generatorXml,
-        Dictionary<FactorDefinition, ValueSpecification> factorSpecs,
+        Dictionary<FactorDefinition, ValueSpec> factorSpecs,
         List<string> tags)
     {
         // Create generator with custom specifications
@@ -991,8 +991,8 @@ WorldSnapshotXml snapshot = new()
                 Capacity = 1000000,
                 FactorValues =
                 [
-                    new FactorValueXml { Id = "income", Value = 50000 },
-                    new FactorValueXml { Id = "pollution", Value = 30 }
+                    new FactorIntensityXml { Id = "income", Value = 50000) },
+                    new FactorIntensityXml { Id = "pollution", Value = 30) }
                 ],
                 PersonCollections =
                 [
@@ -1009,8 +1009,8 @@ WorldSnapshotXml snapshot = new()
                 Capacity = 800000,
                 FactorValues =
                 [
-                    new FactorValueXml { Id = "income", Value = 40000 },
-                    new FactorValueXml { Id = "pollution", Value = 20 }
+                    new FactorIntensityXml { Id = "income", Value = 40000) },
+                    new FactorIntensityXml { Id = "pollution", Value = 20) }
                 ]
             }
         ]

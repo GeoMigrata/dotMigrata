@@ -44,7 +44,7 @@ public sealed record FactorIntensity
     /// If null, the value is generated according to the specification's configuration.
     /// </param>
     /// <param name="useCache">
-    /// When true, uses cached value if available. Default is false.
+    /// When true, uses cached value if available. Default is true for better performance.
     /// </param>
     /// <param name="random">
     /// Optional Random instance for value generation. If null, uses a new Random instance.
@@ -53,10 +53,11 @@ public sealed record FactorIntensity
     /// <exception cref="InvalidOperationException">
     /// Thrown when the evaluated value is negative.
     /// </exception>
-    public double ComputeIntensity(double? normalizedInput = null, bool useCache = false, Random? random = null)
+    public double ComputeIntensity(double? normalizedInput = null, bool useCache = true, Random? random = null)
     {
         var value = Intensity.Evaluate(normalizedInput, useCache, random);
 
+        // Only validate when not using cached values or when no cache exists
         if (value < 0)
             throw new InvalidOperationException(
                 $"Factor intensity must be non-negative. Got: {value} for factor '{Definition.DisplayName}'. " +

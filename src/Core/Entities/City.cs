@@ -71,16 +71,6 @@ public sealed class City : IDisposable
     /// </summary>
     public IReadOnlyList<FactorIntensity> FactorIntensities => _factorIntensities;
 
-    /// <remarks>
-    /// This property is obsolete. Use <see cref="FactorIntensities" /> instead.
-    /// </remarks>
-    [Obsolete("Use FactorIntensities instead. This property will be removed in a future version.")]
-    public IReadOnlyList<FactorValue> FactorValues => _factorIntensities.Select(fi => new FactorValue
-    {
-        Definition = fi.Definition,
-        Intensity = IntensityValue.FromRaw(fi.ComputeIntensity())
-    }).ToList();
-
     /// <summary>
     /// Gets the read-only collection of persons residing in this city.
     /// </summary>
@@ -155,28 +145,6 @@ public sealed class City : IDisposable
         factorIntensity.Intensity = newIntensity;
     }
 
-
-    /// <summary>
-    /// Updates the intensity of an existing <see cref="FactorValue" /> for the specified factor definition.
-    /// </summary>
-    /// <param name="factor">The factor definition to update.</param>
-    /// <param name="newIntensityValue">The new intensity value.</param>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="factor" /> is <see langword="null" />.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    /// Thrown when the specified factor has no matched value in this city.
-    /// </exception>
-    /// <remarks>
-    /// This method is obsolete. Use <see cref="UpdateFactorIntensity(FactorDefinition, ValueSpec)"/> instead.
-    /// </remarks>
-    [Obsolete(
-        "Use UpdateFactorIntensity(FactorDefinition, ValueSpec) instead. This method will be removed in a future version.")]
-    public void UpdateFactorIntensity(FactorDefinition factor, IntensityValue newIntensityValue)
-    {
-        UpdateFactorIntensity(factor, ValueSpec.Fixed(newIntensityValue.Value));
-    }
-
     /// <summary>
     /// Attempts to get the factor intensity for the specified factor definition.
     /// </summary>
@@ -195,41 +163,6 @@ public sealed class City : IDisposable
     {
         ArgumentNullException.ThrowIfNull(factor);
         return _factorLookup.TryGetValue(factor, out factorIntensity);
-    }
-
-    /// <summary>
-    /// Attempts to get the factor value for the specified factor definition.
-    /// </summary>
-    /// <param name="factor">The factor definition to look up.</param>
-    /// <param name="factorValue">
-    /// When this method returns, contains the factor value if found;
-    /// otherwise, <see langword="null" />.
-    /// </param>
-    /// <returns>
-    /// <see langword="true" /> if the factor value exists; otherwise, <see langword="false" />.
-    /// </returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="factor" /> is <see langword="null" />.
-    /// </exception>
-    /// <remarks>
-    /// This method is obsolete. Use <see cref="TryGetFactorIntensity"/> instead.
-    /// </remarks>
-    [Obsolete("Use TryGetFactorIntensity instead. This method will be removed in a future version.")]
-    public bool TryGetFactorValue(FactorDefinition factor, [NotNullWhen(true)] out FactorValue? factorValue)
-    {
-        ArgumentNullException.ThrowIfNull(factor);
-        if (_factorLookup.TryGetValue(factor, out var intensity))
-        {
-            factorValue = new FactorValue
-            {
-                Definition = intensity.Definition,
-                Intensity = IntensityValue.FromRaw(intensity.ComputeIntensity())
-            };
-            return true;
-        }
-
-        factorValue = null;
-        return false;
     }
 
     /// <summary>

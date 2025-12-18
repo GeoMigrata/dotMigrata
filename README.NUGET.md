@@ -1,4 +1,4 @@
-﻿# dotMigrata
+﻿﻿# dotMigrata
 
 A .NET simulation framework for modeling individual-based population migration and city evolution in multi-city systems.
 
@@ -91,8 +91,8 @@ collection.Add(new StandardPersonGenerator
 // Create cities
 var cityA = new City(
     factorValues: [
-        new FactorValue { Definition = incomeFactor, Intensity = 50000 },
-        new FactorValue { Definition = pollutionFactor, Intensity = 30 }
+        new FactorIntensity { Definition = incomeFactor, Intensity = ValueSpec.Fixed(50000) },
+        new FactorIntensity { Definition = pollutionFactor, Intensity = ValueSpec.Fixed(30) }
     ],
     persons: collection.GenerateAllPersons([incomeFactor, pollutionFactor]))
 {
@@ -123,7 +123,7 @@ await engine.DisposeAsync();
 - **World**: Top-level container for cities and factor definitions
 - **City**: Contains factor values and individual persons
 - **FactorDefinition**: Metadata for city characteristics (income, pollution, services)
-- **FactorValue**: Actual values for each city factor
+- **FactorIntensity**: Actual values for each city factor
 
 ### Persons
 

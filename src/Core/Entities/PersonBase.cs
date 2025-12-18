@@ -105,8 +105,7 @@ public abstract class PersonBase
     /// </summary>
     /// <param name="factor">The factor definition to query.</param>
     /// <returns>
-    /// The sensitivity value wrapped in a <see cref="SensitivityValue" />,
-    /// or a neutral value (0) if the factor is not defined for this person.
+    /// The sensitivity value, or 0.0 if the factor is not defined for this person.
     /// </returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factor" /> is <see langword="null" />.
@@ -114,11 +113,10 @@ public abstract class PersonBase
     /// <remarks>
     /// This method is thread-safe for read operations.
     /// </remarks>
-    public SensitivityValue GetSensitivity(FactorDefinition factor)
+    public double GetSensitivity(FactorDefinition factor)
     {
         ArgumentNullException.ThrowIfNull(factor);
-        var value = _factorSensitivities.GetValueOrDefault(factor, 0.0);
-        return SensitivityValue.FromRaw(value);
+        return _factorSensitivities.GetValueOrDefault(factor, 0.0);
     }
 
     /// <summary>
@@ -138,9 +136,9 @@ public abstract class PersonBase
     ///     Thread Safety: This method is not thread-safe. Ensure single-threaded access when updating sensitivities.
     ///     </para>
     /// </remarks>
-    public void UpdateSensitivity(FactorDefinition factor, SensitivityValue sensitivity)
+    public void UpdateSensitivity(FactorDefinition factor, double sensitivity)
     {
         ArgumentNullException.ThrowIfNull(factor);
-        _factorSensitivities[factor] = sensitivity.Value;
+        _factorSensitivities[factor] = sensitivity;
     }
 }
