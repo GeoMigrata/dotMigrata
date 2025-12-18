@@ -52,7 +52,11 @@ jobs:
 
       - name: Pack
         run: |
-          dotnet pack dotMigrata.csproj --configuration Release --no-build -o ./artifacts /p:Version=${{ steps.version.outputs.version }}
+          dotnet pack dotMigrata.csproj -c Release --no-build -o ./artifacts /p:Version=${{ steps.version.outputs.version }} -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
+
+      - name: Check OIDC availability
+        run: |
+          test -n "$ACTIONS_ID_TOKEN_REQUEST_URL" && echo "OIDC request URL is present" || (echo "OIDC not available" && exit 1)
 
       - name: Publish to NuGet.org via Trusted Publishing
         run: |
