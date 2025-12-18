@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   publish:
@@ -16,9 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
-    env:
-      NUGET_TRUSTED_PUBLISHING: true
 
     steps:
       - name: Checkout
@@ -53,18 +49,13 @@ jobs:
       - name: Pack
         run: |
           dotnet pack dotMigrata.csproj -c Release --no-build -o ./artifacts /p:Version=${{ steps.version.outputs.version }} -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
-      
-      # OIDC -> ephemeral NuGet API key for nuget.org
-      - name: Authenticate to NuGet.org (OIDC → ephemeral key)
-        id: nuget_login
-        uses: NuGet/login@v1
-        with:
-          user: ${{ secrets.NUGET_USER }}
 
-      - name: Publish to NuGet.org via Trusted Publishing
+      - name: Publish to NuGet.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
           find ./artifacts -maxdepth 1 -type f -name "*.nupkg" ! -name "*.symbols.nupkg" -print0 | xargs -0 -I {} \
             dotnet nuget push "{}" \
               --source "https://api.nuget.org/v3/index.json" \
-              --api-key "${{ steps.nuget_login.outputs.NUGET_API_KEY }}" \
+              --api-key "$NUGET_API_KEY" \
               --skip-duplicate
