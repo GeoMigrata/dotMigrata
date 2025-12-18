@@ -1,7 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using dotMigrata.Core.Entities;
 using dotMigrata.Core.Values;
-using dotMigrata.Generator;
 using dotMigrata.Simulation.Events.Enums;
 using dotMigrata.Simulation.Events.Interfaces;
 using dotMigrata.Simulation.Models;
@@ -32,7 +31,7 @@ public sealed class FactorChangeEffect : IEventEffect
     /// <param name="seed">Optional random seed for reproducible value generation.</param>
     public FactorChangeEffect(
         FactorDefinition factor,
-        ValueSpecification valueSpecification,
+        ValueSpec valueSpecification,
         EffectApplicationType applicationType,
         EffectDuration duration,
         Func<City, bool>? cityFilter = null,
@@ -54,7 +53,7 @@ public sealed class FactorChangeEffect : IEventEffect
     /// <summary>
     /// Gets the value specification for target values.
     /// </summary>
-    public ValueSpecification ValueSpecification { get; }
+    public ValueSpec ValueSpecification { get; }
 
     /// <summary>
     /// Gets the type of application for this effect.
@@ -79,14 +78,15 @@ public sealed class FactorChangeEffect : IEventEffect
 
         foreach (var city in cities)
         {
-            if (!city.TryGetFactorValue(Factor, out var currentFactor))
+            if (!city.TryGetFactorIntensity(Factor, out var currentIntensity))
                 continue;
 
-            var state = GetOrCreateState(city, currentFactor.Intensity.Value, context.CurrentTick);
-            var newValue = CalculateNewValue(state, currentFactor.Intensity.Value, context.CurrentTick);
+            var currentValue = currentIntensity.ComputeIntensity();
+            var state = GetOrCreateState(city, currentValue, context.CurrentTick);
+            var newValue = CalculateNewValue(state, currentValue, context.CurrentTick);
 
             newValue = Math.Clamp(newValue, Factor.MinValue, Factor.MaxValue);
-            city.UpdateFactorIntensity(Factor, IntensityValue.FromRaw(newValue));
+            city.UpdateFactorIntensity(Factor, ValueSpec.Fixed(newValue));
         }
     }
 

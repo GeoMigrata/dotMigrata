@@ -89,8 +89,9 @@ public sealed class DebugObserver : ISimulationObserver
             WriteLine($"     Population: {city.Population:N0}");
             WriteLine($"     Capacity: {city.Capacity:N0}");
             Write("     Factors: ");
-            var factorValues = city.FactorValues.Select(fv => $"{fv.Definition.DisplayName}={fv.Intensity.Value:F1}");
-            WriteLine(string.Join(", ", factorValues));
+            var factorIntensities = city.FactorIntensities.Select(fi =>
+                $"{fi.Definition.DisplayName}={fi.ComputeIntensity():F1}");
+            WriteLine(string.Join(", ", factorIntensities));
         }
 
         WriteLine();

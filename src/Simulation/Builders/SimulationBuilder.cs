@@ -1,6 +1,5 @@
 ﻿using dotMigrata.Core.Entities;
 using dotMigrata.Core.Values;
-using dotMigrata.Generator;
 using dotMigrata.Logic.Calculators;
 using dotMigrata.Logic.Interfaces;
 using dotMigrata.Logic.Models;
@@ -282,7 +281,7 @@ public sealed class SimulationBuilder
     public SimulationBuilder WithFactorChange(
         string displayName,
         FactorDefinition factor,
-        ValueSpecification valueSpecification,
+        ValueSpec valueSpecification,
         IEventTrigger trigger,
         EffectApplicationType applicationType = EffectApplicationType.Absolute,
         EffectDuration? duration = null,

@@ -58,19 +58,20 @@ public sealed class PerCapitaFeedbackStrategy : IFeedbackStrategy
     /// <inheritdoc />
     public void ApplyFeedback(City city, World world)
     {
-        if (!city.TryGetFactorValue(_factor, out var currentFactor)) return;
+        if (!city.TryGetFactorIntensity(_factor, out var currentIntensity)) return;
 
         // Calculate per-capita adjustment
         var populationRatio = city.Population / Math.Max(city.Capacity ?? city.Population, 1.0);
         var adjustment = populationRatio * _scalingFactor;
 
         // Apply adjustment with clamping to valid range
+        var currentValue = currentIntensity.ComputeIntensity();
         var newIntensity = Math.Clamp(
-            currentFactor.Intensity.Value + adjustment,
+            currentValue + adjustment,
             _factor.MinValue,
             _factor.MaxValue
         );
 
-        city.UpdateFactorIntensity(_factor, IntensityValue.FromRaw(newIntensity));
+        city.UpdateFactorIntensity(_factor, ValueSpec.Fixed(newIntensity));
     }
 }

@@ -59,7 +59,7 @@ public sealed class CongestionFeedbackStrategy : IFeedbackStrategy
     /// <inheritdoc />
     public void ApplyFeedback(City city, World world)
     {
-        if (!city.TryGetFactorValue(_factor, out var currentFactor)) return;
+        if (!city.TryGetFactorIntensity(_factor, out var currentIntensity)) return;
 
         if (city.Capacity == null) return;
 
@@ -69,11 +69,9 @@ public sealed class CongestionFeedbackStrategy : IFeedbackStrategy
 
         // Apply negative adjustment (congestion reduces factor)
         var reduction = congestionSeverity * _impactStrength;
-        var newIntensity = Math.Max(
-            currentFactor.Intensity.Value - reduction,
-            _factor.MinValue
-        );
+        var currentValue = currentIntensity.ComputeIntensity();
+        var newIntensity = Math.Max(currentValue - reduction, _factor.MinValue);
 
-        city.UpdateFactorIntensity(_factor, IntensityValue.FromRaw(newIntensity));
+        city.UpdateFactorIntensity(_factor, ValueSpec.Fixed(newIntensity));
     }
 }

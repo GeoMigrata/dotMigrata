@@ -75,11 +75,11 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
 
         foreach (var (factor, sensitivity) in person.FactorSensitivities)
         {
-            if (!city.TryGetFactorValue(factor, out var factorValue))
+            if (!city.TryGetFactorIntensity(factor, out var factorIntensity))
                 continue;
 
             // Normalize the factor intensity
-            var normalizedIntensity = factorValue!.Normalize(factor);
+            var normalizedIntensity = factorIntensity.Normalize(factor);
 
             // Determine the factor direction
             var direction = factor.Type == FactorType.Positive ? 1.0 : -1.0;

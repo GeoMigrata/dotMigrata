@@ -79,7 +79,7 @@ public class World
         // Validate that each city has values for all factor definitions
         foreach (var city in _cities)
         {
-            var cityFactors = city.FactorValues.Select(fv => fv.Definition).ToHashSet();
+            var cityFactors = city.FactorIntensities.Select(fi => fi.Definition).ToHashSet();
             var missingFactors = _factorDefinitions.Where(fd => !cityFactors.Contains(fd)).ToList();
 
             if (missingFactors.Count > 0)

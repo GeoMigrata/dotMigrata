@@ -35,7 +35,7 @@ public static class WorldValidator
         foreach (var city in world.Cities)
         {
             var missingFactors = world.FactorDefinitions
-                .Where(fd => city.FactorValues.All(fv => fv.Definition != fd))
+                .Where(fd => city.FactorIntensities.All(fi => fi.Definition != fd))
                 .ToList();
 
             if (missingFactors.Count > 0)
