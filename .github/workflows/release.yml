@@ -1,15 +1,16 @@
-﻿name: Release
+﻿name: Publish to NuGet
 
 on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
 
 jobs:
   publish:
     if: github.repository == 'GeoMigrata/dotMigrata'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -23,9 +24,10 @@ jobs:
       - name: Restore strong-name key
         run: |
           mkdir -p ./build
-          echo "${{ secrets.SNK_KEY_BASE64 }}" | base64 --decode > ./build/GeoMigrata.snk
+          echo "${{ secrets.SNK_KEY_BASE64 }}" | \
+            base64 --decode > ./build/GeoMigrata.snk
 
-      - name: Restore
+      - name: Restore dependencies
         run: dotnet restore
 
       - name: Build
@@ -35,7 +37,13 @@ jobs:
         run: dotnet test -c Release --no-build
 
       - name: Pack
-        run: dotnet pack dotMigrata.csproj -c Release --no-build /p:PackageVersion=${GITHUB_REF_NAME#v}
+        run: |
+          dotnet pack dotMigrata.csproj -c Release --no-build \
+            /p:PackageVersion=${GITHUB_REF_NAME#v}
 
       - name: Push to NuGet
-        run: dotnet nuget push "**/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        run: |
+          dotnet nuget push "**/*.nupkg" \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
