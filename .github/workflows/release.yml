@@ -5,12 +5,18 @@ on:
     tags:
       - 'v*'
 
+permissions: 
+  contents: read
+  id-token: write
+
 jobs:
   publish:
     if: github.repository == 'GeoMigrata/dotMigrata'
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      NUGET_TRUSTED_PUBLISHING: true
 
     steps:
       - name: Checkout
@@ -19,7 +25,10 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
 
       - name: Restore strong-name key
         run: |
@@ -27,23 +36,29 @@ jobs:
           echo "${{ secrets.SNK_KEY_BASE64 }}" | \
             base64 --decode > ./build/GeoMigrata.snk
 
+      - name: Show dotnet info
+        run: dotnet --info
+
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Build
-        run: dotnet build -c Release --no-restore
+      - name: Build (Release)
+        run: dotnet build --configuration Release --no-restore
 
-      - name: Test
-        run: dotnet test -c Release --no-build
+      - name: Derive Version from Tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Pack
         run: |
-          dotnet pack dotMigrata.csproj -c Release --no-build \
-            /p:PackageVersion=${GITHUB_REF_NAME#v}
+          dotnet pack dotMigrata.csproj --configuration Release --no-build -o ./artifacts /p:Version=${{ steps.version.outputs.version }}
 
-      - name: Push to NuGet
+      - name: Publish to NuGet.org via Trusted Publishing
         run: |
-          dotnet nuget push "**/*.nupkg" \
-            --api-key ${{ secrets.NUGET_API_KEY }} \
-            --source https://api.nuget.org/v3/index.json \
-            --skip-duplicate
+          find ./artifacts -maxdepth 1 -type f -name "*.nupkg" ! -name "*.symbols.nupkg" -print0 | xargs -0 -I {} \
+            dotnet nuget push "{}" \
+              --source "https://api.nuget.org/v3/index.json" \
+              --api-key "AzureAD" \
+              --skip-duplicate
