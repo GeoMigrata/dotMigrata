@@ -19,18 +19,15 @@ jobs:
       id-token: write
     env:
       NUGET_TRUSTED_PUBLISHING: true
-    strategy:
-      matrix:
-        dotnet-version: [ '8.0.x', '9.0.x', '10.0.x' ]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET ${{ matrix.dotnet-version }}
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ matrix.dotnet-version }}
+          dotnet-version: 10.x
 
       - name: Restore strong-name key
         run: |
@@ -60,7 +57,4 @@ jobs:
       - name: Publish to NuGet.org via Trusted Publishing
         run: |
           find ./artifacts -maxdepth 1 -type f -name "*.nupkg" ! -name "*.symbols.nupkg" -print0 | xargs -0 -I {} \
-            dotnet nuget push "{}" \
-              --source "https://api.nuget.org/v3/index.json" \
-              --api-key "AzureAD" \
-              --skip-duplicate
+            dotnet nuget push "{}" --source "https://api.nuget.org/v3/index.json" --skip-duplicate
