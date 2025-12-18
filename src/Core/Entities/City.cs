@@ -146,6 +146,22 @@ public sealed class City : IDisposable
     }
 
     /// <summary>
+    /// Materializes all factor intensities for optimal runtime performance.
+    /// Should be called once before simulation begins.
+    /// </summary>
+    /// <param name="random">Optional Random instance for value generation.</param>
+    /// <remarks>
+    /// This method evaluates all ValueSpec instances once and caches the results,
+    /// eliminating the overhead of repeated evaluations during simulation.
+    /// Call this after all cities are set up but before simulation starts.
+    /// </remarks>
+    public void MaterializeFactorIntensities(Random? random = null)
+    {
+        foreach (var factorIntensity in _factorIntensities)
+            factorIntensity.Materialize(random);
+    }
+
+    /// <summary>
     /// Attempts to get the factor intensity for the specified factor definition.
     /// </summary>
     /// <param name="factor">The factor definition to look up.</param>

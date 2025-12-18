@@ -8,9 +8,9 @@ namespace dotMigrata.Core.Values;
 /// </summary>
 /// <remarks>
 ///     <para>
-///     The intensity is stored as a <see cref="ValueSpec" /> which is evaluated lazily
-///     when needed for calculations. This allows flexible value specification including
-///     fixed values, random ranges, or approximate distributions.
+///     The intensity is stored as a <see cref="ValueSpec"/> which can be materialized once
+///     before simulation begins for optimal runtime performance. This allows flexible value
+///     specification during setup while maintaining minimal overhead during simulation.
 ///     </para>
 ///     <para>
 ///     Intensity values must always be non-negative (≥ 0). The sign of the factor's effect
@@ -19,6 +19,8 @@ namespace dotMigrata.Core.Values;
 /// </remarks>
 public sealed record FactorIntensity
 {
+    private double? _materializedValue;
+
     /// <summary>
     /// Gets or initializes the factor definition this intensity is for.
     /// </summary>
@@ -26,15 +28,59 @@ public sealed record FactorIntensity
 
     /// <summary>
     /// Gets or sets the intensity value specification of the factor.
-    /// This specification will be evaluated to produce the actual intensity value during calculations.
+    /// This specification should be materialized before simulation begins.
     /// Must produce non-negative values (>= 0).
     /// </summary>
     /// <remarks>
-    /// The ValueSpec is evaluated on-demand, allowing for lazy computation and flexible value generation.
-    /// Use <see cref="ComputeIntensity" /> to obtain the concrete intensity value.
+    /// The ValueSpec provides type-safe, convenient value specification during setup.
+    /// Call <see cref="Materialize"/> before simulation to optimize runtime performance.
     /// </remarks>
     [ValueRange(0, double.MaxValue, AllowNegative = false)]
     public required ValueSpec Intensity { get; set; }
+
+    /// <summary>
+    /// Materializes the intensity value from the specification.
+    /// Should be called once before simulation begins for optimal performance.
+    /// </summary>
+    /// <param name="random">Optional Random instance for value generation.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the evaluated value is negative.
+    /// </exception>
+    public void Materialize(Random? random = null)
+    {
+        var value = Intensity.Evaluate(null, false, random);
+
+        if (value < 0)
+            throw new InvalidOperationException(
+                $"Factor intensity must be non-negative. Got: {value} for factor '{Definition.DisplayName}'. " +
+                "Ensure the ValueSpec produces non-negative values.");
+
+        _materializedValue = value;
+    }
+
+    /// <summary>
+    /// Gets the intensity value. Returns materialized value if available, otherwise evaluates the spec.
+    /// </summary>
+    /// <param name="random">Optional Random instance for value generation if not materialized.</param>
+    /// <returns>The intensity value (always non-negative).</returns>
+    /// <remarks>
+    /// For best performance, call <see cref="Materialize" /> before accessing this property repeatedly.
+    /// </remarks>
+    public double GetIntensity(Random? random = null)
+    {
+        if (_materializedValue.HasValue)
+            return _materializedValue.Value;
+
+        // Fallback: evaluate with caching
+        var value = Intensity.Evaluate(null, true, random);
+
+        if (value < 0)
+            throw new InvalidOperationException(
+                $"Factor intensity must be non-negative. Got: {value} for factor '{Definition.DisplayName}'. " +
+                "Ensure the ValueSpec produces non-negative values.");
+
+        return value;
+    }
 
     /// <summary>
     /// Computes and returns the concrete intensity value from the specification.
@@ -53,11 +99,17 @@ public sealed record FactorIntensity
     /// <exception cref="InvalidOperationException">
     /// Thrown when the evaluated value is negative.
     /// </exception>
+    /// <remarks>
+    /// This method is retained for backward compatibility. Consider using <see cref="GetIntensity"/> instead.
+    /// </remarks>
     public double ComputeIntensity(double? normalizedInput = null, bool useCache = true, Random? random = null)
     {
+        // If materialized and no custom input, return materialized value
+        if (_materializedValue.HasValue && normalizedInput == null)
+            return _materializedValue.Value;
+
         var value = Intensity.Evaluate(normalizedInput, useCache, random);
 
-        // Only validate when not using cached values or when no cache exists
         if (value < 0)
             throw new InvalidOperationException(
                 $"Factor intensity must be non-negative. Got: {value} for factor '{Definition.DisplayName}'. " +
@@ -70,20 +122,15 @@ public sealed record FactorIntensity
     /// Normalizes the intensity value using the factor's normalization rules.
     /// </summary>
     /// <param name="factorDefinition">The factor definition containing normalization rules.</param>
-    /// <param name="normalizedInput">
-    /// Optional normalized input value (0-1 range) for deterministic evaluation.
-    /// </param>
-    /// <param name="useCache">When true, uses cached value if available.</param>
     /// <param name="random">Optional Random instance for value generation.</param>
     /// <returns>Normalized value between 0 and 1.</returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factorDefinition" /> is null.
     /// </exception>
-    internal double Normalize(FactorDefinition factorDefinition, double? normalizedInput = null,
-        bool useCache = false, Random? random = null)
+    internal double Normalize(FactorDefinition factorDefinition, Random? random = null)
     {
         ArgumentNullException.ThrowIfNull(factorDefinition);
-        var intensity = ComputeIntensity(normalizedInput, useCache, random);
+        var intensity = GetIntensity(random);
         return factorDefinition.Normalize(intensity);
     }
 }

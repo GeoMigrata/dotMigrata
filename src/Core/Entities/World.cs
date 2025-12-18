@@ -98,4 +98,20 @@ public class World
                     $"World contains mixed person types: {personType.Name} and {currentType.Name}. " +
                     $"A simulation world must contain only one person type.");
     }
+
+    /// <summary>
+    /// Initializes the world for simulation by materializing all factor intensities.
+    /// Should be called once after all setup is complete but before simulation begins.
+    /// </summary>
+    /// <param name="random">Optional Random instance for value generation.</param>
+    /// <remarks>
+    /// This method optimizes runtime performance by evaluating all ValueSpec instances once
+    /// and caching the results. This eliminates repeated evaluation overhead during simulation.
+    /// Call this method after cities and persons are set up but before starting the simulation loop.
+    /// </remarks>
+    public void InitializeForSimulation(Random? random = null)
+    {
+        foreach (var city in Cities)
+            city.MaterializeFactorIntensities(random);
+    }
 }

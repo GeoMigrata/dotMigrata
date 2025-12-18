@@ -1143,3 +1143,22 @@ File.WriteAllText("simulation_metrics.csv", collector.ExportToCsv());
 **Tag-based analysis:**
 
 - Population counts by tag for demographic tracking
+
+## Performance Optimization
+
+For optimal performance in simulations, materialize factor intensities before the simulation loop:
+
+```csharp
+// After setting up your world
+world.InitializeForSimulation();
+
+// Now run your simulation - factor intensities are pre-computed
+for (int step = 0; step < 100; step++)
+{
+    // Simulation logic here
+    // Factor intensity access is now optimized (pure double lookup)
+}
+```
+
+This eliminates ValueSpec evaluation overhead during simulation while preserving the safety and convenience of ValueSpec
+during setup.
