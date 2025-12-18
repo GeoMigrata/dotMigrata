@@ -53,12 +53,16 @@ jobs:
       - name: Pack
         run: |
           dotnet pack dotMigrata.csproj -c Release --no-build -o ./artifacts /p:Version=${{ steps.version.outputs.version }} -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
-
-      - name: Check OIDC availability
-        run: |
-          test -n "$ACTIONS_ID_TOKEN_REQUEST_URL" && echo "OIDC request URL is present" || (echo "OIDC not available" && exit 1)
+      
+      # OIDC -> ephemeral NuGet API key for nuget.org
+      - name: Authenticate to NuGet.org (OIDC → ephemeral key)
+        id: nuget_login
+        uses: NuGet/login@v1
 
       - name: Publish to NuGet.org via Trusted Publishing
         run: |
           find ./artifacts -maxdepth 1 -type f -name "*.nupkg" ! -name "*.symbols.nupkg" -print0 | xargs -0 -I {} \
-            dotnet nuget push "{}" --source "https://api.nuget.org/v3/index.json" --skip-duplicate
+            dotnet nuget push "{}" \
+              --source "https://api.nuget.org/v3/index.json" \
+              --api-key "${{ steps.nuget_login.outputs.NUGET_API_KEY }}" \
+              --skip-duplicate
