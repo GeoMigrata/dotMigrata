@@ -1,4 +1,5 @@
 ﻿using dotMigrata.Core.Exceptions;
+using dotMigrata.Core.Values;
 
 namespace dotMigrata.Generator;
 
@@ -6,6 +7,11 @@ namespace dotMigrata.Generator;
 /// Represents a value specification for a person attribute or factor sensitivity.
 /// Can be a fixed value, a random range, or an approximate value using normal distribution.
 /// </summary>
+/// <remarks>
+/// This class is deprecated. Use <see cref="ValueSpec"/> instead.
+/// This type is maintained for backward compatibility and will be removed in a future version.
+/// </remarks>
+[Obsolete("Use ValueSpec from dotMigrata.Core.Values instead. This type will be removed in a future version.")]
 public sealed record ValueSpecification
 {
     private readonly double? _fixedValue;

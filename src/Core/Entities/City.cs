@@ -12,8 +12,8 @@ namespace dotMigrata.Core.Entities;
 /// </summary>
 public sealed class City : IDisposable
 {
-    private readonly Dictionary<FactorDefinition, FactorValue> _factorLookup;
-    private readonly List<FactorValue> _factorValues;
+    private readonly Dictionary<FactorDefinition, FactorIntensity> _factorLookup;
+    private readonly List<FactorIntensity> _factorIntensities;
     private readonly HashSet<PersonBase> _persons;
     private readonly ReaderWriterLockSlim _personsLock = new();
     private bool _disposed;
@@ -21,14 +21,14 @@ public sealed class City : IDisposable
     /// <summary>
     /// Initializes a new instance of the <see cref="City" /> class.
     /// </summary>
-    /// <param name="factorValues">The initial factor values for the city, or <see langword="null" /> for none.</param>
+    /// <param name="factorIntensities">The initial factor values for the city, or <see langword="null" /> for none.</param>
     /// <param name="persons">The initial persons residing in this city, or <see langword="null" /> for none.</param>
     public City(
-        IEnumerable<FactorValue>? factorValues = null,
+        IEnumerable<FactorIntensity>? factorIntensities = null,
         IEnumerable<PersonBase>? persons = null)
     {
-        _factorValues = factorValues?.ToList() ?? [];
-        _factorLookup = _factorValues.ToDictionary(fv => fv.Definition, fv => fv);
+        _factorIntensities = factorIntensities?.ToList() ?? [];
+        _factorLookup = _factorIntensities.ToDictionary(fi => fi.Definition, fv => fv);
 
         _persons = persons?.ToHashSet() ?? [];
         foreach (var person in _persons)
@@ -67,9 +67,19 @@ public sealed class City : IDisposable
     public int? Capacity { get; init; }
 
     /// <summary>
-    /// Gets the read-only list of factor values for this city.
+    /// Gets the read-only list of factor intensities for this city.
     /// </summary>
-    public IReadOnlyList<FactorValue> FactorValues => _factorValues;
+    public IReadOnlyList<FactorIntensity> FactorIntensities => _factorIntensities;
+
+    /// <remarks>
+    /// This property is obsolete. Use <see cref="FactorIntensities" /> instead.
+    /// </remarks>
+    [Obsolete("Use FactorIntensities instead. This property will be removed in a future version.")]
+    public IReadOnlyList<FactorValue> FactorValues => _factorIntensities.Select(fi => new FactorValue
+    {
+        Definition = fi.Definition,
+        Intensity = IntensityValue.FromRaw(fi.ComputeIntensity())
+    }).ToList();
 
     /// <summary>
     /// Gets the read-only collection of persons residing in this city.
@@ -118,14 +128,39 @@ public sealed class City : IDisposable
     public void Dispose()
     {
         Dispose(true);
-        GC.SuppressFinalize(this);
     }
+
+    /// <summary>
+    /// Updates the intensity of an existing <see cref="FactorIntensity" /> for the specified factor definition.
+    /// </summary>
+    /// <param name="factor">The factor definition to update.</param>
+    /// <param name="newIntensity">The new intensity value specification.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="factor" /> or <paramref name="newIntensity" /> is <see langword="null" />.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the specified factor has no matched intensity in this city.
+    /// </exception>
+    /// <remarks>
+    /// This method keeps <see cref="FactorIntensity" /> immutable while allowing controlled updates via the City API.
+    /// </remarks>
+    public void UpdateFactorIntensity(FactorDefinition factor, ValueSpec newIntensity)
+    {
+        ArgumentNullException.ThrowIfNull(factor);
+        ArgumentNullException.ThrowIfNull(newIntensity);
+
+        if (!_factorLookup.TryGetValue(factor, out var factorIntensity))
+            throw new ArgumentException("Given factor has no matched intensity in this city.", nameof(factor));
+
+        factorIntensity.Intensity = newIntensity;
+    }
+
 
     /// <summary>
     /// Updates the intensity of an existing <see cref="FactorValue" /> for the specified factor definition.
     /// </summary>
     /// <param name="factor">The factor definition to update.</param>
-    /// <param name="newIntensity">The new intensity value.</param>
+    /// <param name="newIntensityValue">The new intensity value.</param>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factor" /> is <see langword="null" />.
     /// </exception>
@@ -133,16 +168,33 @@ public sealed class City : IDisposable
     /// Thrown when the specified factor has no matched value in this city.
     /// </exception>
     /// <remarks>
-    /// This method keeps <see cref="FactorValue" /> immutable while allowing controlled updates via the City API.
+    /// This method is obsolete. Use <see cref="UpdateFactorIntensity(FactorDefinition, ValueSpec)"/> instead.
     /// </remarks>
-    public void UpdateFactorIntensity(FactorDefinition factor, IntensityValue newIntensity)
+    [Obsolete(
+        "Use UpdateFactorIntensity(FactorDefinition, ValueSpec) instead. This method will be removed in a future version.")]
+    public void UpdateFactorIntensity(FactorDefinition factor, IntensityValue newIntensityValue)
+    {
+        UpdateFactorIntensity(factor, ValueSpec.Fixed(newIntensityValue.Value));
+    }
+
+    /// <summary>
+    /// Attempts to get the factor intensity for the specified factor definition.
+    /// </summary>
+    /// <param name="factor">The factor definition to look up.</param>
+    /// <param name="factorIntensity">
+    /// When this method returns, contains the factor intensity if found;
+    /// otherwise, <see langword="null" />.
+    /// </param>
+    /// <returns>
+    /// <see langword="true" /> if the factor intensity exists; otherwise, <see langword="false" />.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="factor" /> is <see langword="null" />.
+    /// </exception>
+    public bool TryGetFactorIntensity(FactorDefinition factor, [NotNullWhen(true)] out FactorIntensity? factorIntensity)
     {
         ArgumentNullException.ThrowIfNull(factor);
-
-        if (!_factorLookup.TryGetValue(factor, out var factorValue))
-            throw new ArgumentException("Given factor has no matched value in this city.", nameof(factor));
-
-        factorValue.Intensity = newIntensity;
+        return _factorLookup.TryGetValue(factor, out factorIntensity);
     }
 
     /// <summary>
@@ -159,10 +211,25 @@ public sealed class City : IDisposable
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factor" /> is <see langword="null" />.
     /// </exception>
+    /// <remarks>
+    /// This method is obsolete. Use <see cref="TryGetFactorIntensity"/> instead.
+    /// </remarks>
+    [Obsolete("Use TryGetFactorIntensity instead. This method will be removed in a future version.")]
     public bool TryGetFactorValue(FactorDefinition factor, [NotNullWhen(true)] out FactorValue? factorValue)
     {
         ArgumentNullException.ThrowIfNull(factor);
-        return _factorLookup.TryGetValue(factor, out factorValue);
+        if (_factorLookup.TryGetValue(factor, out var intensity))
+        {
+            factorValue = new FactorValue
+            {
+                Definition = intensity.Definition,
+                Intensity = IntensityValue.FromRaw(intensity.ComputeIntensity())
+            };
+            return true;
+        }
+
+        factorValue = null;
+        return false;
     }
 
     /// <summary>

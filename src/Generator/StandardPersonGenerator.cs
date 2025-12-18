@@ -48,39 +48,39 @@ public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
     /// Gets or sets the factor sensitivity specifications.
     /// Key is the FactorDefinition reference, value is the value specification.
     /// </summary>
-    public Dictionary<FactorDefinition, ValueSpecification> FactorSensitivities { get; init; } = [];
+    public Dictionary<FactorDefinition, ValueSpec> FactorSensitivities { get; init; } = [];
 
     /// <summary>
     /// Gets or sets the moving willingness specification.
     /// Must be specified - no default values provided.
     /// </summary>
     [Required]
-    public required ValueSpecification MovingWillingness { get; init; }
+    public required ValueSpec MovingWillingness { get; init; }
 
     /// <summary>
     /// Gets or sets the retention rate specification.
     /// Must be specified - no default values provided.
     /// </summary>
     [Required]
-    public required ValueSpecification RetentionRate { get; init; }
+    public required ValueSpec RetentionRate { get; init; }
 
     /// <summary>
     /// Gets or sets the sensitivity scaling specification.
     /// Optional, defaults to 1.0 if not specified.
     /// </summary>
-    public ValueSpecification? SensitivityScaling { get; init; }
+    public ValueSpec? SensitivityScaling { get; init; }
 
     /// <summary>
     /// Gets or sets the attraction threshold specification.
     /// Optional, defaults to 0.0 if not specified.
     /// </summary>
-    public ValueSpecification? AttractionThreshold { get; init; }
+    public ValueSpec? AttractionThreshold { get; init; }
 
     /// <summary>
     /// Gets or sets the minimum acceptable attraction specification.
     /// Optional, defaults to 0.0 if not specified.
     /// </summary>
-    public ValueSpecification? MinimumAcceptableAttraction { get; init; }
+    public ValueSpec? MinimumAcceptableAttraction { get; init; }
 
     /// <summary>
     /// Gets or sets the tags to apply to all generated persons.
@@ -120,12 +120,11 @@ public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
                 sensitivities[factor] = sensitivity;
             }
 
-            var movingWillingness = NormalizedValue.FromRatio(GenerateValue(MovingWillingness));
-            var retentionRate = NormalizedValue.FromRatio(GenerateValue(RetentionRate));
-            var sensitivityScaling = SensitivityScaling != null ? GenerateValue(SensitivityScaling) : 1.0;
-            var attractionThreshold = AttractionThreshold != null ? GenerateValue(AttractionThreshold) : 0.0;
-            var minimumAcceptableAttraction =
-                MinimumAcceptableAttraction != null ? GenerateValue(MinimumAcceptableAttraction) : 0.0;
+            var movingWillingness = NormalizedValue.FromRatio(MovingWillingness.Evaluate(random: _random));
+            var retentionRate = NormalizedValue.FromRatio(RetentionRate.Evaluate(random: _random));
+            var sensitivityScaling = SensitivityScaling?.Evaluate(random: _random) ?? 1.0;
+            var attractionThreshold = AttractionThreshold?.Evaluate(random: _random) ?? 0.0;
+            var minimumAcceptableAttraction = MinimumAcceptableAttraction?.Evaluate(random: _random) ?? 0.0;
 
             yield return new StandardPerson(sensitivities)
             {
@@ -143,8 +142,11 @@ public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
     {
         if (FactorSensitivities.TryGetValue(factor, out var spec))
         {
-            // Handle specs that have scale but no range - use default sensitivity range
-            if (spec is not { IsFixed: false, HasRange: false }) return GenerateValue(spec, true);
+            // If spec has a range, use it directly
+            if (spec.HasRange || spec.IsFixed || spec.IsApproximate)
+                return spec.Evaluate(random: _random);
+
+            // Handle specs without range - use default sensitivity range
             var (min, max) = (DefaultSensitivityRange.Min, DefaultSensitivityRange.Max);
             var mean = (min + max) / 2;
             var stdDev = (max - min) / 6;
@@ -156,49 +158,6 @@ public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
         // Use normal distribution for sensitivities by default
         var defaultValue = GenerateNormalRandom(0, SensitivityStdDev);
         return DefaultSensitivityRange.Clamp(defaultValue);
-    }
-
-    private double GenerateValue(ValueSpecification spec, bool useNormalDistribution = false)
-    {
-        if (spec.IsFixed)
-            return spec.FixedValue!.Value;
-
-        double generatedValue;
-
-        // Handle Approximately specifications (normal distribution with explicit mean/stddev)
-        if (spec.IsApproximate)
-        {
-            generatedValue = GenerateNormalRandom(spec.Mean!.Value, spec.StandardDeviation!.Value);
-        }
-        else if (spec.HasRange)
-        {
-            var (min, max) = spec.Range!.Value;
-            if (useNormalDistribution)
-            {
-                var mean = (min + max) / 2;
-                var stdDev = (max - min) / 6;
-                generatedValue = GenerateNormalRandom(mean, stdDev);
-                generatedValue = Math.Clamp(generatedValue, min, max);
-            }
-            else
-            {
-                generatedValue = GenerateUniformRandom(min, max);
-            }
-        }
-        else
-        {
-            throw new InvalidOperationException(
-                "Value specification must have either a fixed value, a range, or approximate distribution. " +
-                "Random generation with default ranges is not supported for required attributes.");
-        }
-
-        // Apply scale
-        return generatedValue * spec.Scale;
-    }
-
-    private double GenerateUniformRandom(double min, double max)
-    {
-        return min + _random.NextDouble() * (max - min);
     }
 
     private double GenerateNormalRandom(double mean, double stdDev)

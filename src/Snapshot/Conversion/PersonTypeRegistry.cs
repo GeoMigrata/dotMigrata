@@ -26,7 +26,7 @@ public static class PersonTypeRegistry
         PersonFactories = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly
-        Dictionary<string, Func<GeneratorXml, Dictionary<FactorDefinition, ValueSpecification>, List<string>,
+        Dictionary<string, Func<GeneratorXml, Dictionary<FactorDefinition, ValueSpec>, List<string>,
             IPersonGenerator<PersonBase>>> GeneratorFactories = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly Dictionary<string, Func<PersonBase, XmlDocument, XmlElement?>> PersonSerializers =
@@ -109,7 +109,7 @@ public static class PersonTypeRegistry
     /// </summary>
     internal static IPersonGenerator<PersonBase> CreateGenerator(
         GeneratorXml generatorXml,
-        Dictionary<FactorDefinition, ValueSpecification> factorSpecs,
+        Dictionary<FactorDefinition, ValueSpec> factorSpecs,
         List<string> tags)
     {
         var typeName = generatorXml.PersonType;
@@ -127,7 +127,9 @@ public static class PersonTypeRegistry
     /// </summary>
     internal static XmlElement? SerializePersonCustomProperties(PersonBase person, XmlDocument doc, string typeName)
     {
-        return PersonSerializers.TryGetValue(typeName, out var serializer) ? serializer(person, doc) : null;
+        return PersonSerializers.TryGetValue(typeName, out var serializer)
+            ? serializer(person, doc)
+            : null;
     }
 
     private static void RegisterStandardPerson()

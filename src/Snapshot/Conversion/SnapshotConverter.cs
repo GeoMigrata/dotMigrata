@@ -2,7 +2,6 @@
 using dotMigrata.Core.Enums;
 using dotMigrata.Core.Values;
 using dotMigrata.Core.Values.Interfaces;
-using dotMigrata.Generator;
 using dotMigrata.Snapshot.Enums;
 using dotMigrata.Snapshot.Models;
 
@@ -199,7 +198,7 @@ public static class SnapshotConverter
         List<FactorDefinition> allFactors)
     {
         // Convert factor sensitivity specifications
-        var factorSpecs = new Dictionary<FactorDefinition, ValueSpecification>();
+        var factorSpecs = new Dictionary<FactorDefinition, ValueSpec>();
         if (generator.FactorSensitivities != null)
             foreach (var spec in generator.FactorSensitivities)
                 if (factorLookup.TryGetValue(spec.Id, out var factor))
@@ -213,42 +212,42 @@ public static class SnapshotConverter
         return personGenerator.Generate(allFactors);
     }
 
-    internal static ValueSpecification ConvertValueSpec(ValueSpecXml? spec, double defaultValue)
+    internal static ValueSpec ConvertValueSpec(ValueSpecXml? spec, double defaultValue)
     {
         if (spec == null)
-            return ValueSpecification.Fixed(defaultValue);
+            return ValueSpec.Fixed(defaultValue);
 
         // Attribute-based format (v2.0)
         if (spec.ValueSpecified)
-            return ValueSpecification.Fixed(spec.Value);
+            return ValueSpec.Fixed(spec.Value);
 
         if (spec is { MinSpecified: true, MaxSpecified: true })
-            return ValueSpecification.InRange(spec.Min, spec.Max);
+            return ValueSpec.InRange(spec.Min, spec.Max);
 
         if (spec.ScaleSpecified)
             return Math.Abs(spec.Scale - 1.0) < double.Epsilon
-                ? ValueSpecification.Random()
-                : ValueSpecification.RandomWithScale(spec.Scale);
+                ? ValueSpec.Random()
+                : ValueSpec.RandomWithScale(spec.Scale);
 
-        return ValueSpecification.Fixed(defaultValue);
+        return ValueSpec.Fixed(defaultValue);
     }
 
-    private static ValueSpecification ConvertSensitivitySpec(SensitivitySpecXml spec)
+    private static ValueSpec ConvertSensitivitySpec(SensitivitySpecXml spec)
     {
         // Attribute-based format (v2.0)
         if (spec.ValueSpecified)
-            return ValueSpecification.Fixed(spec.Value);
+            return ValueSpec.Fixed(spec.Value);
 
         if (spec is { MinSpecified: true, MaxSpecified: true })
-            return ValueSpecification.InRange(spec.Min, spec.Max);
+            return ValueSpec.InRange(spec.Min, spec.Max);
 
         if (spec.ScaleSpecified)
             return Math.Abs(spec.Scale - 1.0) < double.Epsilon
-                ? ValueSpecification.Random()
-                : ValueSpecification.RandomWithScale(spec.Scale);
+                ? ValueSpec.Random()
+                : ValueSpec.RandomWithScale(spec.Scale);
 
         // Default: random with default range
-        return ValueSpecification.Random();
+        return ValueSpec.Random();
     }
 
     private static Dictionary<FactorDefinition, double> ConvertFactorSensitivities(
@@ -283,15 +282,15 @@ public static class SnapshotConverter
         Dictionary<string, FactorDefinition> factorLookup,
         Dictionary<string, List<PersonBase>> personCollections)
     {
-        // Convert factor values
-        var factorValues = new List<FactorValue>();
+        // Convert factor intensities
+        var factorIntensities = new List<FactorIntensity>();
         if (cityXml.FactorValues != null)
             foreach (var fv in cityXml.FactorValues)
                 if (factorLookup.TryGetValue(fv.Id, out var factor))
-                    factorValues.Add(new FactorValue
+                    factorIntensities.Add(new FactorIntensity
                     {
                         Definition = factor,
-                        Intensity = IntensityValue.FromRaw(fv.Value)
+                        Intensity = ValueSpec.Fixed(fv.Value)
                     });
 
         // Collect persons from referenced collections
@@ -301,7 +300,7 @@ public static class SnapshotConverter
                 if (personCollections.TryGetValue(collectionRef.Id, out var collectionPersons))
                     persons.AddRange(collectionPersons);
 
-        var city = new City(factorValues, persons)
+        var city = new City(factorIntensities, persons)
         {
             DisplayName = cityXml.DisplayName,
             Location = new Coordinate
@@ -360,7 +359,7 @@ public static class SnapshotConverter
 
     private static WorldStateXml ConvertWorldState(World world)
     {
-        return new WorldStateXml
+        return new WorldStateXml()
         {
             DisplayName = world.DisplayName,
             FactorDefinitions = world.FactorDefinitions.Select(ConvertToFactorDefXml).ToList(),
@@ -371,7 +370,7 @@ public static class SnapshotConverter
 
     private static FactorDefXml ConvertToFactorDefXml(FactorDefinition factor)
     {
-        return new FactorDefXml
+        return new FactorDefXml()
         {
             Id = GetFactorId(factor),
             DisplayName = factor.DisplayName,
@@ -391,7 +390,7 @@ public static class SnapshotConverter
             Latitude = city.Location.Latitude,
             Longitude = city.Location.Longitude,
             Area = city.Area,
-            FactorValues = city.FactorValues.Select(ConvertToFactorValueXml).ToList(),
+            FactorValues = city.FactorIntensities.Select(ConvertToFactorValueXml).ToList(),
             PersonCollections = [] // Note: Population groups are not reconstructed
         };
 
@@ -402,12 +401,12 @@ public static class SnapshotConverter
         return cityXml;
     }
 
-    private static FactorValueXml ConvertToFactorValueXml(FactorValue fv)
+    private static FactorValueXml ConvertToFactorValueXml(FactorIntensity fi)
     {
-        return new FactorValueXml
+        return new FactorValueXml()
         {
-            Id = GetFactorId(fv.Definition),
-            Value = fv.Intensity.Value
+            Id = GetFactorId(fi.Definition),
+            Value = fi.ComputeIntensity()
         };
     }
 

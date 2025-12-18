@@ -32,7 +32,7 @@ public interface ICustomGeneratorSerializer<TPerson, TGenerator>
     /// </remarks>
     TGenerator CreateFromXml(
         GeneratorXml generatorXml,
-        Dictionary<FactorDefinition, ValueSpecification> factorSpecs,
+        Dictionary<FactorDefinition, ValueSpec> factorSpecs,
         List<string> tags);
 
     /// <summary>
