@@ -1,24 +1,33 @@
 ﻿name: Publish to NuGet
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag (format: v*)"
+        required: true
+        type: string
+      description:
+        description: "Short release description (e.g., 'Beta 0.6.0')"
+        required: true
+        type: string
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
+    name: Publish to NuGet
     if: github.repository == 'GeoMigrata/dotMigrata'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -37,14 +46,37 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
+      - name: Create and Push Tag
+        env:
+          VERSION_INPUT: ${{ github.event.inputs.version }}
+          DESCRIPTION_INPUT: ${{ github.event.inputs.description }}
+        run: |
+          # Ensure we're on the default branch's latest commit
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          echo "Current branch: $CURRENT_BRANCH"
+
+          # Create annotated tag on the latest commit
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+
+          # If tag exists, exit early to avoid duplicate push
+          if git rev-parse "$VERSION_INPUT" >/dev/null 2>&1; then
+            echo "Tag $VERSION_INPUT already exists. Skipping creation and push."
+          else
+            git tag -a "$VERSION_INPUT" -m "$DESCRIPTION_INPUT"
+            git push origin "$VERSION_INPUT"
+          fi
+
+      - name: Derive Version from Input
+        id: version
+        env:
+          VERSION_INPUT: ${{ github.event.inputs.version }}
+        run: |
+          VERSION_NO_V=${VERSION_INPUT#v}
+          echo "version=$VERSION_NO_V" >> "$GITHUB_OUTPUT"
+
       - name: Build (Release)
         run: dotnet build --configuration Release --no-restore
-
-      - name: Derive Version from Tag
-        id: version
-        run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          echo "version=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Pack
         run: |

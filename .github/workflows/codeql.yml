@@ -9,6 +9,7 @@ on:
 
 jobs:
   analyze:
+    if: github.repository == 'GeoMigrata/dotMigrata'
     name: Analyze
     runs-on: ubuntu-latest
     permissions:
