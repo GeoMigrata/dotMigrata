@@ -16,8 +16,8 @@ namespace dotMigrata.Generator;
 ///     Uses deterministic random generation when seeded, allowing reproducible person generation.
 ///     </para>
 ///     <para>
-///     uses <see cref="UnitValuePromise" /> for all value specifications,
-///     ensuring type-safe generation of values in the [0, 1] range.
+///     Uses <see cref="UnitValuePromise" /> for all value specifications,
+///     ensuring type-safe generation of values.
 ///     </para>
 /// </remarks>
 public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
@@ -27,23 +27,16 @@ public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
     /// <summary>
     /// Initializes a new instance with a random seed.
     /// </summary>
-    public StandardPersonGenerator()
-    {
-        _random = new Random();
-    }
+    public StandardPersonGenerator() => _random = new Random();
 
     /// <summary>
     /// Initializes a new instance with a specific seed for reproducibility.
     /// </summary>
     /// <param name="seed">The random seed.</param>
-    public StandardPersonGenerator(int seed)
-    {
-        _random = new Random(seed);
-    }
+    public StandardPersonGenerator(int seed) => _random = new Random(seed);
 
     /// <summary>
     /// Gets or sets the factor sensitivity specifications.
-    /// All sensitivities are in [0, 1] range.
     /// </summary>
     public Dictionary<FactorDefinition, UnitValuePromise> FactorSensitivities { get; init; } = [];
 
@@ -56,26 +49,25 @@ public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
 
     /// <summary>
     /// Gets or sets the retention rate specification.
-    /// Values are in [0, 1] range.
     /// </summary>
     [Required]
     public required UnitValuePromise RetentionRate { get; init; }
 
     /// <summary>
     /// Gets or sets the sensitivity scaling specification.
-    /// Values are in [0, 1] range. Defaults to 1.0 if not specified.
+    /// Defaults to 1.0 if not specified.
     /// </summary>
     public UnitValuePromise? SensitivityScaling { get; init; }
 
     /// <summary>
     /// Gets or sets the attraction threshold specification.
-    /// Values are in [0, 1] range. Defaults to 0.0 if not specified.
+    /// Defaults to 0.0 if not specified.
     /// </summary>
     public UnitValuePromise? AttractionThreshold { get; init; }
 
     /// <summary>
     /// Gets or sets the minimum acceptable attraction specification.
-    /// Values are in [0, 1] range. Defaults to 0.0 if not specified.
+    /// Defaults to 0.0 if not specified.
     /// </summary>
     public UnitValuePromise? MinimumAcceptableAttraction { get; init; }
 
@@ -132,11 +124,8 @@ public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
         }
     }
 
-    private UnitValue GenerateFactorSensitivity(FactorDefinition factor)
-    {
-        return FactorSensitivities.TryGetValue(factor, out var spec)
+    private UnitValue GenerateFactorSensitivity(FactorDefinition factor) =>
+        FactorSensitivities.TryGetValue(factor, out var spec)
             ? spec.Evaluate(_random)
-            : UnitValue.FromRatio(_random.NextDouble());
-        // Default: random value in [0, 1] range
-    }
+            : UnitValue.FromRatio(_random.NextDouble()); // Default: random value in [0, 1] range
 }

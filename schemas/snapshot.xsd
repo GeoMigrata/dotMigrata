@@ -4,7 +4,8 @@
   
   Type-safe unified value system with:
   - Single namespace for all elements
-  - UnitValue type for all normalized 0-1 range values
+  - UnitValue type for normalized 0-1 range values in person properties
+  - City factor intensities use raw values (normalized at runtime via Factor definitions)
   - Unified PersonSpec for templates and generators
   - FactorIntensity terminology (no more FactorValue)
   - Attribute-based configuration for scalar values
@@ -134,8 +135,8 @@
 
     <xs:complexType name="SensitivitySpecsType">
         <xs:annotation>
-            <xs:documentation>Factor sensitivity specifications. All values in 0-1 range (UnitValue). Use V for fixed,
-                Min/Max for range, Approximately for normal distribution.
+            <xs:documentation>Factor sensitivity specifications. Use V for fixed value, Min/Max for range, or
+                Approximately for normal distribution.
             </xs:documentation>
         </xs:annotation>
         <xs:sequence>
@@ -145,8 +146,8 @@
 
     <xs:complexType name="SensitivitySpecType">
         <xs:annotation>
-            <xs:documentation>Value specification for sensitivity (0-1 UnitValue). V for fixed, Min/Max for range,
-                Approximately+StdDev for normal distribution.
+            <xs:documentation>Sensitivity value specification. V for fixed, Min/Max for range, or Approximately+StdDev
+                for normal distribution.
             </xs:documentation>
         </xs:annotation>
         <xs:attribute name="Id" type="xs:string" use="required"/>
@@ -159,7 +160,7 @@
 
     <xs:complexType name="ValueSpecType">
         <xs:annotation>
-            <xs:documentation>Value specification for UnitValue properties (0-1 range). V for fixed, Min/Max for range,
+            <xs:documentation>Value specification for person properties. V for fixed, Min/Max for range, or
                 Approximately+StdDev for normal distribution.
             </xs:documentation>
         </xs:annotation>
@@ -193,7 +194,8 @@
 
     <xs:complexType name="CityFactorsType">
         <xs:annotation>
-            <xs:documentation>Factor intensities for a city. All values must be normalized to 0-1 range (UnitValue).
+            <xs:documentation>Factor intensities for a city. Values are raw factor values that will be normalized using
+                the corresponding Factor definition's Min, Max, and Transform settings.
             </xs:documentation>
         </xs:annotation>
         <xs:sequence>
@@ -203,12 +205,13 @@
 
     <xs:complexType name="FactorIntensityType">
         <xs:annotation>
-            <xs:documentation>A city's factor intensity. Value (V) must be in 0-1 range representing normalized
-                intensity.
+            <xs:documentation>A city's factor intensity. The V attribute contains the raw factor value, which will be
+                normalized at runtime using the corresponding Factor definition. The Factor definition with matching Id
+                must exist in the Factors section.
             </xs:documentation>
         </xs:annotation>
         <xs:attribute name="Id" type="xs:string" use="required"/>
-        <xs:attribute name="V" type="ZeroToOneType" use="required"/>
+        <xs:attribute name="V" type="xs:double" use="required"/>
     </xs:complexType>
 
     <xs:complexType name="CityPopulationType">

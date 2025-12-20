@@ -1,23 +1,22 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace dotMigrata.Core.Values;
 
 /// <summary>
-/// Represents a normalized value guaranteed to be in the [0, 1] range.
-/// Used for all factor intensities, sensitivities, and normalized measurements in the simulation.
+/// Represents a normalized value guaranteed to be between 0 and 1.
+/// Used for factor intensities, sensitivities, and other normalized measurements.
 /// </summary>
 /// <remarks>
-/// This type enforces type safety by ensuring all values are within the valid 0-1 range.
-/// All arithmetic operations automatically clamp results to maintain range validity.
-/// Implemented as a readonly record struct for zero-allocation overhead and value semantics.
+/// This type ensures type safety by clamping values to the valid range.
+/// All arithmetic operations automatically maintain range validity.
+/// Implemented as a readonly record struct for optimal performance and value semantics.
 /// </remarks>
 public readonly record struct UnitValue : IComparable<UnitValue>
 {
     /// <summary>
-    /// Initializes a new instance, clamping the value to [0, 1] range.
+    /// Initializes a new instance, clamping the value to valid range.
     /// </summary>
-    /// <param name="value">The value to normalize. Will be clamped to [0, 1].</param>
+    /// <param name="value">The value to normalize. Will be clamped if needed.</param>
     /// <exception cref="ArgumentException">Thrown when value is NaN or Infinity.</exception>
     private UnitValue(double value)
     {
@@ -28,7 +27,7 @@ public readonly record struct UnitValue : IComparable<UnitValue>
     }
 
     /// <summary>
-    /// Gets the underlying value in the [0, 1] range.
+    /// Gets the underlying value.
     /// </summary>
     public double Value { get; }
 
@@ -37,41 +36,29 @@ public readonly record struct UnitValue : IComparable<UnitValue>
     /// <summary>
     /// Compares this instance with another <see cref="UnitValue" />.
     /// </summary>
-    public int CompareTo(UnitValue other)
-    {
-        return Value.CompareTo(other.Value);
-    }
+    public int CompareTo(UnitValue other) => Value.CompareTo(other.Value);
 
     #endregion
 
     /// <summary>
     /// Returns a string representation of this value.
     /// </summary>
-    public override string ToString()
-    {
-        return Value.ToString("F2", CultureInfo.InvariantCulture);
-    }
+    public override string ToString() => Value.ToString("F2", CultureInfo.InvariantCulture);
 
     /// <summary>
     /// Returns a string representation of this value with specified format.
     /// </summary>
-    public string ToString(string format)
-    {
-        return Value.ToString(format, CultureInfo.InvariantCulture);
-    }
+    public string ToString(string format) => Value.ToString(format, CultureInfo.InvariantCulture);
 
     #region Factory Methods
 
     /// <summary>
     /// Creates a <see cref="UnitValue" /> from a ratio value.
     /// </summary>
-    /// <param name="ratio">The ratio value. Values outside [0, 1] will be clamped.</param>
+    /// <param name="ratio">The ratio value to use. Values outside the valid range will be clamped.</param>
     /// <returns>A new <see cref="UnitValue" /> instance.</returns>
     /// <exception cref="ArgumentException">Thrown when ratio is NaN or Infinity.</exception>
-    public static UnitValue FromRatio(double ratio)
-    {
-        return new UnitValue(ratio);
-    }
+    public static UnitValue FromRatio(double ratio) => new(ratio);
 
     /// <summary>
     /// Attempts to create a <see cref="UnitValue" /> from a ratio without throwing an exception.
@@ -79,7 +66,7 @@ public readonly record struct UnitValue : IComparable<UnitValue>
     /// <param name="ratio">The ratio value.</param>
     /// <param name="result">The resulting normalized value if successful.</param>
     /// <returns><c>true</c> if conversion succeeded; otherwise, <c>false</c>.</returns>
-    public static bool TryFromRatio(double ratio, [NotNullWhen(true)] out UnitValue result)
+    public static bool TryFromRatio(double ratio, out UnitValue result)
     {
         if (double.IsNaN(ratio) || double.IsInfinity(ratio))
         {
@@ -92,9 +79,9 @@ public readonly record struct UnitValue : IComparable<UnitValue>
     }
 
     /// <summary>
-    /// Creates a <see cref="UnitValue" /> from a percentage value (0-100).
+    /// Creates a <see cref="UnitValue" /> from a percentage (0-100).
     /// </summary>
-    /// <param name="percentage">The percentage value. Will be divided by 100 and clamped to [0, 1].</param>
+    /// <param name="percentage">The percentage value. Will be divided by 100 and clamped if needed.</param>
     /// <returns>A new <see cref="UnitValue" /> instance.</returns>
     /// <exception cref="ArgumentException">Thrown when percentage is NaN or Infinity.</exception>
     public static UnitValue FromPercentage(double percentage)
@@ -111,7 +98,7 @@ public readonly record struct UnitValue : IComparable<UnitValue>
     /// <param name="percentage">The percentage value (0-100).</param>
     /// <param name="result">The resulting normalized value if successful.</param>
     /// <returns><c>true</c> if conversion succeeded; otherwise, <c>false</c>.</returns>
-    public static bool TryFromPercentage(double percentage, [NotNullWhen(true)] out UnitValue result)
+    public static bool TryFromPercentage(double percentage, out UnitValue result)
     {
         if (double.IsNaN(percentage) || double.IsInfinity(percentage))
         {
@@ -147,54 +134,37 @@ public readonly record struct UnitValue : IComparable<UnitValue>
     #region Arithmetic Operators
 
     /// <summary>
-    /// Adds two normalized values, clamping the result to [0, 1].
+    /// Adds two normalized values, clamping the result if needed.
     /// </summary>
-    public static UnitValue operator +(UnitValue left, UnitValue right)
-    {
-        return new UnitValue(left.Value + right.Value);
-    }
+    public static UnitValue operator +(UnitValue left, UnitValue right) => new(left.Value + right.Value);
 
     /// <summary>
-    /// Subtracts two normalized values, clamping the result to [0, 1].
+    /// Subtracts two normalized values, clamping the result if needed.
     /// </summary>
-    public static UnitValue operator -(UnitValue left, UnitValue right)
-    {
-        return new UnitValue(left.Value - right.Value);
-    }
+    public static UnitValue operator -(UnitValue left, UnitValue right) => new(left.Value - right.Value);
 
     /// <summary>
-    /// Multiplies two normalized values, clamping the result to [0, 1].
+    /// Multiplies two normalized values, clamping the result if needed.
     /// </summary>
-    public static UnitValue operator *(UnitValue left, UnitValue right)
-    {
-        return new UnitValue(left.Value * right.Value);
-    }
+    public static UnitValue operator *(UnitValue left, UnitValue right) => new(left.Value * right.Value);
 
     /// <summary>
-    /// Multiplies a normalized value by a scalar, clamping the result to [0, 1].
+    /// Multiplies a normalized value by a scalar, clamping the result to if needed.
     /// </summary>
-    public static UnitValue operator *(UnitValue left, double right)
-    {
-        return new UnitValue(left.Value * right);
-    }
+    public static UnitValue operator *(UnitValue left, double right) => new(left.Value * right);
 
     /// <summary>
-    /// Multiplies a scalar by a normalized value, clamping the result to [0, 1].
+    /// Multiplies a scalar by a normalized value, clamping the result if needed.
     /// </summary>
-    public static UnitValue operator *(double left, UnitValue right)
-    {
-        return new UnitValue(left * right.Value);
-    }
+    public static UnitValue operator *(double left, UnitValue right) => new(left * right.Value);
 
     /// <summary>
-    /// Divides a normalized value by a scalar, clamping the result to [0, 1].
+    /// Divides a normalized value by a scalar, clamping the result to if needed.
     /// </summary>
-    public static UnitValue operator /(UnitValue left, double right)
-    {
-        if (right == 0.0)
-            throw new DivideByZeroException("Cannot divide by zero.");
-        return new UnitValue(left.Value / right);
-    }
+    public static UnitValue operator /(UnitValue left, double right) =>
+        right == 0.0
+            ? throw new DivideByZeroException("Cannot divide by zero.")
+            : new UnitValue(left.Value / right);
 
     #endregion
 
@@ -203,34 +173,22 @@ public readonly record struct UnitValue : IComparable<UnitValue>
     /// <summary>
     /// Determines whether one normalized value is less than another.
     /// </summary>
-    public static bool operator <(UnitValue left, UnitValue right)
-    {
-        return left.Value < right.Value;
-    }
+    public static bool operator <(UnitValue left, UnitValue right) => left.Value < right.Value;
 
     /// <summary>
     /// Determines whether one normalized value is greater than another.
     /// </summary>
-    public static bool operator >(UnitValue left, UnitValue right)
-    {
-        return left.Value > right.Value;
-    }
+    public static bool operator >(UnitValue left, UnitValue right) => left.Value > right.Value;
 
     /// <summary>
     /// Determines whether one normalized value is less than or equal to another.
     /// </summary>
-    public static bool operator <=(UnitValue left, UnitValue right)
-    {
-        return left.Value <= right.Value;
-    }
+    public static bool operator <=(UnitValue left, UnitValue right) => left.Value <= right.Value;
 
     /// <summary>
     /// Determines whether one normalized value is greater than or equal to another.
     /// </summary>
-    public static bool operator >=(UnitValue left, UnitValue right)
-    {
-        return left.Value >= right.Value;
-    }
+    public static bool operator >=(UnitValue left, UnitValue right) => left.Value >= right.Value;
 
     #endregion
 
@@ -239,18 +197,12 @@ public readonly record struct UnitValue : IComparable<UnitValue>
     /// <summary>
     /// Implicitly converts a <see cref="UnitValue" /> to a <see cref="double" />.
     /// </summary>
-    public static implicit operator double(UnitValue value)
-    {
-        return value.Value;
-    }
+    public static implicit operator double(UnitValue value) => value.Value;
 
     /// <summary>
-    /// Explicitly converts a <see cref="double" /> to a <see cref="UnitValue" />, clamping to [0, 1].
+    /// Explicitly converts a <see cref="double" /> to a <see cref="UnitValue" />, clamping to if needed.
     /// </summary>
-    public static explicit operator UnitValue(double value)
-    {
-        return FromRatio(value);
-    }
+    public static explicit operator UnitValue(double value) => FromRatio(value);
 
     #endregion
 
@@ -259,10 +211,7 @@ public readonly record struct UnitValue : IComparable<UnitValue>
     /// <summary>
     /// Converts this value to a percentage (0-100).
     /// </summary>
-    public double ToPercentage()
-    {
-        return Value * 100.0;
-    }
+    public double ToPercentage() => Value * 100.0;
 
     /// <summary>
     /// Linearly interpolates between two normalized values.
@@ -271,26 +220,18 @@ public readonly record struct UnitValue : IComparable<UnitValue>
     /// <param name="b">The end value.</param>
     /// <param name="t">The interpolation factor (0-1).</param>
     /// <returns>The interpolated value.</returns>
-    public static UnitValue Lerp(UnitValue a, UnitValue b, double t)
-    {
-        return new UnitValue(a.Value + (b.Value - a.Value) * Math.Clamp(t, 0.0, 1.0));
-    }
+    public static UnitValue Lerp(UnitValue a, UnitValue b, double t) =>
+        new(a.Value + (b.Value - a.Value) * Math.Clamp(t, 0.0, 1.0));
 
     /// <summary>
     /// Returns the minimum of two normalized values.
     /// </summary>
-    public static UnitValue Min(UnitValue a, UnitValue b)
-    {
-        return new UnitValue(Math.Min(a.Value, b.Value));
-    }
+    public static UnitValue Min(UnitValue a, UnitValue b) => new(Math.Min(a.Value, b.Value));
 
     /// <summary>
     /// Returns the maximum of two normalized values.
     /// </summary>
-    public static UnitValue Max(UnitValue a, UnitValue b)
-    {
-        return new UnitValue(Math.Max(a.Value, b.Value));
-    }
+    public static UnitValue Max(UnitValue a, UnitValue b) => new(Math.Max(a.Value, b.Value));
 
     #endregion
 }

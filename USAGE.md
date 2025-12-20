@@ -207,8 +207,7 @@ ValueSpec.RandomWithScale(scale: 1.5)
 
 ## PersonCollection System
 
-The **PersonCollection** system provides fine-grained control over population generation. You can add individual
-persons,
+The **PersonCollection** system gives you fine-grained control over population generation. Add individual persons,
 duplicates, or use generators with specifications. **Important:** Always use `FactorDefinition` object references, not
 strings.
 
@@ -336,7 +335,7 @@ var tagStats = world.AllPersons
 
 ## Custom Person Generation
 
-For more control over person attributes, you can configure individual generators with custom parameters:
+For more control over person attributes, configure individual generators with custom parameters:
 
 ```csharp
 using dotMigrata.Core.Entities;
@@ -393,9 +392,8 @@ var city = new City(
 
 ## Creating Custom Person Types
 
-Version `0.5.0-beta` introduces an inheritance-based architecture that allows you to create custom person types by
-inheriting from `PersonBase`. This enables domain-specific properties while maintaining compatibility with the
-framework.
+Version `0.5.0-beta` introduces an inheritance-based architecture for creating custom person types by
+inheriting from `PersonBase`. This lets you add domain-specific properties while maintaining framework compatibility.
 
 ### When to Create Custom Person Types
 
@@ -445,7 +443,7 @@ public sealed class DemographicPerson : PersonBase
 
 ### Using Custom Person Types with Custom Calculators
 
-When using custom person types, you typically need custom calculators that can access the additional properties:
+When using custom person types, you'll typically need custom calculators to access the additional properties:
 
 ```csharp
 using dotMigrata.Core.Entities;
@@ -873,7 +871,7 @@ var result = await engine.RunAsync(world);
 
 ## Working with Snapshots
 
-The snapshot system provides XML-based serialization for saving and loading simulation configurations. Snapshots use
+The snapshot system provides XML-based serialization for saving and loading simulation configurations. Snapshots store
 PersonCollection specifications for efficient storage and deterministic reproducibility.
 
 ### Loading a Snapshot from File
@@ -897,7 +895,7 @@ if (snapshot?.World != null)
 
 ### Creating and Saving a Snapshot
 
-Snapshots are typically created as XML files. Here's how to create a snapshot programmatically using modern C# syntax:
+Snapshots are typically created as XML files. Here's how to create one programmatically using modern C# syntax:
 
 ```csharp
 using dotMigrata.Snapshot.Enums;
@@ -1087,7 +1085,7 @@ See [examples/example-snapshot.xml](../examples/example-snapshot.xml) for a comp
 
 ## Simulation Metrics
 
-The framework provides comprehensive metrics collection for academic analysis:
+The framework provides metrics collection for academic analysis:
 
 ```csharp
 using dotMigrata.Simulation.Metrics;

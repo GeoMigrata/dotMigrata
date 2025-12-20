@@ -67,16 +67,16 @@ public record FactorDefinition
     /// When null, linear normalization is used.
     /// </summary>
     /// <remarks>
-    /// uses <see cref="UnitValuePromise.TransformFunc" /> delegate type
+    /// Uses <see cref="UnitValuePromise.TransformFunc" /> delegate type
     /// for better integration with the unified value system.
     /// </remarks>
     public UnitValuePromise.TransformFunc? TransformFunction { get; init; }
 
     /// <summary>
-    /// Normalizes a raw value to the [0, 1] range using this factor's transformation.
+    /// Normalizes a raw value using this factor's transformation.
     /// </summary>
     /// <param name="rawValue">The raw value to normalize.</param>
-    /// <returns>A normalized value between 0 and 1.</returns>
+    /// <returns>A normalized value.</returns>
     internal UnitValue Normalize(UnitValue rawValue)
     {
         var clamped = Math.Clamp(rawValue, _minValue, _maxValue);

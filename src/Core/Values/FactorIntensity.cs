@@ -6,12 +6,12 @@
 /// </summary>
 /// <remarks>
 ///     <para>
-///     intensity values are stored directly as <see cref="UnitValue" /> for optimal
-///     runtime performance. This ensures type safety and eliminates overhead during simulation.
+///     Intensity values are stored as <see cref="UnitValue" /> for type safety
+///     and optimal runtime performance during simulation.
 ///     </para>
 ///     <para>
-///     Intensity values are always in the [0, 1] range. The sign of the factor's effect
-///     is determined by the <see cref="FactorDefinition.Type" /> property, not by the intensity value.
+///     The sign of a factor's effect is determined by <see cref="FactorDefinition.Type" />,
+///     not by the intensity value.
 ///     </para>
 /// </remarks>
 public sealed class FactorIntensity
@@ -23,16 +23,12 @@ public sealed class FactorIntensity
 
     /// <summary>
     /// Gets or initializes the intensity value of the factor.
-    /// Value is guaranteed to be in the [0, 1] range.
     /// </summary>
     public required UnitValue Value { get; init; }
 
     /// <summary>
     /// Normalizes the intensity value using the factor's normalization rules.
     /// </summary>
-    /// <returns>Normalized value between 0 and 1.</returns>
-    internal UnitValue Normalize()
-    {
-        return Definition.Normalize(Value);
-    }
+    /// <returns>Normalized value.</returns>
+    internal UnitValue Normalize() => Definition.Normalize(Value);
 }

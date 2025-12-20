@@ -15,7 +15,7 @@ public sealed class UnitValuePromise
     /// <summary>
     /// Delegate for transform functions that map normalized input to output range.
     /// </summary>
-    /// <param name="normalizedInput">Input value in [0, 1] range.</param>
+    /// <param name="normalizedInput">Normalized input value.</param>
     /// <param name="min">Minimum value of the output range.</param>
     /// <param name="max">Maximum value of the output range.</param>
     /// <returns>Transformed value within the specified range.</returns>
@@ -141,11 +141,8 @@ public sealed class UnitValuePromise
     /// <summary>
     /// Creates a specification for a fixed value.
     /// </summary>
-    /// <param name="value">The fixed value (will be clamped to [0, 1]).</param>
-    public static UnitValuePromise Fixed(double value)
-    {
-        return new UnitValuePromise(value);
-    }
+    /// <param name="value">The fixed value (will be clamped to if needed).</param>
+    public static UnitValuePromise Fixed(double value) => new(value);
 
     /// <summary>
     /// Creates a specification for a random value in the specified range.
@@ -214,10 +211,7 @@ public sealed class UnitValuePromise
     /// <summary>
     /// Invalidates the cached value, forcing re-evaluation on next call.
     /// </summary>
-    public void InvalidateCache()
-    {
-        _cached = null;
-    }
+    public void InvalidateCache() => _cached = null;
 
     private UnitValue ComputeValue(Random? random)
     {
@@ -225,9 +219,7 @@ public sealed class UnitValuePromise
 
         // Handle approximate (normal distribution)
         if (_mean.HasValue && _standardDeviation.HasValue)
-        {
             rawValue = GenerateNormalRandom(_mean.Value, _standardDeviation.Value, random);
-        }
 
         // Handle ranged values
         else if (_range.HasValue)
@@ -243,10 +235,8 @@ public sealed class UnitValuePromise
             rawValue = _transform(normalized, min, max);
         }
         else
-        {
             throw new InvalidOperationException(
                 "Specification must have either a fixed value, a range, or approximate distribution.");
-        }
 
         return UnitValue.FromRatio(rawValue);
     }

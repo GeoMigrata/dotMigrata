@@ -273,7 +273,7 @@ XmlSnapshotSerializer.SerializeToFile(snapshot, "output-snapshot.xml");
 
 ## Simulation Metrics
 
-The framework includes comprehensive metrics collection for academic analysis:
+The framework includes metrics collection for academic analysis:
 
 ```csharp
 using dotMigrata.Simulation.Metrics;

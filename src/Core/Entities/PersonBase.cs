@@ -4,12 +4,12 @@ namespace dotMigrata.Core.Entities;
 
 /// <summary>
 /// Base class for all person types in the simulation.
-/// Defines core migration-essential properties and behaviors that all person types must implement.
+/// Defines core migration-essential properties and behaviors.
 /// </summary>
 /// <remarks>
 ///     <para>
-///     Custom attraction calculators can define their own person types by inheriting from this class
-///     and adding domain-specific properties. The framework guarantees that all person types will have
+///     Custom person types can inherit from this class to add domain-specific properties.
+///     The framework ensures all person types have the essential properties needed for migration logic.
 ///     the essential properties needed for migration logic.
 ///     </para>
 ///     <para>
@@ -17,7 +17,7 @@ namespace dotMigrata.Core.Entities;
 ///     The <see cref="CurrentCity" /> property is mutable to support migration operations.
 ///     </para>
 ///     <para>
-///     all sensitivity values are <see cref="UnitValue" /> (0-1 range).
+///     All sensitivity values use <see cref="UnitValue" /> for type safety.
 ///     Factor direction (positive/negative) is determined by <see cref="FactorDefinition.Type" />.
 ///     </para>
 /// </remarks>
@@ -29,7 +29,7 @@ public abstract class PersonBase
     /// Initializes a new instance of the <see cref="PersonBase" /> class.
     /// </summary>
     /// <param name="factorSensitivities">
-    /// A dictionary mapping factor definitions to sensitivity values in [0, 1] range.
+    /// A dictionary mapping factor definitions to sensitivity values.
     /// Sensitivities determine how strongly this person responds to each city factor.
     /// </param>
     /// <exception cref="ArgumentNullException">
@@ -51,7 +51,7 @@ public abstract class PersonBase
     public City? CurrentCity { get; set; }
 
     /// <summary>
-    /// Gets the willingness to migrate, as a normalized value in the range [0, 1].
+    /// Gets the willingness to migrate.
     /// </summary>
     /// <remarks>
     /// Higher values indicate greater willingness to consider migration.
@@ -61,7 +61,7 @@ public abstract class PersonBase
     public required UnitValue MovingWillingness { get; init; }
 
     /// <summary>
-    /// Gets the retention rate, as a normalized value in the range [0, 1].
+    /// Gets the retention rate.
     /// </summary>
     /// <remarks>
     /// Higher values indicate greater tendency to stay in current location.
@@ -74,8 +74,8 @@ public abstract class PersonBase
     /// Gets the read-only dictionary of factor sensitivities.
     /// </summary>
     /// <remarks>
-    /// All sensitivities are in [0, 1] range. Factor direction (positive/negative attraction)
-    /// is determined by <see cref="FactorDefinition.Type" />, not the sensitivity value.
+    /// Factor direction (positive/negative attraction) is determined by
+    /// <see cref="FactorDefinition.Type" />, not the sensitivity value.
     /// </remarks>
     public IReadOnlyDictionary<FactorDefinition, UnitValue> FactorSensitivities => _factorSensitivities;
 
@@ -109,7 +109,7 @@ public abstract class PersonBase
     /// </summary>
     /// <param name="factor">The factor definition to query.</param>
     /// <returns>
-    /// The sensitivity value in [0, 1] range, or <see cref="UnitValue.Zero" /> if the factor is not defined for this person.
+    /// The sensitivity value, or <see cref="UnitValue.Zero" /> if the factor is not defined for this person.
     /// </returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factor" /> is <see langword="null" />.
@@ -127,7 +127,7 @@ public abstract class PersonBase
     /// Updates the sensitivity for a specific factor.
     /// </summary>
     /// <param name="factor">The factor definition to update.</param>
-    /// <param name="sensitivity">The new sensitivity value in [0, 1] range.</param>
+    /// <param name="sensitivity">The new sensitivity value.</param>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factor" /> is <see langword="null" />.
     /// </exception>

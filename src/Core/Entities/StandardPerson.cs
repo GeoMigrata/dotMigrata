@@ -15,7 +15,7 @@ namespace dotMigrata.Core.Entities;
 ///     with domain-specific properties instead of modifying this class.
 ///     </para>
 ///     <para>
-///     all numeric properties use <see cref="UnitValue" /> for type safety.
+///     All numeric properties use <see cref="UnitValue" /> for type safety.
 ///     </para>
 /// </remarks>
 public sealed class StandardPerson : PersonBase
@@ -23,7 +23,7 @@ public sealed class StandardPerson : PersonBase
     /// <summary>
     /// Initializes a new instance of the <see cref="StandardPerson" /> class.
     /// </summary>
-    /// <param name="factorSensitivities">A dictionary mapping factor definitions to sensitivity values in [0, 1] range.</param>
+    /// <param name="factorSensitivities">A dictionary mapping factor definitions to sensitivity values.</param>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factorSensitivities" /> is <see langword="null" />.
     /// </exception>
@@ -33,7 +33,7 @@ public sealed class StandardPerson : PersonBase
     }
 
     /// <summary>
-    /// Gets the sensitivity scaling coefficient (A_G) in [0, 1] range.
+    /// Gets the sensitivity scaling coefficient (A_G).
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -48,7 +48,7 @@ public sealed class StandardPerson : PersonBase
     public UnitValue SensitivityScaling { get; init; } = UnitValue.One;
 
     /// <summary>
-    /// Gets the attraction threshold (τ) in [0, 1] range.
+    /// Gets the attraction threshold (τ).
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -62,7 +62,7 @@ public sealed class StandardPerson : PersonBase
     public UnitValue AttractionThreshold { get; init; }
 
     /// <summary>
-    /// Gets the minimum acceptable attraction score (α_min) in [0, 1] range.
+    /// Gets the minimum acceptable attraction score (α_min).
     /// </summary>
     /// <remarks>
     ///     <para>
