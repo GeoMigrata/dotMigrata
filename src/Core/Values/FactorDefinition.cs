@@ -1,5 +1,4 @@
 ﻿using dotMigrata.Core.Enums;
-using dotMigrata.Core.Values.Interfaces;
 
 namespace dotMigrata.Core.Values;
 
@@ -9,7 +8,8 @@ namespace dotMigrata.Core.Values;
 /// </summary>
 public record FactorDefinition
 {
-    private readonly ValueRange _range;
+    private readonly double _maxValue;
+    private readonly double _minValue;
 
     /// <summary>
     /// Gets or initializes the display name of the factor.
@@ -30,14 +30,14 @@ public record FactorDefinition
     /// <exception cref="ArgumentException">Thrown when the value is NaN, Infinity, or negative.</exception>
     public required double MinValue
     {
-        get => _range.Min;
+        get => _minValue;
         init
         {
             if (double.IsNaN(value) || double.IsInfinity(value))
                 throw new ArgumentException("MinValue must be a valid number.", nameof(MinValue));
             if (value < 0)
                 throw new ArgumentException("MinValue must be non-negative (>= 0).", nameof(MinValue));
-            _range = new ValueRange(value, _range.Max);
+            _minValue = value;
         }
     }
 
@@ -49,7 +49,7 @@ public record FactorDefinition
     /// <exception cref="ArgumentException">Thrown when the value is NaN, Infinity, not greater than MinValue, or negative.</exception>
     public required double MaxValue
     {
-        get => _range.Max;
+        get => _maxValue;
         init
         {
             if (double.IsNaN(value) || double.IsInfinity(value))
@@ -58,39 +58,38 @@ public record FactorDefinition
                 throw new ArgumentException("MaxValue must be non-negative (>= 0).", nameof(MaxValue));
             if (value <= MinValue)
                 throw new ArgumentException("MaxValue must be greater than MinValue.", nameof(MaxValue));
-            _range = new ValueRange(_range.Min, value);
+            _maxValue = value;
         }
     }
-
-    /// <summary>
-    /// Gets the value range for this factor.
-    /// </summary>
-    public ValueRange Range => _range;
 
     /// <summary>
     /// Gets or initializes the transformation function for normalization.
     /// When null, linear normalization is used.
     /// </summary>
     /// <remarks>
-    /// Use <see cref="TransformFunctions"/> for built-in implementations (Linear, Logarithmic, Sigmoid)
-    /// or provide your own implementation of <see cref="ITransformFunction"/>.
+    /// As of v0.7.1-beta, uses <see cref="UnitValueSpec.TransformFunc" /> delegate type
+    /// for better integration with the unified value system.
     /// </remarks>
-    public ITransformFunction? TransformFunction { get; init; }
+    public UnitValueSpec.TransformFunc? TransformFunction { get; init; }
 
     /// <summary>
-    /// Normalizes a raw value to the 0-1 range using this factor's transformation.
+    /// Normalizes a raw value to the [0, 1] range using this factor's transformation.
     /// </summary>
     /// <param name="rawValue">The raw value to normalize.</param>
     /// <returns>A normalized value between 0 and 1.</returns>
-    internal double Normalize(double rawValue)
+    internal UnitValue Normalize(UnitValue rawValue)
     {
-        var clamped = Math.Clamp(rawValue, _range.Min, _range.Max);
+        var clamped = Math.Clamp(rawValue, _minValue, _maxValue);
 
         if (TransformFunction != null)
-            return TransformFunction.Transform(clamped, _range.Min, _range.Max);
+        {
+            var transformed = TransformFunction(clamped, _minValue, _maxValue);
+            return UnitValue.FromRatio(transformed);
+        }
 
         // Default to linear normalization
-        var range = _range.Max - _range.Min;
-        return range == 0 ? 0 : (clamped - _range.Min) / range;
+        var range = _maxValue - _minValue;
+        var normalized = range == 0 ? 0 : (clamped - _minValue) / range;
+        return UnitValue.FromRatio(normalized);
     }
 }

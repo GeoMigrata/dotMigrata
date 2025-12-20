@@ -90,7 +90,7 @@ public sealed class DebugObserver : ISimulationObserver
             WriteLine($"     Capacity: {city.Capacity:N0}");
             Write("     Factors: ");
             var factorIntensities = city.FactorIntensities.Select(fi =>
-                $"{fi.Definition.DisplayName}={fi.ComputeIntensity():F1}");
+                $"{fi.Definition.DisplayName}={fi.Value}");
             WriteLine(string.Join(", ", factorIntensities));
         }
 

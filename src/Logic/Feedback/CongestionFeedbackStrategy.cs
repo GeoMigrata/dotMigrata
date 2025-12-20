@@ -69,9 +69,9 @@ public sealed class CongestionFeedbackStrategy : IFeedbackStrategy
 
         // Apply negative adjustment (congestion reduces factor)
         var reduction = congestionSeverity * _impactStrength;
-        var currentValue = currentIntensity.ComputeIntensity();
-        var newIntensity = Math.Max(currentValue - reduction, _factor.MinValue);
+        var currentValue = (double)currentIntensity.Value;
+        var newIntensity = Math.Max(currentValue - reduction, 0.0);
 
-        city.UpdateFactorIntensity(_factor, ValueSpec.Fixed(newIntensity));
+        city.UpdateFactorIntensity(_factor, UnitValue.FromRatio(newIntensity));
     }
 }

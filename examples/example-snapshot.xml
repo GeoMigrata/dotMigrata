@@ -1,22 +1,24 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <!--
-  dotMigrata Snapshot v2.0 - Simplified XML Format
+  dotMigrata Snapshot v3.0 - Unified Spec Format
   
-  This snapshot defines a migration simulation with:
-  - 4 factors affecting migration decisions
-  - 2 cities with different characteristics
-  - Population groups with both templates and generators
+  This snapshot demonstrates the v0.7.1-beta unified value system:
+  - Single <Person> element for both templates and generators
+  - Generator mode: includes Seed attribute with randomized specs
+  - Template mode: no Seed, uses fixed values
+  - All values are in [0, 1] range for UnitValue compatibility
+  - Single <Spec> format with V (fixed) or Min/Max (range)
 -->
 <Snapshot xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xmlns="http://geomigrata.pages.dev/snapshot"
           xsi:schemaLocation="http://geomigrata.pages.dev/snapshot ../schemas/snapshot.xsd"
-          Version="2.0"
+          Version="3.0"
           Id="c8836553-be0c-42c5-be58-abbae82c6918"
           Status="Seed"
-          CreatedAt="2025-11-14T05:26:05.7805660Z"
+          CreatedAt="2025-12-19T09:00:00.0000000Z"
           Tick="0">
 
-    <World Name="Example Migration Simulation">
+    <World Name="Example Migration Simulation - v0.7.1-beta">
 
         <!-- Factor Definitions: characteristics that influence migration -->
         <Factors>
@@ -26,54 +28,58 @@
             <Factor Id="security" Name="Security" Type="Positive" Min="0" Max="10"/>
         </Factors>
 
-        <!-- Population Groups: templates and generators for creating persons -->
+        <!-- Population Groups: unified person specifications (templates and generators) -->
         <Population>
             <Group Id="young_people">
 
-                <!-- Person template: creates 1 person with fixed attributes -->
-                <Person Count="1" Willingness="0.5" Retention="0.3" Threshold="0.3"
-                        Scaling="0.5" MinAttraction="10" Tags="template;young">
-                    <Sensitivities>
-                        <S Id="pollution" V="0.5"/>
-                        <S Id="transport" V="0.5"/>
-                        <S Id="income" V="0.1"/>
-                        <S Id="security" V="0.8"/>
-                    </Sensitivities>
-                </Person>
-
-                <!-- Generator: creates 100,000 persons with randomized attributes -->
-                <Generator Count="100000" Seed="42">
-                    <Sensitivities>
-                        <!-- Range-based: random value between Min and Max -->
-                        <S Id="pollution" Min="-7" Max="-3"/>
-                        <S Id="transport" Min="3" Max="8"/>
-                        <!-- Scale-based: random value scaled by factor -->
-                        <S Id="income" Scale="0.7"/>
-                        <S Id="security" Min="0.6" Max="0.9"/>
-                    </Sensitivities>
-                    <Willingness Min="0.5" Max="1.0"/>
-                    <Retention V="0.1"/>
-                    <Threshold Min="0" Max="0.5"/>
-                    <Scaling Min="0.5" Max="1.5"/>
-                    <MinAttraction V="10"/>
-                    <Tags>generated;young</Tags>
-                </Generator>
-
-                <!-- Smaller generator with fixed attributes -->
-                <Generator Count="100" Seed="132">
-                    <Sensitivities>
-                        <S Id="pollution" V="0.5"/>
-                        <S Id="transport" V="0.5"/>
-                        <S Id="income" V="0.1"/>
-                        <S Id="security" V="0.8"/>
-                    </Sensitivities>
+                <!-- Template: Fixed values, no Seed attribute -->
+                <Person Count="1" Type="StandardPerson">
                     <Willingness V="0.5"/>
                     <Retention V="0.3"/>
                     <Threshold V="0.3"/>
                     <Scaling V="0.5"/>
-                    <MinAttraction V="10"/>
+                    <MinAttraction V="0.1"/>
+                    <Sensitivities>
+                        <S Id="pollution" V="0.5"/>
+                        <S Id="transport" V="0.5"/>
+                        <S Id="income" V="0.1"/>
+                        <S Id="security" V="0.8"/>
+                    </Sensitivities>
+                    <Tags>template;young</Tags>
+                </Person>
+
+                <!-- Generator: Randomized specs with Seed attribute -->
+                <Person Count="100000" Seed="42" Type="StandardPerson">
+                    <Willingness Min="0.5" Max="1.0"/>
+                    <Retention V="0.1"/>
+                    <Threshold Min="0.0" Max="0.5"/>
+                    <Scaling Min="0.5" Max="1.0"/>
+                    <MinAttraction V="0.1"/>
+                    <Sensitivities>
+                        <!-- All values now in [0, 1] range -->
+                        <S Id="pollution" Min="0.3" Max="0.8"/>
+                        <S Id="transport" Min="0.4" Max="0.9"/>
+                        <S Id="income" Min="0.1" Max="0.3"/>
+                        <S Id="security" Min="0.6" Max="0.9"/>
+                    </Sensitivities>
+                    <Tags>generated;young</Tags>
+                </Person>
+
+                <!-- Smaller generator with mixed fixed/range specs -->
+                <Person Count="100" Seed="132" Type="StandardPerson">
+                    <Willingness V="0.5"/>
+                    <Retention V="0.3"/>
+                    <Threshold V="0.3"/>
+                    <Scaling V="0.5"/>
+                    <MinAttraction V="0.1"/>
+                    <Sensitivities>
+                        <S Id="pollution" V="0.5"/>
+                        <S Id="transport" Min="0.4" Max="0.6"/>
+                        <S Id="income" V="0.1"/>
+                        <S Id="security" V="0.8"/>
+                    </Sensitivities>
                     <Tags>fixed;young</Tags>
-                </Generator>
+                </Person>
 
             </Group>
         </Population>
@@ -83,6 +89,7 @@
             <City Id="shanghai_cn" Name="Shanghai" Lat="31.2304" Lon="121.4737"
                   Area="6340.5" Capacity="30000000">
                 <Factors>
+                    <!-- Raw values (not normalized) -->
                     <F Id="pollution" V="8"/>
                     <F Id="transport" V="7"/>
                     <F Id="income" V="900"/>

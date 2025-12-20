@@ -15,6 +15,10 @@ namespace dotMigrata.Generator;
 ///     <para>
 ///     Uses deterministic random generation when seeded, allowing reproducible person generation.
 ///     </para>
+///     <para>
+///     As of v0.7.1-beta, uses <see cref="UnitValueSpec" /> for all value specifications,
+///     ensuring type-safe generation of values in the [0, 1] range.
+///     </para>
 /// </remarks>
 public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
 {
@@ -38,49 +42,42 @@ public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
     }
 
     /// <summary>
-    /// Gets or sets the number of persons to generate.
-    /// </summary>
-    [Required]
-    [Range(1, int.MaxValue)]
-    public required int Count { get; init; }
-
-    /// <summary>
     /// Gets or sets the factor sensitivity specifications.
-    /// Key is the FactorDefinition reference, value is the value specification.
+    /// All sensitivities are in [0, 1] range.
     /// </summary>
-    public Dictionary<FactorDefinition, ValueSpec> FactorSensitivities { get; init; } = [];
+    public Dictionary<FactorDefinition, UnitValueSpec> FactorSensitivities { get; init; } = [];
 
     /// <summary>
     /// Gets or sets the moving willingness specification.
-    /// Must be specified - no default values provided.
+    /// Values are in [0, 1] range.
     /// </summary>
     [Required]
-    public required ValueSpec MovingWillingness { get; init; }
+    public required UnitValueSpec MovingWillingness { get; init; }
 
     /// <summary>
     /// Gets or sets the retention rate specification.
-    /// Must be specified - no default values provided.
+    /// Values are in [0, 1] range.
     /// </summary>
     [Required]
-    public required ValueSpec RetentionRate { get; init; }
+    public required UnitValueSpec RetentionRate { get; init; }
 
     /// <summary>
     /// Gets or sets the sensitivity scaling specification.
-    /// Optional, defaults to 1.0 if not specified.
+    /// Values are in [0, 1] range. Defaults to 1.0 if not specified.
     /// </summary>
-    public ValueSpec? SensitivityScaling { get; init; }
+    public UnitValueSpec? SensitivityScaling { get; init; }
 
     /// <summary>
     /// Gets or sets the attraction threshold specification.
-    /// Optional, defaults to 0.0 if not specified.
+    /// Values are in [0, 1] range. Defaults to 0.0 if not specified.
     /// </summary>
-    public ValueSpec? AttractionThreshold { get; init; }
+    public UnitValueSpec? AttractionThreshold { get; init; }
 
     /// <summary>
     /// Gets or sets the minimum acceptable attraction specification.
-    /// Optional, defaults to 0.0 if not specified.
+    /// Values are in [0, 1] range. Defaults to 0.0 if not specified.
     /// </summary>
-    public ValueSpec? MinimumAcceptableAttraction { get; init; }
+    public UnitValueSpec? MinimumAcceptableAttraction { get; init; }
 
     /// <summary>
     /// Gets or sets the tags to apply to all generated persons.
@@ -88,14 +85,11 @@ public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
     public IReadOnlyList<string> Tags { get; init; } = [];
 
     /// <summary>
-    /// Gets or sets the default sensitivity range.
+    /// Gets or sets the number of persons to generate.
     /// </summary>
-    public ValueRange DefaultSensitivityRange { get; init; } = new(-10.0, 10.0);
-
-    /// <summary>
-    /// Gets or sets the standard deviation for sensitivity normal distribution.
-    /// </summary>
-    public double SensitivityStdDev { get; init; } = 3.0;
+    [Required]
+    [Range(1, int.MaxValue)]
+    public required int Count { get; init; }
 
     /// <summary>
     /// Generates StandardPerson instances according to this configuration.
@@ -113,18 +107,18 @@ public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
         for (var i = 0; i < Count; i++)
         {
             // Generate factor sensitivities
-            var sensitivities = new Dictionary<FactorDefinition, double>();
+            var sensitivities = new Dictionary<FactorDefinition, UnitValue>();
             foreach (var factor in factors)
             {
                 var sensitivity = GenerateFactorSensitivity(factor);
                 sensitivities[factor] = sensitivity;
             }
 
-            var movingWillingness = NormalizedValue.FromRatio(MovingWillingness.Evaluate(random: _random));
-            var retentionRate = NormalizedValue.FromRatio(RetentionRate.Evaluate(random: _random));
-            var sensitivityScaling = SensitivityScaling?.Evaluate(random: _random) ?? 1.0;
-            var attractionThreshold = AttractionThreshold?.Evaluate(random: _random) ?? 0.0;
-            var minimumAcceptableAttraction = MinimumAcceptableAttraction?.Evaluate(random: _random) ?? 0.0;
+            var movingWillingness = MovingWillingness.Evaluate(_random);
+            var retentionRate = RetentionRate.Evaluate(_random);
+            var sensitivityScaling = SensitivityScaling?.Evaluate(_random) ?? UnitValue.One;
+            var attractionThreshold = AttractionThreshold?.Evaluate(_random) ?? UnitValue.Zero;
+            var minimumAcceptableAttraction = MinimumAcceptableAttraction?.Evaluate(_random) ?? UnitValue.Zero;
 
             yield return new StandardPerson(sensitivities)
             {
@@ -138,34 +132,11 @@ public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
         }
     }
 
-    private double GenerateFactorSensitivity(FactorDefinition factor)
+    private UnitValue GenerateFactorSensitivity(FactorDefinition factor)
     {
-        if (FactorSensitivities.TryGetValue(factor, out var spec))
-        {
-            // If spec has a range, use it directly
-            if (spec.HasRange || spec.IsFixed || spec.IsApproximate)
-                return spec.Evaluate(random: _random);
-
-            // Handle specs without range - use default sensitivity range
-            var (min, max) = (DefaultSensitivityRange.Min, DefaultSensitivityRange.Max);
-            var mean = (min + max) / 2;
-            var stdDev = (max - min) / 6;
-            var value = GenerateNormalRandom(mean, stdDev);
-            value = Math.Clamp(value, min, max);
-            return value * spec.Scale;
-        }
-
-        // Use normal distribution for sensitivities by default
-        var defaultValue = GenerateNormalRandom(0, SensitivityStdDev);
-        return DefaultSensitivityRange.Clamp(defaultValue);
-    }
-
-    private double GenerateNormalRandom(double mean, double stdDev)
-    {
-        // Box-Muller transform
-        var u1 = 1.0 - _random.NextDouble();
-        var u2 = 1.0 - _random.NextDouble();
-        var randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2.0 * Math.PI * u2);
-        return mean + stdDev * randStdNormal;
+        return FactorSensitivities.TryGetValue(factor, out var spec)
+            ? spec.Evaluate(_random)
+            : UnitValue.FromRatio(_random.NextDouble());
+        // Default: random value in [0, 1] range
     }
 }

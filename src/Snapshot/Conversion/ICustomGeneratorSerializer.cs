@@ -20,19 +20,19 @@ public interface ICustomGeneratorSerializer<TPerson, TGenerator>
     where TGenerator : IPersonGenerator<TPerson>
 {
     /// <summary>
-    /// Creates a generator instance from XML data.
+    /// Creates a generator instance from PersonSpec XML data.
     /// </summary>
-    /// <param name="generatorXml">The generator XML containing base configuration.</param>
+    /// <param name="spec">The person specification containing base configuration.</param>
     /// <param name="factorSpecs">Factor sensitivity specifications.</param>
     /// <param name="tags">Tags to apply to generated persons.</param>
     /// <returns>A new generator instance.</returns>
     /// <remarks>
-    /// Base specifications (Count, Seed, MovingWillingness, RetentionRate, etc.) are provided.
-    /// Extract custom specifications from <paramref name="generatorXml" />.CustomProperties if needed.
+    /// Base specifications (Count, Seed, Willingness, Retention, etc.) are provided.
+    /// Extract custom specifications from <paramref name="spec" />.CustomProperties if needed.
     /// </remarks>
     TGenerator CreateFromXml(
-        GeneratorXml generatorXml,
-        Dictionary<FactorDefinition, ValueSpec> factorSpecs,
+        PersonSpec spec,
+        Dictionary<FactorDefinition, UnitValueSpec> factorSpecs,
         List<string> tags);
 
     /// <summary>

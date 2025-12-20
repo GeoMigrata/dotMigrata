@@ -22,11 +22,11 @@ namespace dotMigrata.Snapshot.Conversion;
 public static class PersonTypeRegistry
 {
     private static readonly
-        Dictionary<string, Func<PersonTemplateXml, Dictionary<FactorDefinition, double>, List<string>, PersonBase>>
+        Dictionary<string, Func<PersonSpec, Dictionary<FactorDefinition, UnitValue>, List<string>, PersonBase>>
         PersonFactories = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly
-        Dictionary<string, Func<GeneratorXml, Dictionary<FactorDefinition, ValueSpec>, List<string>,
+        Dictionary<string, Func<PersonSpec, Dictionary<FactorDefinition, UnitValueSpec>, List<string>,
             IPersonGenerator<PersonBase>>> GeneratorFactories = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly Dictionary<string, Func<PersonBase, XmlDocument, XmlElement?>> PersonSerializers =
@@ -34,8 +34,8 @@ public static class PersonTypeRegistry
 
     static PersonTypeRegistry()
     {
-        // Register StandardPerson by default
         RegisterStandardPerson();
+        // Register StandardPerson by default
     }
 
     /// <summary>
@@ -82,44 +82,44 @@ public static class PersonTypeRegistry
         ArgumentException.ThrowIfNullOrWhiteSpace(typeName);
         ArgumentNullException.ThrowIfNull(serializer);
 
-        GeneratorFactories[typeName] = (generatorXml, factorSpecs, tags) =>
-            serializer.CreateFromXml(generatorXml, factorSpecs, tags);
+        GeneratorFactories[typeName] = (spec, factorSpecs, tags) =>
+            serializer.CreateFromXml(spec, factorSpecs, tags);
     }
 
     /// <summary>
-    /// Creates a person from template XML.
+    /// Creates a person from PersonSpec XML.
     /// </summary>
     internal static PersonBase CreatePerson(
-        PersonTemplateXml template,
-        Dictionary<FactorDefinition, double> sensitivities,
+        PersonSpec spec,
+        Dictionary<FactorDefinition, UnitValue> sensitivities,
         List<string> tags)
     {
-        var typeName = template.PersonType;
+        var typeName = spec.Type;
 
         if (!PersonFactories.TryGetValue(typeName, out var factory))
             throw new InvalidOperationException(
                 $"Person type '{typeName}' is not registered. " +
                 $"Register custom types using PersonTypeRegistry.RegisterPersonType<T>().");
 
-        return factory(template, sensitivities, tags);
+        return factory(spec, sensitivities, tags);
     }
 
     /// <summary>
-    /// Creates a generator from XML.
+    /// Creates a generator from PersonSpec XML.
     /// </summary>
     internal static IPersonGenerator<PersonBase> CreateGenerator(
-        GeneratorXml generatorXml,
-        Dictionary<FactorDefinition, ValueSpec> factorSpecs,
+        PersonSpec spec,
+        Dictionary<FactorDefinition, UnitValueSpec> factorSpecs,
         List<string> tags)
     {
-        var typeName = generatorXml.PersonType;
+        var typeName = spec.Type;
 
         if (!GeneratorFactories.TryGetValue(typeName, out var factory))
             throw new InvalidOperationException(
                 $"Generator for person type '{typeName}' is not registered. " +
                 $"Register custom generators using PersonTypeRegistry.RegisterGeneratorType<TPerson, TGenerator>().");
 
-        return factory(generatorXml, factorSpecs, tags);
+        return factory(spec, factorSpecs, tags);
     }
 
     /// <summary>
@@ -135,43 +135,82 @@ public static class PersonTypeRegistry
     private static void RegisterStandardPerson()
     {
         // StandardPerson factory
-        PersonFactories["StandardPerson"] = (template, sensitivities, tags) =>
-            new StandardPerson(sensitivities)
-            {
-                MovingWillingness = NormalizedValue.FromRatio(template.MovingWillingness),
-                RetentionRate = NormalizedValue.FromRatio(template.RetentionRate),
-                SensitivityScaling = template.SensitivityScaling,
-                AttractionThreshold = template.AttractionThreshold,
-                MinimumAcceptableAttraction = template.MinimumAcceptableAttraction,
-                Tags = tags
-            };
+        PersonFactories["StandardPerson"] = (spec, sensitivities, tags) => new StandardPerson(sensitivities)
+        {
+            MovingWillingness = GetSpecValue(spec.Willingness, 0.5),
+            RetentionRate = GetSpecValue(spec.Retention, 0.3),
+            SensitivityScaling = GetSpecValue(spec.Scaling, 1.0),
+            AttractionThreshold = GetSpecValue(spec.Threshold, 0.0),
+            MinimumAcceptableAttraction = GetSpecValue(spec.MinAttraction, 0.0),
+            Tags = tags
+        };
 
         // StandardPersonGenerator factory
-        GeneratorFactories["StandardPerson"] = (generatorXml, factorSpecs, tags) =>
+        GeneratorFactories["StandardPerson"] = (spec, factorSpecs, tags) =>
         {
-            var standardGenerator = new StandardPersonGenerator(
-                generatorXml.SeedSpecified ? generatorXml.Seed : Random.Shared.Next())
+            var seed = spec.Seed ?? Random.Shared.Next();
+
+            return new StandardPersonGenerator(seed)
             {
-                Count = generatorXml.Count,
+                Count = spec.Count,
                 FactorSensitivities = factorSpecs,
-                MovingWillingness = SnapshotConverter.ConvertValueSpec(generatorXml.MovingWillingness, 0.5),
-                RetentionRate = SnapshotConverter.ConvertValueSpec(generatorXml.RetentionRate, 0.5),
-                SensitivityScaling = generatorXml.SensitivityScaling != null
-                    ? SnapshotConverter.ConvertValueSpec(generatorXml.SensitivityScaling, 1.0)
+                MovingWillingness = ConvertSpecToUnitValueSpec(spec.Willingness, 0.5),
+                RetentionRate = ConvertSpecToUnitValueSpec(spec.Retention, 0.3),
+                SensitivityScaling = spec.Scaling != null
+                    ? ConvertSpecToUnitValueSpec(spec.Scaling, 1.0)
                     : null,
-                AttractionThreshold = generatorXml.AttractionThreshold != null
-                    ? SnapshotConverter.ConvertValueSpec(generatorXml.AttractionThreshold, 0.0)
+                AttractionThreshold = spec.Threshold != null
+                    ? ConvertSpecToUnitValueSpec(spec.Threshold, 0.0)
                     : null,
-                MinimumAcceptableAttraction = generatorXml.MinimumAcceptableAttraction != null
-                    ? SnapshotConverter.ConvertValueSpec(generatorXml.MinimumAcceptableAttraction, 0.0)
+                MinimumAcceptableAttraction = spec.MinAttraction != null
+                    ? ConvertSpecToUnitValueSpec(spec.MinAttraction, 0.0)
                     : null,
                 Tags = tags
             };
-
-            return standardGenerator;
         };
 
         // StandardPerson has no custom properties beyond PersonBase + standard fields
         PersonSerializers["StandardPerson"] = (_, _) => null;
+    }
+
+    private static UnitValue GetSpecValue(Spec? spec, double defaultValue)
+    {
+        if (spec?.Value.HasValue == true)
+        {
+            var value = Math.Clamp(spec.Value.Value, 0, 1);
+            return UnitValue.FromRatio(value);
+        }
+
+        // If range specified, use midpoint
+        if (spec?.Min.HasValue != true || !spec.Max.HasValue)
+            return UnitValue.FromRatio(Math.Clamp(defaultValue, 0, 1));
+
+        var min = Math.Clamp(spec.Min!.Value, 0, 1);
+        var max = Math.Clamp(spec.Max.Value, 0, 1);
+        var midpoint = (min + max) / 2.0;
+        return UnitValue.FromRatio(midpoint);
+    }
+
+    private static UnitValueSpec ConvertSpecToUnitValueSpec(Spec? spec, double defaultValue)
+    {
+        if (spec == null)
+            return UnitValueSpec.Fixed(Math.Clamp(defaultValue, 0, 1));
+
+        // Fixed value
+        if (spec.Value.HasValue)
+        {
+            var value = Math.Clamp(spec.Value.Value, 0, 1);
+            return UnitValueSpec.Fixed(value);
+        }
+
+        // Range
+        if (spec is not { Min: not null, Max: not null })
+            return UnitValueSpec.Fixed(Math.Clamp(defaultValue, 0, 1));
+
+        var min = Math.Clamp(spec.Min.Value, 0, 1);
+        var max = Math.Clamp(spec.Max.Value, 0, 1);
+        return UnitValueSpec.InRange(min, max);
+
+        // Default
     }
 }

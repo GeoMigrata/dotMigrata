@@ -11,15 +11,6 @@
 public interface IDistanceCalculator
 {
     /// <summary>
-    /// Calculates the distance between two geographic coordinates.
-    /// </summary>
-    /// <param name="from">The starting coordinate.</param>
-    /// <param name="to">The destination coordinate.</param>
-    /// <returns>The distance in kilometers.</returns>
-    /// <exception cref="ArgumentException">Thrown when coordinates are invalid.</exception>
-    double CalculateDistance(Coordinate from, Coordinate to);
-
-    /// <summary>
     /// Gets the name of this distance calculation method.
     /// </summary>
     /// <remarks>
@@ -45,4 +36,13 @@ public interface IDistanceCalculator
     /// Simple algorithms like Haversine are acceptable for most cases but less accurate for very long distances.
     /// </remarks>
     bool SuitableForLongDistances { get; }
+
+    /// <summary>
+    /// Calculates the distance between two geographic coordinates.
+    /// </summary>
+    /// <param name="from">The starting coordinate.</param>
+    /// <param name="to">The destination coordinate.</param>
+    /// <returns>The distance in kilometers.</returns>
+    /// <exception cref="ArgumentException">Thrown when coordinates are invalid.</exception>
+    double CalculateDistance(Coordinate from, Coordinate to);
 }

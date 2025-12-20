@@ -6,7 +6,7 @@ namespace dotMigrata.Core.Values;
 /// Represents a geographic coordinate using WGS84 datum (latitude and longitude).
 /// </summary>
 /// <remarks>
-/// Provides distance calculation using pluggable <see cref="Interfaces.IDistanceCalculator"/> strategies.
+/// Provides distance calculation using pluggable <see cref="Interfaces.IDistanceCalculator" /> strategies.
 /// Defaults to Haversine formula for backward compatibility and general use.
 /// </remarks>
 public readonly record struct Coordinate
@@ -15,7 +15,7 @@ public readonly record struct Coordinate
     /// Gets or sets the default distance calculator (Haversine by default).
     /// </summary>
     /// <remarks>
-    /// This property uses thread-safe operations for updates. 
+    /// This property uses thread-safe operations for updates.
     /// For better design, prefer passing IDistanceCalculator via dependency injection or method parameters.
     /// </remarks>
     public static IDistanceCalculator DefaultDistanceCalculator

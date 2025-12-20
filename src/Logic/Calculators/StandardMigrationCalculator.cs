@@ -66,7 +66,7 @@ public sealed class StandardMigrationCalculator : IMigrationCalculator, IDisposa
         IDictionary<City, AttractionResult> attractionResults)
     {
         ObjectDisposedException.ThrowIf(_disposed != 0, this);
-        
+
         var originCity = person.CurrentCity;
         if (originCity == null)
             return null;
@@ -142,7 +142,7 @@ public sealed class StandardMigrationCalculator : IMigrationCalculator, IDisposa
         IAttractionCalculator attractionCalculator)
     {
         ObjectDisposedException.ThrowIf(_disposed != 0, this);
-        
+
         var allPersons = world.AllPersons.ToList();
 
         // Configure parallel or sequential processing based on config

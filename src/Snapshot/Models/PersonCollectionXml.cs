@@ -3,28 +3,27 @@
 namespace dotMigrata.Snapshot.Models;
 
 /// <summary>
-/// Population group containing person templates and generators.
+/// Defines a collection of person specifications (both templates and generators).
 /// </summary>
 /// <remarks>
-/// Groups can be referenced by cities to assign population.
+/// Person specifications can be either templates (fixed values) or generators (randomized values).
+/// The presence of a Seed attribute determines the mode.
 /// </remarks>
 public class PersonCollectionXml
 {
     /// <summary>
-    /// Gets or sets the unique identifier for this group.
+    /// Gets or sets the unique identifier for this collection.
     /// </summary>
     [XmlAttribute("Id")]
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the person templates (fixed attribute persons).
+    /// Gets or sets the person specifications (both templates and generators).
     /// </summary>
+    /// <remarks>
+    /// Specifications without a Seed attribute act as templates (fixed values).
+    /// Specifications with a Seed attribute act as generators (randomized values).
+    /// </remarks>
     [XmlElement("Person")]
-    public List<PersonTemplateXml>? Persons { get; set; }
-
-    /// <summary>
-    /// Gets or sets the generators (random attribute persons).
-    /// </summary>
-    [XmlElement("Generator")]
-    public List<GeneratorXml>? Generators { get; set; }
+    public List<PersonSpec>? PersonSpecs { get; set; }
 }

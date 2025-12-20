@@ -40,9 +40,6 @@ public sealed class MigrationDecisionStage : ISimulationStage, IDisposable
         _attractionCalculator = attractionCalculator ?? throw new ArgumentNullException(nameof(attractionCalculator));
     }
 
-    /// <inheritdoc />
-    public string Name => StageName;
-
     /// <summary>
     /// Releases resources used by this stage.
     /// </summary>
@@ -57,11 +54,14 @@ public sealed class MigrationDecisionStage : ISimulationStage, IDisposable
     }
 
     /// <inheritdoc />
+    public string Name => StageName;
+
+    /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Task ExecuteAsync(SimulationContext context)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         // Calculate all migration decisions using configured parallel processing settings
         var flows = _migrationCalculator
             .CalculateAllMigrationFlows(context.World, _attractionCalculator)

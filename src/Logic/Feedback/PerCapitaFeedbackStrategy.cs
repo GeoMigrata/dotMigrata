@@ -65,13 +65,13 @@ public sealed class PerCapitaFeedbackStrategy : IFeedbackStrategy
         var adjustment = populationRatio * _scalingFactor;
 
         // Apply adjustment with clamping to valid range
-        var currentValue = currentIntensity.ComputeIntensity();
+        var currentValue = (double)currentIntensity.Value;
         var newIntensity = Math.Clamp(
             currentValue + adjustment,
-            _factor.MinValue,
-            _factor.MaxValue
+            0.0,
+            1.0
         );
 
-        city.UpdateFactorIntensity(_factor, ValueSpec.Fixed(newIntensity));
+        city.UpdateFactorIntensity(_factor, UnitValue.FromRatio(newIntensity));
     }
 }

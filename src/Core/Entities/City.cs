@@ -12,8 +12,8 @@ namespace dotMigrata.Core.Entities;
 /// </summary>
 public sealed class City : IDisposable
 {
-    private readonly Dictionary<FactorDefinition, FactorIntensity> _factorLookup;
     private readonly List<FactorIntensity> _factorIntensities;
+    private readonly Dictionary<FactorDefinition, FactorIntensity> _factorLookup;
     private readonly HashSet<PersonBase> _persons;
     private readonly ReaderWriterLockSlim _personsLock = new();
     private bool _disposed;
@@ -124,41 +124,30 @@ public sealed class City : IDisposable
     /// Updates the intensity of an existing <see cref="FactorIntensity" /> for the specified factor definition.
     /// </summary>
     /// <param name="factor">The factor definition to update.</param>
-    /// <param name="newIntensity">The new intensity value specification.</param>
+    /// <param name="newValue">The new intensity value in [0, 1] range.</param>
     /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="factor" /> or <paramref name="newIntensity" /> is <see langword="null" />.
+    /// Thrown when <paramref name="factor" /> is <see langword="null" />.
     /// </exception>
     /// <exception cref="ArgumentException">
     /// Thrown when the specified factor has no matched intensity in this city.
     /// </exception>
     /// <remarks>
-    /// This method keeps <see cref="FactorIntensity" /> immutable while allowing controlled updates via the City API.
+    /// As of v0.7.1-beta, intensities are immutable <see cref="UnitValue" /> values.
+    /// This method replaces the entire FactorIntensity instance with a new one.
     /// </remarks>
-    public void UpdateFactorIntensity(FactorDefinition factor, ValueSpec newIntensity)
+    public void UpdateFactorIntensity(FactorDefinition factor, UnitValue newValue)
     {
         ArgumentNullException.ThrowIfNull(factor);
-        ArgumentNullException.ThrowIfNull(newIntensity);
 
-        if (!_factorLookup.TryGetValue(factor, out var factorIntensity))
+        if (!_factorLookup.ContainsKey(factor))
             throw new ArgumentException("Given factor has no matched intensity in this city.", nameof(factor));
 
-        factorIntensity.Intensity = newIntensity;
-    }
+        var newIntensity = new FactorIntensity { Definition = factor, Value = newValue };
+        _factorLookup[factor] = newIntensity;
 
-    /// <summary>
-    /// Materializes all factor intensities for optimal runtime performance.
-    /// Should be called once before simulation begins.
-    /// </summary>
-    /// <param name="random">Optional Random instance for value generation.</param>
-    /// <remarks>
-    /// This method evaluates all ValueSpec instances once and caches the results,
-    /// eliminating the overhead of repeated evaluations during simulation.
-    /// Call this after all cities are set up but before simulation starts.
-    /// </remarks>
-    public void MaterializeFactorIntensities(Random? random = null)
-    {
-        foreach (var factorIntensity in _factorIntensities)
-            factorIntensity.Materialize(random);
+        var index = _factorIntensities.FindIndex(fi => fi.Definition == factor);
+        if (index >= 0)
+            _factorIntensities[index] = newIntensity;
     }
 
     /// <summary>

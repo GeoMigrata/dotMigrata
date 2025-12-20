@@ -10,7 +10,7 @@ namespace dotMigrata.Simulation.Events.Effects;
 /// <summary>
 /// Effect that changes factor values for cities.
 /// Supports various application types (absolute, delta, multiply, transitions)
-/// and reuses <see cref="ValueSpecification" /> for flexible value generation.
+/// and reuses <see cref="Core.Values.UnitValueSpec" /> for flexible value generation.
 /// </summary>
 public sealed class FactorChangeEffect : IEventEffect
 {
@@ -23,7 +23,7 @@ public sealed class FactorChangeEffect : IEventEffect
     /// <param name="factor">The factor definition to modify.</param>
     /// <param name="valueSpecification">
     /// Specification for the target value (fixed, range, or approximate).
-    /// Leverages existing <see cref="ValueSpecification" /> infrastructure.
+    /// Leverages existing <see cref="Core.Values.UnitValueSpec" /> infrastructure.
     /// </param>
     /// <param name="applicationType">How the value change is applied.</param>
     /// <param name="duration">Duration over which the effect is applied.</param>
@@ -31,14 +31,14 @@ public sealed class FactorChangeEffect : IEventEffect
     /// <param name="seed">Optional random seed for reproducible value generation.</param>
     public FactorChangeEffect(
         FactorDefinition factor,
-        ValueSpec valueSpecification,
+        UnitValueSpec valueSpecification,
         EffectApplicationType applicationType,
         EffectDuration duration,
         Func<City, bool>? cityFilter = null,
         int? seed = null)
     {
         Factor = factor ?? throw new ArgumentNullException(nameof(factor));
-        ValueSpecification = valueSpecification ?? throw new ArgumentNullException(nameof(valueSpecification));
+        UnitValueSpec = valueSpecification ?? throw new ArgumentNullException(nameof(valueSpecification));
         ApplicationType = applicationType;
         Duration = duration ?? throw new ArgumentNullException(nameof(duration));
         CityFilter = cityFilter;
@@ -53,7 +53,7 @@ public sealed class FactorChangeEffect : IEventEffect
     /// <summary>
     /// Gets the value specification for target values.
     /// </summary>
-    public ValueSpec ValueSpecification { get; }
+    public UnitValueSpec UnitValueSpec { get; }
 
     /// <summary>
     /// Gets the type of application for this effect.
@@ -81,12 +81,12 @@ public sealed class FactorChangeEffect : IEventEffect
             if (!city.TryGetFactorIntensity(Factor, out var currentIntensity))
                 continue;
 
-            var currentValue = currentIntensity.ComputeIntensity();
+            var currentValue = (double)currentIntensity.Value;
             var state = GetOrCreateState(city, currentValue, context.CurrentTick);
             var newValue = CalculateNewValue(state, currentValue, context.CurrentTick);
 
-            newValue = Math.Clamp(newValue, Factor.MinValue, Factor.MaxValue);
-            city.UpdateFactorIntensity(Factor, ValueSpec.Fixed(newValue));
+            newValue = Math.Clamp(newValue, 0.0, 1.0);
+            city.UpdateFactorIntensity(Factor, UnitValue.FromRatio(newValue));
         }
     }
 
@@ -108,26 +108,8 @@ public sealed class FactorChangeEffect : IEventEffect
 
     private double GenerateTargetValue()
     {
-        if (ValueSpecification.IsFixed)
-            return ValueSpecification.FixedValue!.Value;
-
-        if (ValueSpecification.HasRange)
-        {
-            var (min, max) = ValueSpecification.Range!.Value;
-            return min + _random.NextDouble() * (max - min) * ValueSpecification.Scale;
-        }
-
-        if (!ValueSpecification.IsApproximate)
-            return _random.NextDouble() * ValueSpecification.Scale;
-
-        // Box-Muller transform for normal distribution
-        var u1 = 1.0 - _random.NextDouble();
-        var u2 = 1.0 - _random.NextDouble();
-        var randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2.0 * Math.PI * u2);
-        return ValueSpecification.Mean!.Value +
-               ValueSpecification.StandardDeviation!.Value * randStdNormal * ValueSpecification.Scale;
-
-        // Default random [0,1]
+        return UnitValueSpec.Evaluate(_random);
+        // UnitValueSpec.Evaluate handles all the logic internally
     }
 
     private double CalculateNewValue(FactorChangeState state, double currentValue, int currentTick)

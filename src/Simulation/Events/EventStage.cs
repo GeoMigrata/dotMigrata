@@ -10,15 +10,15 @@ namespace dotMigrata.Simulation.Events;
 /// Simulation stage that executes events based on their triggers.
 /// </summary>
 /// <remarks>
-/// <para>
-/// This stage evaluates all registered events each tick and executes those
-/// whose triggers fire.
-/// </para>
-/// <para>
-/// When <see cref="UseParallelExecution"/> is true and there are independent events
-/// targeting different cities, events are executed in parallel for better performance.
-/// Otherwise, events are executed sequentially in registration order.
-/// </para>
+///     <para>
+///     This stage evaluates all registered events each tick and executes those
+///     whose triggers fire.
+///     </para>
+///     <para>
+///     When <see cref="UseParallelExecution" /> is true and there are independent events
+///     targeting different cities, events are executed in parallel for better performance.
+///     Otherwise, events are executed sequentially in registration order.
+///     </para>
 /// </remarks>
 [DebuggerDisplay("Stage: {Name}, Events: {_events.Count}, Parallel: {UseParallelExecution}")]
 public sealed class EventStage : ISimulationStage
@@ -35,12 +35,12 @@ public sealed class EventStage : ISimulationStage
     /// Set to false for deterministic execution order.
     /// </param>
     /// <param name="maxDegreeOfParallelism">
-    /// Maximum degree of parallelism. Only used when <paramref name="useParallelExecution"/> is true.
+    /// Maximum degree of parallelism. Only used when <paramref name="useParallelExecution" /> is true.
     /// If null, uses system default (typically number of logical processors).
     /// </param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="events" /> is null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// Thrown when <paramref name="maxDegreeOfParallelism"/> is less than or equal to 0.
+    /// Thrown when <paramref name="maxDegreeOfParallelism" /> is less than or equal to 0.
     /// </exception>
     public EventStage(
         IEnumerable<ISimulationEvent> events,

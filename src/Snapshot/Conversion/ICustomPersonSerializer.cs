@@ -16,19 +16,19 @@ namespace dotMigrata.Snapshot.Conversion;
 public interface ICustomPersonSerializer<TPerson> where TPerson : PersonBase
 {
     /// <summary>
-    /// Creates a person instance from template XML data.
+    /// Creates a person instance from PersonSpec XML data.
     /// </summary>
-    /// <param name="template">The person template containing base properties.</param>
+    /// <param name="spec">The person specification containing base properties.</param>
     /// <param name="sensitivities">Factor sensitivities for the person.</param>
     /// <param name="tags">Tags for categorization.</param>
     /// <returns>A new person instance.</returns>
     /// <remarks>
-    /// Base properties (MovingWillingness, RetentionRate, Tags, FactorSensitivities) are provided.
-    /// Extract custom properties from <paramref name="template" />.CustomProperties if needed.
+    /// Base properties (Willingness, Retention, Tags, Sensitivities) are provided.
+    /// Extract custom properties from <paramref name="spec" />.CustomProperties if needed.
     /// </remarks>
     TPerson CreateFromTemplate(
-        PersonTemplateXml template,
-        Dictionary<FactorDefinition, double> sensitivities,
+        PersonSpec spec,
+        Dictionary<FactorDefinition, UnitValue> sensitivities,
         List<string> tags);
 
     /// <summary>

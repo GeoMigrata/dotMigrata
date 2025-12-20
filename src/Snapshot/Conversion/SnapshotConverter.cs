@@ -1,7 +1,6 @@
 ﻿using dotMigrata.Core.Entities;
 using dotMigrata.Core.Enums;
 using dotMigrata.Core.Values;
-using dotMigrata.Core.Values.Interfaces;
 using dotMigrata.Snapshot.Enums;
 using dotMigrata.Snapshot.Models;
 
@@ -122,14 +121,14 @@ public static class SnapshotConverter
             _ => throw new InvalidOperationException($"Unknown factor type: {def.Type}")
         };
 
-        // Handle transform functions (v0.6.3+)
-        ITransformFunction? transformFunction = null;
+        // Handle transform functions - convert to new delegate type
+        UnitValueSpec.TransformFunc? transformFunction = null;
         if (!string.IsNullOrEmpty(def.CustomTransformName))
             transformFunction = def.CustomTransformName.ToUpperInvariant() switch
             {
-                "LINEAR" => TransformFunctions.Linear,
-                "LOGARITHMIC" => TransformFunctions.Logarithmic,
-                "SIGMOID" => TransformFunctions.Sigmoid,
+                "LINEAR" => UnitValueSpec.Transforms.Linear,
+                "LOGARITHMIC" => UnitValueSpec.Transforms.Logarithmic,
+                "SIGMOID" => UnitValueSpec.Transforms.Sigmoid,
                 _ => null // Unknown custom transforms fallback to linear (default)
             };
 
@@ -157,17 +156,10 @@ public static class SnapshotConverter
         {
             var persons = new List<PersonBase>();
 
-            // Process person templates
-            if (collection.Persons != null)
-                foreach (var templatePersons in collection.Persons.Select(template =>
-                             ConvertPersonTemplate(template, factorLookup)))
-                    persons.AddRange(templatePersons);
-
-            // Process generators
-            if (collection.Generators != null)
-                foreach (var generatedPersons in collection.Generators.Select(generator =>
-                             ConvertGenerator(generator, factorLookup, allFactors)))
-                    persons.AddRange(generatedPersons);
+            // Process all person specs (both templates and generators unified)
+            if (collection.PersonSpecs != null)
+                foreach (var spec in collection.PersonSpecs)
+                    persons.AddRange(ConvertPersonSpec(spec, factorLookup, allFactors));
 
             result[collection.Id] = persons;
         }
@@ -175,95 +167,97 @@ public static class SnapshotConverter
         return result;
     }
 
-    private static IEnumerable<PersonBase> ConvertPersonTemplate(
-        PersonTemplateXml template,
-        Dictionary<string, FactorDefinition> factorLookup)
-    {
-        var sensitivities = ConvertFactorSensitivities(template.FactorSensitivities, factorLookup);
-        var tags = ParseTags(template.Tags);
-
-        for (var i = 0; i < template.Count; i++)
-        {
-            // Create a copy of sensitivities for each person to ensure independence
-            var personSensitivities = new Dictionary<FactorDefinition, double>(sensitivities);
-
-            // Use registry to create person of appropriate type
-            yield return PersonTypeRegistry.CreatePerson(template, personSensitivities, tags);
-        }
-    }
-
-    private static IEnumerable<PersonBase> ConvertGenerator(
-        GeneratorXml generator,
+    private static IEnumerable<PersonBase> ConvertPersonSpec(
+        PersonSpec spec,
         Dictionary<string, FactorDefinition> factorLookup,
         List<FactorDefinition> allFactors)
     {
-        // Convert factor sensitivity specifications
-        var factorSpecs = new Dictionary<FactorDefinition, ValueSpec>();
-        if (generator.FactorSensitivities != null)
-            foreach (var spec in generator.FactorSensitivities)
-                if (factorLookup.TryGetValue(spec.Id, out var factor))
-                    factorSpecs[factor] = ConvertSensitivitySpec(spec);
+        var tags = ParseTags(spec.Tags);
 
-        var tags = ParseTags(generator.Tags);
+        if (spec.IsGenerator)
+        {
+            // Generator mode: convert to UnitValueSpec for randomization
+            var factorSpecs = new Dictionary<FactorDefinition, UnitValueSpec>();
+            if (spec.Sensitivities != null)
+                foreach (var sensitivity in spec.Sensitivities)
+                    if (!string.IsNullOrEmpty(sensitivity.Id) &&
+                        factorLookup.TryGetValue(sensitivity.Id, out var factor))
+                        factorSpecs[factor] = ConvertSpec(sensitivity);
 
-        // Use registry to create generator of appropriate type
-        var personGenerator = PersonTypeRegistry.CreateGenerator(generator, factorSpecs, tags);
+            // Use registry to create generator of appropriate type
+            var personGenerator = PersonTypeRegistry.CreateGenerator(spec, factorSpecs, tags);
 
-        return personGenerator.Generate(allFactors);
+            // Yield all generated persons
+            foreach (var person in personGenerator.Generate(allFactors))
+                yield return person;
+        }
+        else
+        {
+            // Template mode: convert to fixed UnitValue
+            var sensitivities = new Dictionary<FactorDefinition, UnitValue>();
+            if (spec.Sensitivities != null)
+                foreach (var sensitivity in spec.Sensitivities)
+                    if (!string.IsNullOrEmpty(sensitivity.Id) &&
+                        factorLookup.TryGetValue(sensitivity.Id, out var factor))
+                        sensitivities[factor] = ConvertSpecToValue(sensitivity);
+
+            // Create multiple identical persons
+            for (var i = 0; i < spec.Count; i++)
+            {
+                // Create a copy of sensitivities for each person to ensure independence
+                var personSensitivities = new Dictionary<FactorDefinition, UnitValue>(sensitivities);
+
+                // Use registry to create person of appropriate type
+                yield return PersonTypeRegistry.CreatePerson(spec, personSensitivities, tags);
+            }
+        }
     }
 
-    internal static ValueSpec ConvertValueSpec(ValueSpecXml? spec, double defaultValue)
+    /// <summary>
+    /// Converts a Spec to a UnitValueSpec for generator mode.
+    /// </summary>
+    private static UnitValueSpec ConvertSpec(Spec? spec)
     {
         if (spec == null)
-            return ValueSpec.Fixed(defaultValue);
+            return UnitValueSpec.InRange(0, 1);
 
-        // Attribute-based format (v2.0)
-        if (spec.ValueSpecified)
-            return ValueSpec.Fixed(spec.Value);
+        // Fixed value
+        if (spec.Value.HasValue)
+        {
+            var value = Math.Clamp(spec.Value.Value, 0, 1);
+            return UnitValueSpec.Fixed(value);
+        }
 
-        if (spec is { MinSpecified: true, MaxSpecified: true })
-            return ValueSpec.InRange(spec.Min, spec.Max);
+        // Range
+        if (spec is not { Min: not null, Max: not null })
+            return UnitValueSpec.InRange(0, 1);
 
-        if (spec.ScaleSpecified)
-            return Math.Abs(spec.Scale - 1.0) < double.Epsilon
-                ? ValueSpec.Random()
-                : ValueSpec.RandomWithScale(spec.Scale);
+        var min = Math.Clamp(spec.Min.Value, 0, 1);
+        var max = Math.Clamp(spec.Max.Value, 0, 1);
+        return UnitValueSpec.InRange(min, max);
 
-        return ValueSpec.Fixed(defaultValue);
+        // Default: random 0-1
     }
 
-    private static ValueSpec ConvertSensitivitySpec(SensitivitySpecXml spec)
+    /// <summary>
+    /// Converts a Spec to a fixed UnitValue for template mode.
+    /// </summary>
+    private static UnitValue ConvertSpecToValue(Spec? spec)
     {
-        // Attribute-based format (v2.0)
-        if (spec.ValueSpecified)
-            return ValueSpec.Fixed(spec.Value);
+        if (spec?.Value.HasValue == true)
+        {
+            var value = Math.Clamp(spec.Value.Value, 0, 1);
+            return UnitValue.FromRatio(value);
+        }
 
-        if (spec is { MinSpecified: true, MaxSpecified: true })
-            return ValueSpec.InRange(spec.Min, spec.Max);
+        // If no value specified, use midpoint of range or default to 0.5
+        if (spec?.Min.HasValue != true || !spec.Max.HasValue)
+            return UnitValue.FromRatio(0.5);
 
-        if (spec.ScaleSpecified)
-            return Math.Abs(spec.Scale - 1.0) < double.Epsilon
-                ? ValueSpec.Random()
-                : ValueSpec.RandomWithScale(spec.Scale);
-
-        // Default: random with default range
-        return ValueSpec.Random();
-    }
-
-    private static Dictionary<FactorDefinition, double> ConvertFactorSensitivities(
-        List<FactorSensitivityXml>? sensitivities,
-        Dictionary<string, FactorDefinition> factorLookup)
-    {
-        var result = new Dictionary<FactorDefinition, double>();
-
-        if (sensitivities == null)
-            return result;
-
-        foreach (var sensitivity in sensitivities)
-            if (factorLookup.TryGetValue(sensitivity.Id, out var factor))
-                result[factor] = sensitivity.Value;
-
-        return result;
+        var min = Math.Clamp(spec.Min!.Value, 0, 1);
+        var max = Math.Clamp(spec.Max.Value, 0, 1);
+        var midpoint = (min + max) / 2.0;
+        return UnitValue.FromRatio(midpoint);
     }
 
     private static List<City> ConvertCities(
@@ -285,13 +279,24 @@ public static class SnapshotConverter
         // Convert factor intensities
         var factorIntensities = new List<FactorIntensity>();
         if (cityXml.FactorValues != null)
-            foreach (var fv in cityXml.FactorValues)
-                if (factorLookup.TryGetValue(fv.Id, out var factor))
+            foreach (var fv in cityXml.FactorValues!)
+                if (!string.IsNullOrEmpty(fv.Id) && factorLookup.TryGetValue(fv.Id, out var factor))
+                {
+                    // Factor values in XML are raw values that need to be normalized
+                    var rawValue = fv.Value ?? 0.0;
+                    var clamped = Math.Clamp(rawValue, factor.MinValue, factor.MaxValue);
+                    var range = factor.MaxValue - factor.MinValue;
+                    var normalizedValue = range == 0 ? 0 : (clamped - factor.MinValue) / range;
+
+                    // Apply transform if specified
+                    if (factor.TransformFunction != null)
+                        normalizedValue = factor.TransformFunction(clamped, factor.MinValue, factor.MaxValue);
                     factorIntensities.Add(new FactorIntensity
                     {
                         Definition = factor,
-                        Intensity = ValueSpec.Fixed(fv.Value)
+                        Value = UnitValue.FromRatio(normalizedValue)
                     });
+                }
 
         // Collect persons from referenced collections
         var persons = new List<PersonBase>();
@@ -359,7 +364,7 @@ public static class SnapshotConverter
 
     private static WorldStateXml ConvertWorldState(World world)
     {
-        return new WorldStateXml()
+        return new WorldStateXml
         {
             DisplayName = world.DisplayName,
             FactorDefinitions = world.FactorDefinitions.Select(ConvertToFactorDefXml).ToList(),
@@ -370,15 +375,30 @@ public static class SnapshotConverter
 
     private static FactorDefXml ConvertToFactorDefXml(FactorDefinition factor)
     {
-        return new FactorDefXml()
+        return new FactorDefXml
         {
             Id = GetFactorId(factor),
             DisplayName = factor.DisplayName,
             Type = factor.Type.ToString(),
             Min = factor.MinValue,
             Max = factor.MaxValue,
-            CustomTransformName = factor.TransformFunction?.Name
+            CustomTransformName = GetTransformName(factor.TransformFunction)
         };
+    }
+
+    private static string? GetTransformName(UnitValueSpec.TransformFunc? transformFunc)
+    {
+        if (transformFunc == null) return null;
+
+        // Compare delegates to identify transform type
+        if (transformFunc == UnitValueSpec.Transforms.Linear) return "LINEAR";
+        if (transformFunc == UnitValueSpec.Transforms.Logarithmic) return "LOGARITHMIC";
+        if (transformFunc == UnitValueSpec.Transforms.Sigmoid) return "SIGMOID";
+        if (transformFunc == UnitValueSpec.Transforms.Exponential) return "EXPONENTIAL";
+        // ReSharper disable once ConvertIfStatementToReturnStatement
+        if (transformFunc == UnitValueSpec.Transforms.SquareRoot) return "SQUAREROOT";
+
+        return null; // Unknown transform
     }
 
     private static CityXml ConvertToCityXml(City city)
@@ -390,7 +410,7 @@ public static class SnapshotConverter
             Latitude = city.Location.Latitude,
             Longitude = city.Location.Longitude,
             Area = city.Area,
-            FactorValues = city.FactorIntensities.Select(ConvertToFactorValueXml).ToList(),
+            FactorValues = city.FactorIntensities.Select(ConvertToFactorSpec).ToList(),
             PersonCollections = [] // Note: Population groups are not reconstructed
         };
 
@@ -401,12 +421,12 @@ public static class SnapshotConverter
         return cityXml;
     }
 
-    private static FactorValueXml ConvertToFactorValueXml(FactorIntensity fi)
+    private static Spec ConvertToFactorSpec(FactorIntensity fi)
     {
-        return new FactorValueXml()
+        return new Spec
         {
             Id = GetFactorId(fi.Definition),
-            Value = fi.ComputeIntensity()
+            Value = fi.Value
         };
     }
 

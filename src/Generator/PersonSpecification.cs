@@ -86,7 +86,6 @@ public sealed class PersonSpecification
             // Generate duplicates from template
             // For StandardPerson, preserve all properties
             if (_template is StandardPerson stdTemplate)
-            {
                 for (var i = 0; i < Count; i++)
                 {
                     var sensitivities = stdTemplate.FactorSensitivities.ToDictionary(
@@ -105,15 +104,12 @@ public sealed class PersonSpecification
 
                     yield return person;
                 }
-            }
             else
-            {
                 // For custom person types, we cannot safely duplicate instances
                 // Custom types should use IPersonGenerator<TPerson> instead
                 throw new InvalidOperationException(
                     $"Cannot duplicate custom person type '{_template.GetType().Name}' using template mode. " +
                     "Custom person types should use IPersonGenerator<TPerson> to generate multiple instances.");
-            }
         }
         else if (_generator != null)
         {

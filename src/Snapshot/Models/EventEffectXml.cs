@@ -36,7 +36,7 @@ public sealed class EventEffectXml
     /// Gets or sets the value specification for the effect.
     /// </summary>
     [XmlElement("ValueSpec")]
-    public ValueSpecXml? ValueSpecification { get; set; }
+    public Spec? ValueSpecification { get; set; }
 
     /// <summary>
     /// Gets or sets the feedback strategy name (for FeedbackEffect).

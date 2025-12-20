@@ -21,11 +21,6 @@ public sealed class SoftCapacityStrategy : ICityCapacityStrategy
     private readonly double _resistanceSteepness;
 
     /// <summary>
-    /// Gets the default instance with standard resistance curve.
-    /// </summary>
-    public static SoftCapacityStrategy Default { get; } = new();
-
-    /// <summary>
     /// Initializes a new instance with custom resistance steepness.
     /// </summary>
     /// <param name="resistanceSteepness">Controls how sharply resistance increases near capacity. Default is 5.0.</param>
@@ -33,6 +28,11 @@ public sealed class SoftCapacityStrategy : ICityCapacityStrategy
     {
         _resistanceSteepness = resistanceSteepness;
     }
+
+    /// <summary>
+    /// Gets the default instance with standard resistance curve.
+    /// </summary>
+    public static SoftCapacityStrategy Default { get; } = new();
 
     /// <inheritdoc />
     public string StrategyName => "SoftCap";

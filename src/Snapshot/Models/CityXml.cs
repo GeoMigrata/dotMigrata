@@ -50,11 +50,11 @@ public class CityXml
     public bool CapacitySpecified { get; set; }
 
     /// <summary>
-    /// Gets or sets the factor values (city characteristics).
+    /// Gets or sets the factor values (city characteristics - raw values, not normalized).
     /// </summary>
     [XmlArray("Factors")]
     [XmlArrayItem("F")]
-    public List<FactorValueXml>? FactorValues { get; set; }
+    public List<Spec>? FactorValues { get; set; }
 
     /// <summary>
     /// Gets or sets the population group references.

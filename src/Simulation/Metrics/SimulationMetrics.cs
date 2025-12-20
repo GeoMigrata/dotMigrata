@@ -69,7 +69,7 @@ public sealed record SimulationMetrics
         }
     }
 
-    private static double CalculateGini(IList<double> values)
+    private static double CalculateGini(List<double> values)
     {
         if (values.Count == 0) return 0;
 

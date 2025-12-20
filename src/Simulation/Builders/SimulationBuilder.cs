@@ -28,6 +28,7 @@ public sealed class SimulationBuilder
     private readonly List<ISimulationStage> _stages = [];
     private IAttractionCalculator? _attractionCalculator;
     private int _defaultEventInterval = 1;
+    private int? _eventParallelism;
     private ILogger<SimulationEngine>? _logger;
     private IMigrationCalculator? _migrationCalculator;
     private StandardModelConfig _modelConfig = StandardModelConfig.Default;
@@ -35,7 +36,6 @@ public sealed class SimulationBuilder
     private SimulationConfig _simulationConfig = SimulationConfig.Default;
     private IStabilityCriteria? _stabilityCriteria;
     private bool _useParallelEvents = true;
-    private int? _eventParallelism;
 
     /// <summary>
     /// Creates a new <see cref="SimulationBuilder" /> instance.
@@ -281,7 +281,7 @@ public sealed class SimulationBuilder
     public SimulationBuilder WithFactorChange(
         string displayName,
         FactorDefinition factor,
-        ValueSpec valueSpecification,
+        UnitValueSpec valueSpecification,
         IEventTrigger trigger,
         EffectApplicationType applicationType = EffectApplicationType.Absolute,
         EffectDuration? duration = null,

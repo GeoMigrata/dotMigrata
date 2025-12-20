@@ -16,25 +16,29 @@ namespace dotMigrata.Core.Entities;
 ///     Thread Safety: Person instances are designed for single-threaded access within a city context.
 ///     The <see cref="CurrentCity" /> property is mutable to support migration operations.
 ///     </para>
+///     <para>
+///     As of v0.7.1-beta, all sensitivity values are <see cref="UnitValue" /> (0-1 range).
+///     Factor direction (positive/negative) is determined by <see cref="FactorDefinition.Type" />.
+///     </para>
 /// </remarks>
 public abstract class PersonBase
 {
-    private readonly Dictionary<FactorDefinition, double> _factorSensitivities;
+    private readonly Dictionary<FactorDefinition, UnitValue> _factorSensitivities;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PersonBase" /> class.
     /// </summary>
     /// <param name="factorSensitivities">
-    /// A dictionary mapping factor definitions to sensitivity values.
+    /// A dictionary mapping factor definitions to sensitivity values in [0, 1] range.
     /// Sensitivities determine how strongly this person responds to each city factor.
     /// </param>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factorSensitivities" /> is <see langword="null" />.
     /// </exception>
-    protected PersonBase(IDictionary<FactorDefinition, double> factorSensitivities)
+    protected PersonBase(IDictionary<FactorDefinition, UnitValue> factorSensitivities)
     {
         ArgumentNullException.ThrowIfNull(factorSensitivities);
-        _factorSensitivities = new Dictionary<FactorDefinition, double>(factorSensitivities);
+        _factorSensitivities = new Dictionary<FactorDefinition, UnitValue>(factorSensitivities);
     }
 
     /// <summary>
@@ -51,29 +55,29 @@ public abstract class PersonBase
     /// </summary>
     /// <remarks>
     /// Higher values indicate greater willingness to consider migration.
-    /// Type-safe <see cref="NormalizedValue" /> ensures values are always in valid range.
+    /// Type-safe <see cref="UnitValue" /> ensures values are always in valid range.
     /// This is a core property used by migration decision logic.
     /// </remarks>
-    public required NormalizedValue MovingWillingness { get; init; }
+    public required UnitValue MovingWillingness { get; init; }
 
     /// <summary>
     /// Gets the retention rate, as a normalized value in the range [0, 1].
     /// </summary>
     /// <remarks>
     /// Higher values indicate greater tendency to stay in current location.
-    /// Type-safe <see cref="NormalizedValue" /> ensures values are always in valid range.
+    /// Type-safe <see cref="UnitValue" /> ensures values are always in valid range.
     /// This property represents resistance to migration.
     /// </remarks>
-    public required NormalizedValue RetentionRate { get; init; }
+    public required UnitValue RetentionRate { get; init; }
 
     /// <summary>
     /// Gets the read-only dictionary of factor sensitivities.
     /// </summary>
     /// <remarks>
-    /// Sensitivities determine how this person weights different city factors when evaluating
-    /// migration destinations. Positive values indicate attraction, negative values indicate repulsion.
+    /// All sensitivities are in [0, 1] range. Factor direction (positive/negative attraction)
+    /// is determined by <see cref="FactorDefinition.Type" />, not the sensitivity value.
     /// </remarks>
-    public IReadOnlyDictionary<FactorDefinition, double> FactorSensitivities => _factorSensitivities;
+    public IReadOnlyDictionary<FactorDefinition, UnitValue> FactorSensitivities => _factorSensitivities;
 
     /// <summary>
     /// Gets the tags associated with this person for categorization and statistical analysis.
@@ -105,7 +109,7 @@ public abstract class PersonBase
     /// </summary>
     /// <param name="factor">The factor definition to query.</param>
     /// <returns>
-    /// The sensitivity value, or 0.0 if the factor is not defined for this person.
+    /// The sensitivity value in [0, 1] range, or <see cref="UnitValue.Zero" /> if the factor is not defined for this person.
     /// </returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factor" /> is <see langword="null" />.
@@ -113,17 +117,17 @@ public abstract class PersonBase
     /// <remarks>
     /// This method is thread-safe for read operations.
     /// </remarks>
-    public double GetSensitivity(FactorDefinition factor)
+    public UnitValue GetSensitivity(FactorDefinition factor)
     {
         ArgumentNullException.ThrowIfNull(factor);
-        return _factorSensitivities.GetValueOrDefault(factor, 0.0);
+        return _factorSensitivities.GetValueOrDefault(factor, UnitValue.Zero);
     }
 
     /// <summary>
     /// Updates the sensitivity for a specific factor.
     /// </summary>
     /// <param name="factor">The factor definition to update.</param>
-    /// <param name="sensitivity">The new sensitivity value.</param>
+    /// <param name="sensitivity">The new sensitivity value in [0, 1] range.</param>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factor" /> is <see langword="null" />.
     /// </exception>
@@ -136,7 +140,7 @@ public abstract class PersonBase
     ///     Thread Safety: This method is not thread-safe. Ensure single-threaded access when updating sensitivities.
     ///     </para>
     /// </remarks>
-    public void UpdateSensitivity(FactorDefinition factor, double sensitivity)
+    public void UpdateSensitivity(FactorDefinition factor, UnitValue sensitivity)
     {
         ArgumentNullException.ThrowIfNull(factor);
         _factorSensitivities[factor] = sensitivity;
