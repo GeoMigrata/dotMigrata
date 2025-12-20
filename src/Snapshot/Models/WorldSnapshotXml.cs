@@ -7,10 +7,10 @@ namespace dotMigrata.Snapshot.Models;
 /// Root snapshot model with XML serialization support.
 /// </summary>
 /// <remarks>
-///     <para>Snapshot format v0.6+ with support for events and configurations:</para>
+///     <para>Snapshot format v4 for framework v0.7.x with support for:</para>
 ///     <list type="bullet">
 ///         <item>
-///             <description>Single namespace for all elements</description>
+///             <description>No namespace (simplified structure)</description>
 ///         </item>
 ///         <item>
 ///             <description>Attribute-based configuration for scalar values</description>
@@ -22,18 +22,19 @@ namespace dotMigrata.Snapshot.Models;
 ///             <description>Simulation and model configuration persistence</description>
 ///         </item>
 ///         <item>
-///             <description>Consistent naming conventions</description>
+///             <description>Complete transform function support</description>
 ///         </item>
 ///     </list>
 /// </remarks>
-[XmlRoot("Snapshot", Namespace = "https://geomigrata.pages.dev/snapshot")]
+[XmlRoot("Snapshot")]
 public sealed class WorldSnapshotXml
 {
     /// <summary>
     /// Gets the snapshot format version for compatibility tracking.
+    /// Must be "v4" for framework v0.7.x compatibility.
     /// </summary>
     [XmlAttribute("Version")]
-    public string Version { get; init; } = "0.6";
+    public string Version { get; init; } = "v4";
 
     /// <summary>
     /// Gets the unique identifier for this snapshot.

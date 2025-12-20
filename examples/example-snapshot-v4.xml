@@ -1,0 +1,227 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+  dotMigrata Snapshot Example - v4
+  Demonstrates all snapshot features for framework v0.7.x
+  Schema: ../schemas/snapshot-v4.xsd
+-->
+<Snapshot Version="v4" Id="c8836553-be0c-42c5-be58-abbae82c6918" Status="Seed"
+          CreatedAt="2025-12-19T09:00:00.0000000Z" LastModifiedAt="2025-12-20T17:30:00.0000000Z" Tick="0">
+
+    <!-- Simulation execution configuration -->
+    <SimulationConfig MaxTicks="1000" CheckStability="true" StabilityThreshold="10"
+                      StabilityCheckInterval="1" MinTicksBeforeStabilityCheck="10"/>
+
+    <!-- Standard migration model configuration -->
+    <ModelConfig CapacitySteepness="5.0" DistanceDecayLambda="0.001"
+                 MigrationProbabilitySteepness="10.0" MigrationProbabilityThreshold="0.0"
+                 FactorSmoothingAlpha="0.2" UseParallelProcessing="true"/>
+
+    <World Name="Example Migration Simulation - v0.7.x">
+
+        <!-- Factor definitions with all transform types -->
+        <Factors>
+            <Factor Id="pollution" Name="Pollution" Type="Negative" Min="0" Max="12" Transform="Linear"/>
+            <Factor Id="transport" Name="Transport" Type="Positive" Min="0" Max="10" Transform="Logarithmic"/>
+            <Factor Id="income" Name="Avg. Income" Type="Positive" Min="0" Max="1000" Transform="Logarithmic"/>
+            <Factor Id="security" Name="Security" Type="Positive" Min="0" Max="10" Transform="Sigmoid"/>
+            <Factor Id="housing_cost" Name="Housing Cost" Type="Negative" Min="0" Max="5000" Transform="Exponential"/>
+            <Factor Id="education" Name="Education Quality" Type="Positive" Min="0" Max="100" Transform="SquareRoot"/>
+        </Factors>
+
+        <!-- Population groups with templates and generators -->
+        <Population>
+            <Group Id="young_people">
+
+                <!-- Template: Fixed values, no randomization -->
+                <Person Count="1" Type="StandardPerson">
+                    <Willingness V="0.5"/>
+                    <Retention V="0.3"/>
+                    <Threshold V="0.3"/>
+                    <Scaling V="0.5"/>
+                    <MinAttraction V="0.1"/>
+                    <Sensitivities>
+                        <S Id="pollution" V="0.5"/>
+                        <S Id="transport" V="0.5"/>
+                        <S Id="income" V="0.1"/>
+                        <S Id="security" V="0.8"/>
+                        <S Id="housing_cost" V="0.4"/>
+                        <S Id="education" V="0.6"/>
+                    </Sensitivities>
+                    <Tags>template;young</Tags>
+                </Person>
+
+                <!-- Generator: Range-based randomization with seed -->
+                <Person Count="100000" Seed="42" Type="StandardPerson">
+                    <Willingness Min="0.5" Max="1.0"/>
+                    <Retention V="0.1"/>
+                    <Threshold Min="0.0" Max="0.5"/>
+                    <Scaling Min="0.5" Max="1.0"/>
+                    <MinAttraction V="0.1"/>
+                    <Sensitivities>
+                        <S Id="pollution" Min="0.3" Max="0.8"/>
+                        <S Id="transport" Min="0.4" Max="0.9"/>
+                        <S Id="income" Min="0.1" Max="0.3"/>
+                        <S Id="security" Min="0.6" Max="0.9"/>
+                        <S Id="housing_cost" Min="0.3" Max="0.7"/>
+                        <S Id="education" Min="0.5" Max="0.8"/>
+                    </Sensitivities>
+                    <Tags>generated;young</Tags>
+                </Person>
+
+                <!-- Generator: Normal distribution with Approximately -->
+                <Person Count="50000" Seed="132" Type="StandardPerson">
+                    <Willingness Approximately="0.6" StdDev="0.15"/>
+                    <Retention Approximately="0.3" StdDev="0.1"/>
+                    <Threshold Approximately="0.25" StdDev="0.1"/>
+                    <Scaling V="0.7"/>
+                    <MinAttraction V="0.1"/>
+                    <Sensitivities>
+                        <S Id="pollution" Approximately="0.5" StdDev="0.2"/>
+                        <S Id="transport" Approximately="0.6" StdDev="0.15"/>
+                        <S Id="income" V="0.2"/>
+                        <S Id="security" Approximately="0.75" StdDev="0.1"/>
+                        <S Id="housing_cost" Min="0.3" Max="0.6"/>
+                        <S Id="education" Approximately="0.65" StdDev="0.15"/>
+                    </Sensitivities>
+                    <Tags>normal_dist;young</Tags>
+                </Person>
+
+            </Group>
+
+            <Group Id="professionals">
+                <!-- Professional group with different sensitivity profile -->
+                <Person Count="75000" Seed="999" Type="StandardPerson">
+                    <Willingness Min="0.3" Max="0.7"/>
+                    <Retention Approximately="0.5" StdDev="0.2"/>
+                    <Threshold V="0.4"/>
+                    <Scaling Min="0.6" Max="1.0"/>
+                    <MinAttraction V="0.2"/>
+                    <Sensitivities>
+                        <S Id="pollution" Min="0.2" Max="0.5"/>
+                        <S Id="transport" Min="0.5" Max="0.9"/>
+                        <S Id="income" Min="0.6" Max="0.9"/>
+                        <S Id="security" Min="0.7" Max="0.95"/>
+                        <S Id="housing_cost" Min="0.5" Max="0.8"/>
+                        <S Id="education" Min="0.7" Max="0.95"/>
+                    </Sensitivities>
+                    <Tags>generated;professional</Tags>
+                </Person>
+            </Group>
+        </Population>
+
+        <!-- Cities with factor values -->
+        <Cities>
+            <City Id="shanghai_cn" Name="Shanghai" Lat="31.2304" Lon="121.4737" Area="6340.5" Capacity="30000000">
+                <Factors>
+                    <F Id="pollution" V="8"/>
+                    <F Id="transport" V="7"/>
+                    <F Id="income" V="900"/>
+                    <F Id="security" V="4"/>
+                    <F Id="housing_cost" V="3500"/>
+                    <F Id="education" V="75"/>
+                </Factors>
+                <Population>
+                    <Ref Id="young_people"/>
+                    <Ref Id="professionals"/>
+                </Population>
+            </City>
+
+            <City Id="sydney_au" Name="Sydney" Lat="-33.8688" Lon="151.2093" Area="12367.7" Capacity="6000000">
+                <Factors>
+                    <F Id="pollution" V="3"/>
+                    <F Id="transport" V="8"/>
+                    <F Id="income" V="850"/>
+                    <F Id="security" V="9"/>
+                    <F Id="housing_cost" V="4200"/>
+                    <F Id="education" V="85"/>
+                </Factors>
+                <Population>
+                    <Ref Id="young_people"/>
+                    <Ref Id="professionals"/>
+                </Population>
+            </City>
+
+            <City Id="tokyo_jp" Name="Tokyo" Lat="35.6762" Lon="139.6503" Area="2191.0" Capacity="14000000">
+                <Factors>
+                    <F Id="pollution" V="5"/>
+                    <F Id="transport" V="10"/>
+                    <F Id="income" V="950"/>
+                    <F Id="security" V="9.5"/>
+                    <F Id="housing_cost" V="3800"/>
+                    <F Id="education" V="90"/>
+                </Factors>
+                <Population>
+                    <Ref Id="young_people"/>
+                    <Ref Id="professionals"/>
+                </Population>
+            </City>
+        </Cities>
+
+        <!-- Event system examples -->
+        <Events>
+            <!-- One-time event triggered at specific tick -->
+            <Event Id="pollution_spike" Name="Pollution Spike Event"
+                   Description="Temporary pollution increase due to industrial accident" Completed="false">
+                <Trigger Type="TickTrigger" Tick="50"/>
+                <Effects>
+                    <Effect Type="FactorChangeEffect" FactorId="pollution" ApplicationType="Temporary" Duration="20">
+                        <ValueSpec V="10.5"/>
+                    </Effect>
+                </Effects>
+            </Event>
+
+            <!-- Continuous event active between ticks -->
+            <Event Id="transport_improvement" Name="Transport Infrastructure Upgrade"
+                   Description="Gradual transport quality improvement" Completed="false">
+                <Trigger Type="ContinuousTrigger" StartTick="100" EndTick="200"/>
+                <Effects>
+                    <Effect Type="FactorChangeEffect" FactorId="transport" ApplicationType="Permanent">
+                        <ValueSpec V="9.5"/>
+                    </Effect>
+                </Effects>
+            </Event>
+
+            <!-- Composite effect with multiple changes -->
+            <Event Id="economic_boom" Name="Economic Boom"
+                   Description="Economic growth affecting income and housing" Completed="false">
+                <Trigger Type="TickTrigger" Tick="150"/>
+                <Effects>
+                    <Effect Type="CompositeEffect">
+                        <CompositeEffects>
+                            <Effect Type="FactorChangeEffect" FactorId="income" ApplicationType="Permanent">
+                                <ValueSpec V="1050"/>
+                            </Effect>
+                            <Effect Type="FactorChangeEffect" FactorId="housing_cost" ApplicationType="Permanent">
+                                <ValueSpec V="4000"/>
+                            </Effect>
+                        </CompositeEffects>
+                    </Effect>
+                </Effects>
+            </Event>
+        </Events>
+
+    </World>
+
+    <!-- Simulation history for reproducibility -->
+    <History>
+        <Step Tick="0">
+            <Migrations>
+                <M From="shanghai_cn" To="sydney_au" Count="150"/>
+                <M From="shanghai_cn" To="tokyo_jp" Count="200"/>
+                <M From="sydney_au" To="tokyo_jp" Count="75"/>
+            </Migrations>
+        </Step>
+        <Step Tick="1">
+            <Migrations>
+                <M From="shanghai_cn" To="sydney_au" Count="120"/>
+                <M From="tokyo_jp" To="sydney_au" Count="50"/>
+            </Migrations>
+        </Step>
+        <Step Tick="2">
+            <Migrations>
+                <M From="shanghai_cn" To="tokyo_jp" Count="180"/>
+            </Migrations>
+        </Step>
+    </History>
+
+</Snapshot>

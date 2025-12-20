@@ -1,5 +1,6 @@
 ﻿using dotMigrata.Core.Entities;
 using dotMigrata.Core.Enums;
+using dotMigrata.Core.Exceptions;
 using dotMigrata.Core.Values;
 using dotMigrata.Snapshot.Enums;
 using dotMigrata.Snapshot.Models;
@@ -14,6 +15,9 @@ namespace dotMigrata.Snapshot.Conversion;
 /// </remarks>
 public static class SnapshotConverter
 {
+    private const string SupportedVersion = "v4";
+    private const string FrameworkVersion = "v0.7.x";
+
     /// <summary>
     /// Converts a <see cref="WorldSnapshotXml" /> to a <see cref="World" /> domain object.
     /// </summary>
@@ -25,9 +29,15 @@ public static class SnapshotConverter
     /// <exception cref="InvalidOperationException">
     /// Thrown when snapshot data is invalid or incomplete.
     /// </exception>
+    /// <exception cref="SnapshotException">
+    /// Thrown when snapshot version is incompatible with current framework.
+    /// </exception>
     public static World ToWorld(WorldSnapshotXml snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+
+        // Validate version compatibility
+        ValidateVersion(snapshot.Version);
 
         if (snapshot.World == null)
             throw new InvalidOperationException("Snapshot does not contain a World definition.");
@@ -75,7 +85,7 @@ public static class SnapshotConverter
 
         return new WorldSnapshotXml
         {
-            Version = "0.6",
+            Version = "v4",
             Id = Guid.NewGuid().ToString(),
             Status = status,
             CreatedAt = DateTime.UtcNow,
@@ -87,6 +97,24 @@ public static class SnapshotConverter
     }
 
     #region ToWorld Conversion Helpers
+
+    /// <summary>
+    /// Validates that the snapshot version is compatible with the current framework.
+    /// </summary>
+    /// <param name="version">The snapshot version to validate.</param>
+    /// <exception cref="SnapshotException">
+    /// Thrown when snapshot version is incompatible with current framework.
+    /// </exception>
+    private static void ValidateVersion(string? version)
+    {
+        if (string.IsNullOrWhiteSpace(version))
+            throw new SnapshotException("Snapshot version is required.");
+
+        if (!string.Equals(version, SupportedVersion, StringComparison.OrdinalIgnoreCase))
+            throw new SnapshotException(
+                $"Unsupported snapshot version '{version}'. " +
+                $"This framework ({FrameworkVersion}) supports snapshot version '{SupportedVersion}'.");
+    }
 
     private static List<FactorDefinition> ConvertFactorDefinitions(List<FactorDefXml>? definitions)
     {

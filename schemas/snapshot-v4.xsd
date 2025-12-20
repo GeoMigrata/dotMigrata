@@ -1,0 +1,422 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  dotMigrata Snapshot Schema v4
+  Compatible with framework v0.7.x
+  
+  Key features:
+  - No namespace (simplified structure)
+  - Version validation (v4 only)
+  - Complete simulation configuration support (SimulationConfig, ModelConfig)
+  - Full event system (Events with triggers and effects)
+  - Unified PersonSpec for templates and generators
+  - Attribute-based configuration for compact XML
+  - All transform types supported (Linear, Logarithmic, Sigmoid, Exponential, SquareRoot)
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+    <!-- ========== Root Element ========== -->
+
+    <xs:element name="Snapshot">
+        <xs:annotation>
+            <xs:documentation>Root element containing a simulation world snapshot.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="SimulationConfig" type="SimulationConfigType" minOccurs="0"/>
+                <xs:element name="ModelConfig" type="ModelConfigType" minOccurs="0"/>
+                <xs:element name="World" type="WorldType"/>
+                <xs:element name="History" type="HistoryType" minOccurs="0"/>
+            </xs:sequence>
+            <xs:attribute name="Version" type="VersionType" use="required"/>
+            <xs:attribute name="Id" type="xs:string" use="required"/>
+            <xs:attribute name="Status" type="SnapshotStatusType" use="required"/>
+            <xs:attribute name="CreatedAt" type="xs:dateTime" use="required"/>
+            <xs:attribute name="LastModifiedAt" type="xs:dateTime" use="optional"/>
+            <xs:attribute name="Tick" type="xs:nonNegativeInteger" default="0"/>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- ========== Version Control ========== -->
+
+    <xs:simpleType name="VersionType">
+        <xs:annotation>
+            <xs:documentation>Snapshot format version. Must be v4 for compatibility with framework v0.7.x
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="v4"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- ========== Configuration Types ========== -->
+
+    <xs:complexType name="SimulationConfigType">
+        <xs:annotation>
+            <xs:documentation>Simulation execution configuration.</xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="MaxTicks" type="xs:positiveInteger" use="optional" default="1000"/>
+        <xs:attribute name="CheckStability" type="xs:boolean" use="optional" default="true"/>
+        <xs:attribute name="StabilityThreshold" type="xs:nonNegativeInteger" use="optional" default="10"/>
+        <xs:attribute name="StabilityCheckInterval" type="xs:positiveInteger" use="optional" default="1"/>
+        <xs:attribute name="MinTicksBeforeStabilityCheck" type="xs:nonNegativeInteger" use="optional" default="10"/>
+    </xs:complexType>
+
+    <xs:complexType name="ModelConfigType">
+        <xs:annotation>
+            <xs:documentation>Standard migration model configuration parameters.</xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="CapacitySteepness" type="xs:double" use="optional" default="5.0"/>
+        <xs:attribute name="DistanceDecayLambda" type="xs:double" use="optional" default="0.001"/>
+        <xs:attribute name="MigrationProbabilitySteepness" type="xs:double" use="optional" default="10.0"/>
+        <xs:attribute name="MigrationProbabilityThreshold" type="xs:double" use="optional" default="0.0"/>
+        <xs:attribute name="FactorSmoothingAlpha" type="ZeroToOneType" use="optional" default="0.2"/>
+        <xs:attribute name="UseParallelProcessing" type="xs:boolean" use="optional" default="true"/>
+        <xs:attribute name="MaxDegreeOfParallelism" type="xs:positiveInteger" use="optional"/>
+    </xs:complexType>
+
+    <!-- ========== Enumerations ========== -->
+
+    <xs:simpleType name="SnapshotStatusType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Seed"/>
+            <xs:enumeration value="Active"/>
+            <xs:enumeration value="Stabilized"/>
+            <xs:enumeration value="Completed"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="FactorTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Positive"/>
+            <xs:enumeration value="Negative"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="TransformTypeEnum">
+        <xs:annotation>
+            <xs:documentation>Transform function applied to factor values during normalization.</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Linear"/>
+            <xs:enumeration value="Logarithmic"/>
+            <xs:enumeration value="Sigmoid"/>
+            <xs:enumeration value="Exponential"/>
+            <xs:enumeration value="SquareRoot"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- ========== World Structure ========== -->
+
+    <xs:complexType name="WorldType">
+        <xs:sequence>
+            <xs:element name="Factors" type="FactorsType" minOccurs="0"/>
+            <xs:element name="Population" type="PopulationType" minOccurs="0"/>
+            <xs:element name="Cities" type="CitiesType" minOccurs="0"/>
+            <xs:element name="Events" type="EventsType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="Name" type="xs:string" use="optional"/>
+    </xs:complexType>
+
+    <!-- ========== Factor Definitions ========== -->
+
+    <xs:complexType name="FactorsType">
+        <xs:sequence>
+            <xs:element name="Factor" type="FactorType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="FactorType">
+        <xs:attribute name="Id" type="xs:string" use="required"/>
+        <xs:attribute name="Name" type="xs:string" use="optional"/>
+        <xs:attribute name="Type" type="FactorTypeEnum" use="required"/>
+        <xs:attribute name="Min" type="xs:double" use="required"/>
+        <xs:attribute name="Max" type="xs:double" use="required"/>
+        <xs:attribute name="Transform" type="TransformTypeEnum" use="optional"/>
+    </xs:complexType>
+
+    <!-- ========== Population Groups ========== -->
+
+    <xs:complexType name="PopulationType">
+        <xs:sequence>
+            <xs:element name="Group" type="GroupType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="GroupType">
+        <xs:annotation>
+            <xs:documentation>A population group containing person specifications. Use Person without Seed for
+                templates, or Person with Seed for generators.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Person" type="PersonSpecType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="Id" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <!-- ========== Unified Person Specification ========== -->
+
+    <xs:complexType name="PersonSpecType">
+        <xs:annotation>
+            <xs:documentation>Unified person specification. Without Seed: template mode (fixed values). With Seed:
+                generator mode (ranges/distributions).
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Sensitivities" type="SensitivitySpecsType" minOccurs="0"/>
+            <xs:element name="Willingness" type="ValueSpecType" minOccurs="0"/>
+            <xs:element name="Retention" type="ValueSpecType" minOccurs="0"/>
+            <xs:element name="Threshold" type="ValueSpecType" minOccurs="0"/>
+            <xs:element name="Scaling" type="ValueSpecType" minOccurs="0"/>
+            <xs:element name="MinAttraction" type="ValueSpecType" minOccurs="0"/>
+            <xs:element name="Tags" type="xs:string" minOccurs="0"/>
+            <xs:any namespace="##any" minOccurs="0" processContents="lax">
+                <xs:annotation>
+                    <xs:documentation>Custom properties for extended person types. Register custom types via
+                        PersonTypeRegistry.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:any>
+        </xs:sequence>
+        <xs:attribute name="Count" type="xs:positiveInteger" use="required"/>
+        <xs:attribute name="Seed" type="xs:int" use="optional"/>
+        <xs:attribute name="Type" type="xs:string" use="optional" default="StandardPerson"/>
+    </xs:complexType>
+
+    <xs:complexType name="SensitivitySpecsType">
+        <xs:annotation>
+            <xs:documentation>Factor sensitivity specifications. Use V for fixed value, Min/Max for range, or
+                Approximately for normal distribution.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="S" type="SensitivitySpecType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="SensitivitySpecType">
+        <xs:annotation>
+            <xs:documentation>Sensitivity value specification. V for fixed, Min/Max for range, or Approximately+StdDev
+                for normal distribution.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="Id" type="xs:string" use="required"/>
+        <xs:attribute name="V" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="Min" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="Max" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="Approximately" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="StdDev" type="xs:double" use="optional"/>
+    </xs:complexType>
+
+    <xs:complexType name="ValueSpecType">
+        <xs:annotation>
+            <xs:documentation>Value specification for person properties. V for fixed, Min/Max for range, or
+                Approximately+StdDev for normal distribution.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="V" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="Min" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="Max" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="Approximately" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="StdDev" type="xs:double" use="optional"/>
+    </xs:complexType>
+
+    <!-- ========== Cities ========== -->
+
+    <xs:complexType name="CitiesType">
+        <xs:sequence>
+            <xs:element name="City" type="CityType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="CityType">
+        <xs:sequence>
+            <xs:element name="Factors" type="CityFactorsType" minOccurs="0"/>
+            <xs:element name="Population" type="CityPopulationType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="Id" type="xs:string" use="required"/>
+        <xs:attribute name="Name" type="xs:string" use="optional"/>
+        <xs:attribute name="Lat" type="LatitudeType" use="required"/>
+        <xs:attribute name="Lon" type="LongitudeType" use="required"/>
+        <xs:attribute name="Area" type="PositiveDoubleType" use="required"/>
+        <xs:attribute name="Capacity" type="xs:positiveInteger" use="optional"/>
+    </xs:complexType>
+
+    <xs:complexType name="CityFactorsType">
+        <xs:annotation>
+            <xs:documentation>Factor intensities for a city. Values are raw factor values that will be normalized using
+                the corresponding Factor definition's Min, Max, and Transform settings.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="F" type="FactorIntensityType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="FactorIntensityType">
+        <xs:annotation>
+            <xs:documentation>A city's factor intensity. The V attribute contains the raw factor value, which will be
+                normalized at runtime using the corresponding Factor definition. The Factor definition with matching Id
+                must exist in the Factors section.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="Id" type="xs:string" use="required"/>
+        <xs:attribute name="V" type="xs:double" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="CityPopulationType">
+        <xs:sequence>
+            <xs:element name="Ref" type="RefType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="RefType">
+        <xs:attribute name="Id" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <!-- ========== Event System ========== -->
+
+    <xs:complexType name="EventsType">
+        <xs:annotation>
+            <xs:documentation>Collection of simulation events.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Event" type="EventType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="EventType">
+        <xs:annotation>
+            <xs:documentation>A simulation event with trigger and effects.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Trigger" type="EventTriggerType"/>
+            <xs:element name="Effects" type="EventEffectsType"/>
+        </xs:sequence>
+        <xs:attribute name="Id" type="xs:string" use="required"/>
+        <xs:attribute name="Name" type="xs:string" use="required"/>
+        <xs:attribute name="Description" type="xs:string" use="optional"/>
+        <xs:attribute name="Completed" type="xs:boolean" use="optional" default="false"/>
+    </xs:complexType>
+
+    <xs:complexType name="EventTriggerType">
+        <xs:annotation>
+            <xs:documentation>Event trigger configuration. Type determines which attributes are used.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Condition" type="xs:string" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>Condition expression for ConditionalTrigger (note: custom functions cannot be
+                        fully serialized).
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="Type" type="xs:string" use="required"/>
+        <xs:attribute name="Tick" type="xs:nonNegativeInteger" use="optional"/>
+        <xs:attribute name="Interval" type="xs:positiveInteger" use="optional"/>
+        <xs:attribute name="StartTick" type="xs:nonNegativeInteger" use="optional"/>
+        <xs:attribute name="EndTick" type="xs:nonNegativeInteger" use="optional"/>
+        <xs:attribute name="Cooldown" type="xs:nonNegativeInteger" use="optional"/>
+    </xs:complexType>
+
+    <xs:complexType name="EventEffectsType">
+        <xs:annotation>
+            <xs:documentation>Collection of event effects.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Effect" type="EventEffectType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="EventEffectType">
+        <xs:annotation>
+            <xs:documentation>Event effect configuration. Type determines which attributes/elements are used.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="ValueSpec" type="ValueSpecType" minOccurs="0"/>
+            <xs:element name="CompositeEffects" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Effect" type="EventEffectType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="Type" type="xs:string" use="required"/>
+        <xs:attribute name="FactorId" type="xs:string" use="optional"/>
+        <xs:attribute name="ApplicationType" type="xs:string" use="optional"/>
+        <xs:attribute name="Duration" type="xs:nonNegativeInteger" use="optional"/>
+        <xs:attribute name="FeedbackStrategy" type="xs:string" use="optional"/>
+    </xs:complexType>
+
+    <!-- ========== Simulation History ========== -->
+
+    <xs:complexType name="HistoryType">
+        <xs:annotation>
+            <xs:documentation>Simulation history for reproducibility and analysis.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Step" type="StepType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="StepType">
+        <xs:annotation>
+            <xs:documentation>A single simulation step with aggregate migration data.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Migrations" type="MigrationsType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="Tick" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="MigrationsType">
+        <xs:sequence>
+            <xs:element name="M" type="MigrationType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="MigrationType">
+        <xs:annotation>
+            <xs:documentation>Aggregate migration count between two cities for reproducibility tracking.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="From" type="xs:string" use="required"/>
+        <xs:attribute name="To" type="xs:string" use="required"/>
+        <xs:attribute name="Count" type="xs:positiveInteger" use="required"/>
+    </xs:complexType>
+
+    <!-- ========== Custom Simple Types ========== -->
+
+    <xs:simpleType name="PositiveDoubleType">
+        <xs:restriction base="xs:double">
+            <xs:minExclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="LatitudeType">
+        <xs:restriction base="xs:double">
+            <xs:minInclusive value="-90"/>
+            <xs:maxInclusive value="90"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="LongitudeType">
+        <xs:restriction base="xs:double">
+            <xs:minInclusive value="-180"/>
+            <xs:maxInclusive value="180"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="ZeroToOneType">
+        <xs:restriction base="xs:double">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="1"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>
