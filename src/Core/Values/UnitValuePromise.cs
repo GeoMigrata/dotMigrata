@@ -10,7 +10,7 @@ namespace dotMigrata.Core.Values;
 /// This type is used exclusively in generators where values need to be evaluated lazily.
 /// For immediate values (e.g., manual city setup), use <see cref="UnitValue" /> directly.
 /// </remarks>
-public sealed class UnitValueSpec
+public sealed class UnitValuePromise
 {
     /// <summary>
     /// Delegate for transform functions that map normalized input to output range.
@@ -28,7 +28,7 @@ public sealed class UnitValueSpec
     private readonly TransformFunc? _transform;
     private UnitValue? _cached;
 
-    private UnitValueSpec(
+    private UnitValuePromise(
         double? fixedValue = null,
         (double, double)? range = null,
         double? mean = null,
@@ -50,10 +50,10 @@ public sealed class UnitValueSpec
     /// <param name="transform">The transform function to apply.</param>
     /// <returns>A new specification with the transform applied.</returns>
     /// <exception cref="ArgumentNullException">Thrown when transform is null.</exception>
-    public UnitValueSpec WithTransform(TransformFunc transform)
+    public UnitValuePromise WithTransform(TransformFunc transform)
     {
         ArgumentNullException.ThrowIfNull(transform);
-        return new UnitValueSpec(_fixedValue, _range, _mean, _standardDeviation, transform);
+        return new UnitValuePromise(_fixedValue, _range, _mean, _standardDeviation, transform);
     }
 
     #endregion
@@ -142,9 +142,9 @@ public sealed class UnitValueSpec
     /// Creates a specification for a fixed value.
     /// </summary>
     /// <param name="value">The fixed value (will be clamped to [0, 1]).</param>
-    public static UnitValueSpec Fixed(double value)
+    public static UnitValuePromise Fixed(double value)
     {
-        return new UnitValueSpec(value);
+        return new UnitValuePromise(value);
     }
 
     /// <summary>
@@ -153,13 +153,13 @@ public sealed class UnitValueSpec
     /// <param name="min">Minimum value (inclusive).</param>
     /// <param name="max">Maximum value (inclusive).</param>
     /// <exception cref="GeneratorSpecificationException">Thrown when min > max.</exception>
-    public static UnitValueSpec InRange(double min, double max)
+    public static UnitValuePromise InRange(double min, double max)
     {
         if (min > max)
             throw new GeneratorSpecificationException(
                 $"Minimum value ({min}) must be less than or equal to maximum value ({max}).");
 
-        return new UnitValueSpec(range: (min, max));
+        return new UnitValuePromise(range: (min, max));
     }
 
     /// <summary>
@@ -168,13 +168,13 @@ public sealed class UnitValueSpec
     /// <param name="mean">The mean value.</param>
     /// <param name="standardDeviation">The standard deviation (must be positive).</param>
     /// <exception cref="GeneratorSpecificationException">Thrown when standard deviation is not positive.</exception>
-    public static UnitValueSpec Approximately(double mean, double standardDeviation)
+    public static UnitValuePromise Approximately(double mean, double standardDeviation)
     {
         if (standardDeviation <= 0)
             throw new GeneratorSpecificationException(
                 $"Standard deviation must be positive. Got: {standardDeviation}");
 
-        return new UnitValueSpec(mean: mean, standardDeviation: standardDeviation);
+        return new UnitValuePromise(mean: mean, standardDeviation: standardDeviation);
     }
 
     #endregion

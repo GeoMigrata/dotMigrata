@@ -52,7 +52,7 @@ public sealed class CongestionFeedbackStrategy : IFeedbackStrategy
     public bool ShouldApply(City city, World world)
     {
         if (city.Capacity == null) return false;
-        var ratio = city.Population / city.Capacity.Value;
+        var ratio = city.GetPopulationRatio();
         return ratio >= _congestionThreshold;
     }
 
@@ -63,8 +63,8 @@ public sealed class CongestionFeedbackStrategy : IFeedbackStrategy
 
         if (city.Capacity == null) return;
 
-        // Calculate congestion severity
-        var populationRatio = city.Population / city.Capacity.Value;
+        // Calculate congestion severity using consolidated helper
+        var populationRatio = city.GetPopulationRatio();
         var congestionSeverity = Math.Max(0, populationRatio - _congestionThreshold);
 
         // Apply negative adjustment (congestion reduces factor)
@@ -72,6 +72,7 @@ public sealed class CongestionFeedbackStrategy : IFeedbackStrategy
         var currentValue = (double)currentIntensity.Value;
         var newIntensity = Math.Max(currentValue - reduction, 0.0);
 
-        city.UpdateFactorIntensity(_factor, UnitValue.FromRatio(newIntensity));
+        var updatedIntensity = new FactorIntensity { Definition = _factor, Value = UnitValue.FromRatio(newIntensity) };
+        city.UpdateFactorIntensity(updatedIntensity);
     }
 }

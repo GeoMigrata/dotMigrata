@@ -6,7 +6,7 @@
 /// </summary>
 /// <remarks>
 ///     <para>
-///     As of v0.7.1-beta, intensity values are stored directly as <see cref="UnitValue" /> for optimal
+///     intensity values are stored directly as <see cref="UnitValue"/> for optimal
 ///     runtime performance. This ensures type safety and eliminates overhead during simulation.
 ///     </para>
 ///     <para>
@@ -30,14 +30,9 @@ public sealed class FactorIntensity
     /// <summary>
     /// Normalizes the intensity value using the factor's normalization rules.
     /// </summary>
-    /// <param name="factorDefinition">The factor definition containing normalization rules.</param>
     /// <returns>Normalized value between 0 and 1.</returns>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="factorDefinition" /> is null.
-    /// </exception>
-    internal UnitValue Normalize(FactorDefinition factorDefinition)
+    internal UnitValue Normalize()
     {
-        ArgumentNullException.ThrowIfNull(factorDefinition);
-        return factorDefinition.Normalize(Value);
+        return Definition.Normalize(Value);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using dotMigrata.Core.Entities;
 using dotMigrata.Core.Enums;
+using dotMigrata.Core.Values;
 using dotMigrata.Logic.Common;
 using dotMigrata.Logic.Interfaces;
 using dotMigrata.Logic.Models;
@@ -34,18 +35,14 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
         var capacityResistance = CalculateCapacityResistance(city);
 
         // Step 3: Calculate distance resistance (if origin city provided)
-        var distanceResistance = 1.0;
+        var distanceResistance = UnitValue.One;
         if (originCity != null)
             distanceResistance = CalculateDistanceResistance(originCity, city);
-
-        // Step 4: Calculate adjusted attraction
-        var adjustedAttraction = baseAttraction * (1.0 - capacityResistance) * distanceResistance;
-
+        
         return new AttractionResult
         {
             City = city,
             BaseAttraction = baseAttraction,
-            AdjustedAttraction = adjustedAttraction,
             CapacityResistance = capacityResistance,
             DistanceResistance = distanceResistance
         };
@@ -69,7 +66,7 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
     /// - I_ck: normalized intensity of factor k in city c
     /// - D_k: direction of factor k (+1 for positive, -1 for negative)
     /// </summary>
-    private static double CalculateBaseAttraction(City city, PersonBase person)
+    private static UnitValue CalculateBaseAttraction(City city, PersonBase person)
     {
         var totalScore = 0.0;
 
@@ -79,13 +76,13 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
                 continue;
 
             // Normalize the factor intensity
-            var normalizedIntensity = factorIntensity.Normalize(factor);
+            var normalizedIntensity = factorIntensity.Normalize();
 
             // Determine the factor direction
             var direction = factor.Type == FactorType.Positive ? 1.0 : -1.0;
 
             // Calculate contribution: sensitivity * normalized_intensity * direction
-            totalScore += sensitivity * normalizedIntensity * direction;
+            totalScore += (double)sensitivity * (double)normalizedIntensity * direction;
         }
 
         // Apply person's sensitivity scaling if it's a StandardPerson
@@ -101,10 +98,10 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
     /// Formula: R_c = 1 / (1 + e^(-k_c * (crowd - 1)))
     /// where crowd = currentPop / capacity
     /// </summary>
-    private double CalculateCapacityResistance(City city)
+    private UnitValue CalculateCapacityResistance(City city)
     {
         if (city.Capacity is null or 0)
-            return 0.0; // No capacity limit means no resistance
+            return UnitValue.Zero; // No capacity limit means no resistance
 
         return MathUtils.CapacityResistance(
             city.Population,
@@ -116,7 +113,7 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
     /// Calculates distance resistance using exponential decay.
     /// Formula: R_d = e^(-λ * distance)
     /// </summary>
-    private double CalculateDistanceResistance(City originCity, City destinationCity)
+    private UnitValue CalculateDistanceResistance(City originCity, City destinationCity)
     {
         var distance = originCity.Location.DistanceTo(destinationCity.Location);
         return MathUtils.DistanceDecay(distance, _config.DistanceDecayLambda);

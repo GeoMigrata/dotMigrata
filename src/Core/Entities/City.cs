@@ -121,33 +121,31 @@ public sealed class City : IDisposable
     }
 
     /// <summary>
-    /// Updates the intensity of an existing <see cref="FactorIntensity" /> for the specified factor definition.
+    /// Updates the intensity of an existing factor in this city.
     /// </summary>
-    /// <param name="factor">The factor definition to update.</param>
-    /// <param name="newValue">The new intensity value in [0, 1] range.</param>
+    /// <param name="factorIntensity">The new factor intensity to apply. Must already exist in this city.</param>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="factor" /> is <see langword="null" />.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when the specified factor has no matched intensity in this city.
+    /// Thrown when <paramref name="factorIntensity" /> is <see langword="null" />.
     /// </exception>
     /// <remarks>
-    /// As of v0.7.1-beta, intensities are immutable <see cref="UnitValue" /> values.
-    /// This method replaces the entire FactorIntensity instance with a new one.
+    /// Intensities are immutable <see cref="UnitValue"/> values.
+    /// This method replaces the entire FactorIntensity instance with the provided one.
     /// </remarks>
-    public void UpdateFactorIntensity(FactorDefinition factor, UnitValue newValue)
+    public void UpdateFactorIntensity(FactorIntensity factorIntensity)
     {
-        ArgumentNullException.ThrowIfNull(factor);
+        ArgumentNullException.ThrowIfNull(factorIntensity);
 
-        if (!_factorLookup.ContainsKey(factor))
-            throw new ArgumentException("Given factor has no matched intensity in this city.", nameof(factor));
+        if (!_factorLookup.ContainsKey(factorIntensity.Definition))
+            throw new ArgumentException("Given factor has no matched intensity in this city.", nameof(factorIntensity));
 
-        var newIntensity = new FactorIntensity { Definition = factor, Value = newValue };
-        _factorLookup[factor] = newIntensity;
+        _factorLookup[factorIntensity.Definition] = factorIntensity;
 
-        var index = _factorIntensities.FindIndex(fi => fi.Definition == factor);
+        var index = _factorIntensities.FindIndex(fi => fi.Definition == factorIntensity.Definition);
         if (index >= 0)
-            _factorIntensities[index] = newIntensity;
+            _factorIntensities[index] = factorIntensity;
     }
 
     /// <summary>
@@ -234,6 +232,32 @@ public sealed class City : IDisposable
             person.CurrentCity = null;
 
         return removed;
+    }
+
+    /// <summary>
+    /// Gets the population ratio relative to capacity.
+    /// </summary>
+    /// <returns>
+    /// The ratio of current population to capacity as a <see cref="UnitValue" />, or <see cref="UnitValue.One" /> if capacity
+    /// is not set.
+    /// </returns>
+    /// <remarks>
+    ///     <para>
+    ///     This provides a consistent type-safe way to calculate population pressure across feedback strategies.
+    ///     </para>
+    ///     <para>
+    ///     Returns <see cref="UnitValue.One" /> when capacity is null or zero to indicate no capacity constraint.
+    ///     A value of 1.0 represents a city at equilibrium with no pressure from capacity limits,
+    ///     allowing feedback strategies to apply baseline adjustments.
+    ///     </para>
+    /// </remarks>
+    public UnitValue GetPopulationRatio()
+    {
+        if (Capacity is null or 0)
+            return UnitValue.One; // No capacity constraint - treat as equilibrium
+
+        var ratio = (double)Population / Capacity.Value;
+        return UnitValue.FromRatio(ratio);
     }
 
     /// <summary>

@@ -25,5 +25,5 @@ public class PersonCollectionXml
     /// Specifications with a Seed attribute act as generators (randomized values).
     /// </remarks>
     [XmlElement("Person")]
-    public List<PersonSpec>? PersonSpecs { get; set; }
+    public List<PersonSpecXml>? PersonSpecs { get; set; }
 }

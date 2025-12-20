@@ -1,4 +1,5 @@
 ﻿using dotMigrata.Core.Entities;
+using dotMigrata.Core.Values;
 
 namespace dotMigrata.Logic.Models;
 
@@ -23,7 +24,7 @@ public sealed record MigrationFlow
     public required PersonBase Person { get; init; }
 
     /// <summary>
-    /// Gets the migration probability (0-1) for this flow.
+    /// Gets the migration probability (0-1) for this flow as a type-safe <see cref="UnitValue"/>.
     /// </summary>
-    public double MigrationProbability { get; init; }
+    public required UnitValue MigrationProbability { get; init; }
 }

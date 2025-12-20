@@ -10,7 +10,7 @@ namespace dotMigrata.Simulation.Events.Effects;
 /// <summary>
 /// Effect that changes factor values for cities.
 /// Supports various application types (absolute, delta, multiply, transitions)
-/// and reuses <see cref="Core.Values.UnitValueSpec" /> for flexible value generation.
+/// and reuses <see cref="Core.Values.UnitValuePromise" /> for flexible value generation.
 /// </summary>
 public sealed class FactorChangeEffect : IEventEffect
 {
@@ -23,7 +23,7 @@ public sealed class FactorChangeEffect : IEventEffect
     /// <param name="factor">The factor definition to modify.</param>
     /// <param name="valueSpecification">
     /// Specification for the target value (fixed, range, or approximate).
-    /// Leverages existing <see cref="Core.Values.UnitValueSpec" /> infrastructure.
+    /// Leverages existing <see cref="Core.Values.UnitValuePromise" /> infrastructure.
     /// </param>
     /// <param name="applicationType">How the value change is applied.</param>
     /// <param name="duration">Duration over which the effect is applied.</param>
@@ -31,14 +31,14 @@ public sealed class FactorChangeEffect : IEventEffect
     /// <param name="seed">Optional random seed for reproducible value generation.</param>
     public FactorChangeEffect(
         FactorDefinition factor,
-        UnitValueSpec valueSpecification,
+        UnitValuePromise valueSpecification,
         EffectApplicationType applicationType,
         EffectDuration duration,
         Func<City, bool>? cityFilter = null,
         int? seed = null)
     {
         Factor = factor ?? throw new ArgumentNullException(nameof(factor));
-        UnitValueSpec = valueSpecification ?? throw new ArgumentNullException(nameof(valueSpecification));
+        UnitValuePromise = valueSpecification ?? throw new ArgumentNullException(nameof(valueSpecification));
         ApplicationType = applicationType;
         Duration = duration ?? throw new ArgumentNullException(nameof(duration));
         CityFilter = cityFilter;
@@ -53,7 +53,7 @@ public sealed class FactorChangeEffect : IEventEffect
     /// <summary>
     /// Gets the value specification for target values.
     /// </summary>
-    public UnitValueSpec UnitValueSpec { get; }
+    public UnitValuePromise UnitValuePromise { get; }
 
     /// <summary>
     /// Gets the type of application for this effect.
@@ -86,7 +86,8 @@ public sealed class FactorChangeEffect : IEventEffect
             var newValue = CalculateNewValue(state, currentValue, context.CurrentTick);
 
             newValue = Math.Clamp(newValue, 0.0, 1.0);
-            city.UpdateFactorIntensity(Factor, UnitValue.FromRatio(newValue));
+            var updatedIntensity = new FactorIntensity { Definition = Factor, Value = UnitValue.FromRatio(newValue) };
+            city.UpdateFactorIntensity(updatedIntensity);
         }
     }
 
@@ -108,8 +109,8 @@ public sealed class FactorChangeEffect : IEventEffect
 
     private double GenerateTargetValue()
     {
-        return UnitValueSpec.Evaluate(_random);
-        // UnitValueSpec.Evaluate handles all the logic internally
+        return UnitValuePromise.Evaluate(_random);
+        // UnitValuePromise.Evaluate handles all the logic internally
     }
 
     private double CalculateNewValue(FactorChangeState state, double currentValue, int currentTick)

@@ -281,7 +281,7 @@ public sealed class SimulationBuilder
     public SimulationBuilder WithFactorChange(
         string displayName,
         FactorDefinition factor,
-        UnitValueSpec valueSpecification,
+        UnitValuePromise valueSpecification,
         IEventTrigger trigger,
         EffectApplicationType applicationType = EffectApplicationType.Absolute,
         EffectDuration? duration = null,

@@ -1,4 +1,5 @@
 ﻿using dotMigrata.Core.Entities;
+using dotMigrata.Core.Values;
 using dotMigrata.Logic.Common;
 using dotMigrata.Logic.Interfaces;
 using dotMigrata.Logic.Models;
@@ -77,7 +78,7 @@ public sealed class StandardMigrationCalculator : IMigrationCalculator, IDisposa
 
         // Find the best destination city
         City? bestDestination = null;
-        var bestProbability = 0.0;
+        var bestProbability = UnitValue.Zero;
         var destinations = destinationCities.Where(c => c != originCity).ToList();
 
         foreach (var destCity in destinations)
@@ -107,13 +108,13 @@ public sealed class StandardMigrationCalculator : IMigrationCalculator, IDisposa
                 _config.MigrationProbabilitySteepness,
                 _config.MigrationProbabilityThreshold);
 
-            if (!(probability > bestProbability)) continue;
+            if (probability <= bestProbability) continue;
             bestProbability = probability;
             bestDestination = destCity;
         }
 
         // No suitable destination found
-        if (bestDestination == null || bestProbability <= 0.0)
+        if (bestDestination == null || bestProbability <= UnitValue.Zero)
             return null;
 
         // Apply retention rate - person may decide to stay

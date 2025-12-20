@@ -67,10 +67,10 @@ public record FactorDefinition
     /// When null, linear normalization is used.
     /// </summary>
     /// <remarks>
-    /// As of v0.7.1-beta, uses <see cref="UnitValueSpec.TransformFunc" /> delegate type
+    /// uses <see cref="UnitValuePromise.TransformFunc"/> delegate type
     /// for better integration with the unified value system.
     /// </remarks>
-    public UnitValueSpec.TransformFunc? TransformFunction { get; init; }
+    public UnitValuePromise.TransformFunc? TransformFunction { get; init; }
 
     /// <summary>
     /// Normalizes a raw value to the [0, 1] range using this factor's transformation.

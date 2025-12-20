@@ -1,9 +1,12 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <!--
-  dotMigrata Snapshot Schema v2.0
+  dotMigrata Snapshot Schema v3.0
   
-  Simplified XML format with:
+  Type-safe unified value system with:
   - Single namespace for all elements
+  - UnitValue type for all normalized 0-1 range values
+  - Unified PersonSpec for templates and generators
+  - FactorIntensity terminology (no more FactorValue)
   - Attribute-based configuration for scalar values
   - Shorter element names for reduced file size
 -->
@@ -96,44 +99,25 @@
     </xs:complexType>
 
     <xs:complexType name="GroupType">
+        <xs:annotation>
+            <xs:documentation>A population group containing person specifications. Use Person without Seed for
+                templates, or Person with Seed for generators.
+            </xs:documentation>
+        </xs:annotation>
         <xs:sequence>
-            <xs:choice minOccurs="0" maxOccurs="unbounded">
-                <xs:element name="Person" type="PersonType"/>
-                <xs:element name="Generator" type="GeneratorType"/>
-            </xs:choice>
+            <xs:element name="Person" type="PersonSpecType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:attribute name="Id" type="xs:string" use="required"/>
     </xs:complexType>
 
-    <!-- ========== Person Template ========== -->
+    <!-- ========== Unified Person Specification ========== -->
 
-    <xs:complexType name="PersonType">
-        <xs:sequence>
-            <xs:element name="Sensitivities" type="SensitivitiesType" minOccurs="0"/>
-        </xs:sequence>
-        <xs:attribute name="Count" type="xs:positiveInteger" default="1"/>
-        <xs:attribute name="Willingness" type="ZeroToOneType" use="required"/>
-        <xs:attribute name="Retention" type="ZeroToOneType" use="required"/>
-        <xs:attribute name="Threshold" type="xs:double" use="required"/>
-        <xs:attribute name="Scaling" type="xs:double" use="required"/>
-        <xs:attribute name="MinAttraction" type="xs:double" use="required"/>
-        <xs:attribute name="Tags" type="xs:string" use="optional"/>
-    </xs:complexType>
-
-    <xs:complexType name="SensitivitiesType">
-        <xs:sequence>
-            <xs:element name="S" type="SensitivityType" minOccurs="0" maxOccurs="unbounded"/>
-        </xs:sequence>
-    </xs:complexType>
-
-    <xs:complexType name="SensitivityType">
-        <xs:attribute name="Id" type="xs:string" use="required"/>
-        <xs:attribute name="V" type="xs:double" use="optional"/>
-    </xs:complexType>
-
-    <!-- ========== Generator ========== -->
-
-    <xs:complexType name="GeneratorType">
+    <xs:complexType name="PersonSpecType">
+        <xs:annotation>
+            <xs:documentation>Unified person specification. Without Seed: template mode (fixed values). With Seed:
+                generator mode (ranges/distributions).
+            </xs:documentation>
+        </xs:annotation>
         <xs:sequence>
             <xs:element name="Sensitivities" type="SensitivitySpecsType" minOccurs="0"/>
             <xs:element name="Willingness" type="ValueSpecType" minOccurs="0"/>
@@ -145,28 +129,45 @@
         </xs:sequence>
         <xs:attribute name="Count" type="xs:positiveInteger" use="required"/>
         <xs:attribute name="Seed" type="xs:int" use="optional"/>
+        <xs:attribute name="Type" type="xs:string" use="optional" default="StandardPerson"/>
     </xs:complexType>
 
     <xs:complexType name="SensitivitySpecsType">
+        <xs:annotation>
+            <xs:documentation>Factor sensitivity specifications. All values in 0-1 range (UnitValue). Use V for fixed,
+                Min/Max for range, Approximately for normal distribution.
+            </xs:documentation>
+        </xs:annotation>
         <xs:sequence>
             <xs:element name="S" type="SensitivitySpecType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
 
-    <!-- Value specification: V for fixed, Min/Max for range, Scale for random -->
     <xs:complexType name="SensitivitySpecType">
+        <xs:annotation>
+            <xs:documentation>Value specification for sensitivity (0-1 UnitValue). V for fixed, Min/Max for range,
+                Approximately+StdDev for normal distribution.
+            </xs:documentation>
+        </xs:annotation>
         <xs:attribute name="Id" type="xs:string" use="required"/>
-        <xs:attribute name="V" type="xs:double" use="optional"/>
-        <xs:attribute name="Min" type="xs:double" use="optional"/>
-        <xs:attribute name="Max" type="xs:double" use="optional"/>
-        <xs:attribute name="Scale" type="xs:double" use="optional"/>
+        <xs:attribute name="V" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="Min" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="Max" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="Approximately" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="StdDev" type="xs:double" use="optional"/>
     </xs:complexType>
 
     <xs:complexType name="ValueSpecType">
-        <xs:attribute name="V" type="xs:double" use="optional"/>
-        <xs:attribute name="Min" type="xs:double" use="optional"/>
-        <xs:attribute name="Max" type="xs:double" use="optional"/>
-        <xs:attribute name="Scale" type="xs:double" use="optional"/>
+        <xs:annotation>
+            <xs:documentation>Value specification for UnitValue properties (0-1 range). V for fixed, Min/Max for range,
+                Approximately+StdDev for normal distribution.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="V" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="Min" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="Max" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="Approximately" type="ZeroToOneType" use="optional"/>
+        <xs:attribute name="StdDev" type="xs:double" use="optional"/>
     </xs:complexType>
 
     <!-- ========== Cities ========== -->
@@ -191,14 +192,23 @@
     </xs:complexType>
 
     <xs:complexType name="CityFactorsType">
+        <xs:annotation>
+            <xs:documentation>Factor intensities for a city. All values must be normalized to 0-1 range (UnitValue).
+            </xs:documentation>
+        </xs:annotation>
         <xs:sequence>
-            <xs:element name="F" type="FactorValueType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="F" type="FactorIntensityType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
 
-    <xs:complexType name="FactorValueType">
+    <xs:complexType name="FactorIntensityType">
+        <xs:annotation>
+            <xs:documentation>A city's factor intensity. Value (V) must be in 0-1 range representing normalized
+                intensity.
+            </xs:documentation>
+        </xs:annotation>
         <xs:attribute name="Id" type="xs:string" use="required"/>
-        <xs:attribute name="V" type="xs:double" use="required"/>
+        <xs:attribute name="V" type="ZeroToOneType" use="required"/>
     </xs:complexType>
 
     <xs:complexType name="CityPopulationType">

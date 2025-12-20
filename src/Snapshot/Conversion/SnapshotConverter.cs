@@ -122,13 +122,13 @@ public static class SnapshotConverter
         };
 
         // Handle transform functions - convert to new delegate type
-        UnitValueSpec.TransformFunc? transformFunction = null;
+        UnitValuePromise.TransformFunc? transformFunction = null;
         if (!string.IsNullOrEmpty(def.CustomTransformName))
             transformFunction = def.CustomTransformName.ToUpperInvariant() switch
             {
-                "LINEAR" => UnitValueSpec.Transforms.Linear,
-                "LOGARITHMIC" => UnitValueSpec.Transforms.Logarithmic,
-                "SIGMOID" => UnitValueSpec.Transforms.Sigmoid,
+                "LINEAR" => UnitValuePromise.Transforms.Linear,
+                "LOGARITHMIC" => UnitValuePromise.Transforms.Logarithmic,
+                "SIGMOID" => UnitValuePromise.Transforms.Sigmoid,
                 _ => null // Unknown custom transforms fallback to linear (default)
             };
 
@@ -168,7 +168,7 @@ public static class SnapshotConverter
     }
 
     private static IEnumerable<PersonBase> ConvertPersonSpec(
-        PersonSpec spec,
+        PersonSpecXml spec,
         Dictionary<string, FactorDefinition> factorLookup,
         List<FactorDefinition> allFactors)
     {
@@ -176,8 +176,8 @@ public static class SnapshotConverter
 
         if (spec.IsGenerator)
         {
-            // Generator mode: convert to UnitValueSpec for randomization
-            var factorSpecs = new Dictionary<FactorDefinition, UnitValueSpec>();
+            // Generator mode: convert to UnitValuePromise for randomization
+            var factorSpecs = new Dictionary<FactorDefinition, UnitValuePromise>();
             if (spec.Sensitivities != null)
                 foreach (var sensitivity in spec.Sensitivities)
                     if (!string.IsNullOrEmpty(sensitivity.Id) &&
@@ -199,7 +199,7 @@ public static class SnapshotConverter
                 foreach (var sensitivity in spec.Sensitivities)
                     if (!string.IsNullOrEmpty(sensitivity.Id) &&
                         factorLookup.TryGetValue(sensitivity.Id, out var factor))
-                        sensitivities[factor] = ConvertSpecToValue(sensitivity);
+                        sensitivities[factor] = ConvertValueSpecToValue(sensitivity);
 
             // Create multiple identical persons
             for (var i = 0; i < spec.Count; i++)
@@ -214,35 +214,42 @@ public static class SnapshotConverter
     }
 
     /// <summary>
-    /// Converts a Spec to a UnitValueSpec for generator mode.
+    /// Converts a <see cref="ValueSpecXml"/> to a <see cref="UnitValuePromise"/> for generator mode.
     /// </summary>
-    private static UnitValueSpec ConvertSpec(Spec? spec)
+    private static UnitValuePromise ConvertSpec(ValueSpecXml? spec)
     {
         if (spec == null)
-            return UnitValueSpec.InRange(0, 1);
+            return UnitValuePromise.InRange(0, 1);
 
         // Fixed value
         if (spec.Value.HasValue)
         {
             var value = Math.Clamp(spec.Value.Value, 0, 1);
-            return UnitValueSpec.Fixed(value);
+            return UnitValuePromise.Fixed(value);
+        }
+
+        // Approximately (normal distribution)
+        if (spec.Approximately.HasValue)
+        {
+            var mean = Math.Clamp(spec.Approximately.Value, 0, 1);
+            var stdDev = spec.StandardDeviation ?? 0.1; // Default standard deviation
+            return UnitValuePromise.Approximately(mean, stdDev);
         }
 
         // Range
         if (spec is not { Min: not null, Max: not null })
-            return UnitValueSpec.InRange(0, 1);
-
-        var min = Math.Clamp(spec.Min.Value, 0, 1);
-        var max = Math.Clamp(spec.Max.Value, 0, 1);
-        return UnitValueSpec.InRange(min, max);
+            return UnitValuePromise.InRange(0, 1);
 
         // Default: random 0-1
+        var min = Math.Clamp(spec.Min.Value, 0, 1);
+        var max = Math.Clamp(spec.Max.Value, 0, 1);
+        return UnitValuePromise.InRange(min, max);
     }
 
     /// <summary>
-    /// Converts a Spec to a fixed UnitValue for template mode.
+    /// Converts a <see cref="ValueSpecXml"/> to a fixed <see cref="UnitValue"/> for template mode.
     /// </summary>
-    private static UnitValue ConvertSpecToValue(Spec? spec)
+    private static UnitValue ConvertValueSpecToValue(ValueSpecXml? spec)
     {
         if (spec?.Value.HasValue == true)
         {
@@ -364,7 +371,7 @@ public static class SnapshotConverter
 
     private static WorldStateXml ConvertWorldState(World world)
     {
-        return new WorldStateXml
+        return new WorldStateXml()
         {
             DisplayName = world.DisplayName,
             FactorDefinitions = world.FactorDefinitions.Select(ConvertToFactorDefXml).ToList(),
@@ -375,7 +382,7 @@ public static class SnapshotConverter
 
     private static FactorDefXml ConvertToFactorDefXml(FactorDefinition factor)
     {
-        return new FactorDefXml
+        return new FactorDefXml()
         {
             Id = GetFactorId(factor),
             DisplayName = factor.DisplayName,
@@ -386,17 +393,17 @@ public static class SnapshotConverter
         };
     }
 
-    private static string? GetTransformName(UnitValueSpec.TransformFunc? transformFunc)
+    private static string? GetTransformName(UnitValuePromise.TransformFunc? transformFunc)
     {
         if (transformFunc == null) return null;
 
         // Compare delegates to identify transform type
-        if (transformFunc == UnitValueSpec.Transforms.Linear) return "LINEAR";
-        if (transformFunc == UnitValueSpec.Transforms.Logarithmic) return "LOGARITHMIC";
-        if (transformFunc == UnitValueSpec.Transforms.Sigmoid) return "SIGMOID";
-        if (transformFunc == UnitValueSpec.Transforms.Exponential) return "EXPONENTIAL";
+        if (transformFunc == UnitValuePromise.Transforms.Linear) return "LINEAR";
+        if (transformFunc == UnitValuePromise.Transforms.Logarithmic) return "LOGARITHMIC";
+        if (transformFunc == UnitValuePromise.Transforms.Sigmoid) return "SIGMOID";
+        if (transformFunc == UnitValuePromise.Transforms.Exponential) return "EXPONENTIAL";
         // ReSharper disable once ConvertIfStatementToReturnStatement
-        if (transformFunc == UnitValueSpec.Transforms.SquareRoot) return "SQUAREROOT";
+        if (transformFunc == UnitValuePromise.Transforms.SquareRoot) return "SQUAREROOT";
 
         return null; // Unknown transform
     }
@@ -410,7 +417,7 @@ public static class SnapshotConverter
             Latitude = city.Location.Latitude,
             Longitude = city.Location.Longitude,
             Area = city.Area,
-            FactorValues = city.FactorIntensities.Select(ConvertToFactorSpec).ToList(),
+            FactorValues = city.FactorIntensities.Select(ConvertToFactorValueSpec).ToList(),
             PersonCollections = [] // Note: Population groups are not reconstructed
         };
 
@@ -421,9 +428,9 @@ public static class SnapshotConverter
         return cityXml;
     }
 
-    private static Spec ConvertToFactorSpec(FactorIntensity fi)
+    private static ValueSpecXml ConvertToFactorValueSpec(FactorIntensity fi)
     {
-        return new Spec
+        return new ValueSpecXml()
         {
             Id = GetFactorId(fi.Definition),
             Value = fi.Value

@@ -22,7 +22,7 @@ namespace dotMigrata.Snapshot.Models;
 /// All values must be in [0, 1] range for UnitValue compatibility.
 /// </para>
 /// </remarks>
-public class Spec
+public class ValueSpecXml
 {
     /// <summary>
     /// Gets or sets the factor/attribute identifier (for sensitivities and factor values).
@@ -53,6 +53,18 @@ public class Spec
     /// </summary>
     [XmlAttribute("Max")]
     public double? Max { get; set; }
+
+    /// <summary>
+    /// Gets or sets the mean for approximately/normal distribution specification (0-1 range).
+    /// </summary>
+    [XmlAttribute("Approximately")]
+    public double? Approximately { get; set; }
+
+    /// <summary>
+    /// Gets or sets the standard deviation for approximately/normal distribution (defaults to 0.1 if not specified).
+    /// </summary>
+    [XmlAttribute("StdDev")]
+    public double? StandardDeviation { get; set; }
 
     /// <summary>
     /// Validates that all values are in valid [0, 1] range.

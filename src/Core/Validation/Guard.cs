@@ -4,26 +4,14 @@ using System.Runtime.CompilerServices;
 namespace dotMigrata.Core.Validation;
 
 /// <summary>
-/// Provides guard clauses for parameter validation.
+/// Provides domain-specific guard clauses for parameter validation.
 /// </summary>
+/// <remarks>
+/// For null checks, use <see cref="ArgumentNullException.ThrowIfNull(object?, string?)"/> directly.
+/// This class provides additional domain-specific validation methods.
+/// </remarks>
 public static class Guard
 {
-    /// <summary>
-    /// Throws an <see cref="ArgumentNullException" /> if the value is null.
-    /// </summary>
-    /// <typeparam name="T">The type of the value.</typeparam>
-    /// <param name="value">The value to check.</param>
-    /// <param name="paramName">The name of the parameter.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value" /> is null.</exception>
-    public static void ThrowIfNull<T>(
-        [NotNull] T? value,
-        [CallerArgumentExpression(nameof(value))]
-        string? paramName = null)
-    {
-        ArgumentNullException.ThrowIfNull(value, paramName);
-    }
-
-
     /// <summary>
     /// Throws an <see cref="ArgumentException" /> if the string is null or whitespace.
     /// </summary>

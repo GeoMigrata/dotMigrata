@@ -16,7 +16,7 @@ namespace dotMigrata.Generator;
 ///     Uses deterministic random generation when seeded, allowing reproducible person generation.
 ///     </para>
 ///     <para>
-///     As of v0.7.1-beta, uses <see cref="UnitValueSpec" /> for all value specifications,
+///     uses <see cref="UnitValuePromise"/> for all value specifications,
 ///     ensuring type-safe generation of values in the [0, 1] range.
 ///     </para>
 /// </remarks>
@@ -45,39 +45,39 @@ public sealed class StandardPersonGenerator : IPersonGenerator<StandardPerson>
     /// Gets or sets the factor sensitivity specifications.
     /// All sensitivities are in [0, 1] range.
     /// </summary>
-    public Dictionary<FactorDefinition, UnitValueSpec> FactorSensitivities { get; init; } = [];
+    public Dictionary<FactorDefinition, UnitValuePromise> FactorSensitivities { get; init; } = [];
 
     /// <summary>
     /// Gets or sets the moving willingness specification.
     /// Values are in [0, 1] range.
     /// </summary>
     [Required]
-    public required UnitValueSpec MovingWillingness { get; init; }
+    public required UnitValuePromise MovingWillingness { get; init; }
 
     /// <summary>
     /// Gets or sets the retention rate specification.
     /// Values are in [0, 1] range.
     /// </summary>
     [Required]
-    public required UnitValueSpec RetentionRate { get; init; }
+    public required UnitValuePromise RetentionRate { get; init; }
 
     /// <summary>
     /// Gets or sets the sensitivity scaling specification.
     /// Values are in [0, 1] range. Defaults to 1.0 if not specified.
     /// </summary>
-    public UnitValueSpec? SensitivityScaling { get; init; }
+    public UnitValuePromise? SensitivityScaling { get; init; }
 
     /// <summary>
     /// Gets or sets the attraction threshold specification.
     /// Values are in [0, 1] range. Defaults to 0.0 if not specified.
     /// </summary>
-    public UnitValueSpec? AttractionThreshold { get; init; }
+    public UnitValuePromise? AttractionThreshold { get; init; }
 
     /// <summary>
     /// Gets or sets the minimum acceptable attraction specification.
     /// Values are in [0, 1] range. Defaults to 0.0 if not specified.
     /// </summary>
-    public UnitValueSpec? MinimumAcceptableAttraction { get; init; }
+    public UnitValuePromise? MinimumAcceptableAttraction { get; init; }
 
     /// <summary>
     /// Gets or sets the tags to apply to all generated persons.

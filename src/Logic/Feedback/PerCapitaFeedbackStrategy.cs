@@ -60,18 +60,19 @@ public sealed class PerCapitaFeedbackStrategy : IFeedbackStrategy
     {
         if (!city.TryGetFactorIntensity(_factor, out var currentIntensity)) return;
 
-        // Calculate per-capita adjustment
-        var populationRatio = city.Population / Math.Max(city.Capacity ?? city.Population, 1.0);
+        // Calculate per-capita adjustment using consolidated helper
+        var populationRatio = city.GetPopulationRatio();
         var adjustment = populationRatio * _scalingFactor;
 
         // Apply adjustment with clamping to valid range
         var currentValue = (double)currentIntensity.Value;
-        var newIntensity = Math.Clamp(
+        var adjustedValue = Math.Clamp(
             currentValue + adjustment,
             0.0,
             1.0
         );
 
-        city.UpdateFactorIntensity(_factor, UnitValue.FromRatio(newIntensity));
+        var updatedIntensity = new FactorIntensity { Definition = _factor, Value = UnitValue.FromRatio(adjustedValue) };
+        city.UpdateFactorIntensity(updatedIntensity);
     }
 }

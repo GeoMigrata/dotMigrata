@@ -1,4 +1,127 @@
-﻿## Version 0.7.1-beta (Unified Value System)
+﻿## Version 0.7.2-beta (Complete Type Safety & Code Cleanup)
+
+**Version 0.7.2-beta** achieves complete type safety throughout the codebase, eliminates code duplication, and improves
+API consistency. All 0-1 range values now use `UnitValue` for compile-time guarantees.
+
+### ** BREAKING CHANGES - Type Safety Improvements**
+
+This release continues the breaking changes from v0.7.1-beta with no backward compatibility.
+
+#### Type Safety: All 0-1 Values Now `UnitValue`
+
+All properties/methods that return or accept 0-1 range values now use `UnitValue`.
+
+| Component                               | Old Type                | New Type                   |
+|-----------------------------------------|-------------------------|----------------------------|
+| `AttractionResult.BaseAttraction`       | `double`                | `UnitValue`                |
+| `AttractionResult.AdjustedAttraction`   | `double`                | `UnitValue` (computed)     |
+| `AttractionResult.CapacityResistance`   | `double`                | `UnitValue`                |
+| `AttractionResult.DistanceResistance`   | `double`                | `UnitValue`                |
+| `MigrationFlow.MigrationProbability`    | `double`                | `UnitValue`                |
+| `MathUtils.Sigmoid()` return            | `double`                | `UnitValue`                |
+| `MathUtils.DistanceDecay()` return      | `double`                | `UnitValue`                |
+| `MathUtils.CapacityResistance()` return | `UnitValue`             | `UnitValue`                |
+| `MathUtils.LinearNormalize()` return    | `double`                | `UnitValue`                |
+| `MathUtils.Softmax()` return            | `IReadOnlyList<double>` | `IReadOnlyList<UnitValue>` |
+
+**Migration Example**:
+
+```csharp
+// OLD (v0.7.1)
+double baseAttraction = result.BaseAttraction;
+double probability = flow.MigrationProbability;
+double resistance = MathUtils.DistanceDecay(distance, lambda);
+
+// NEW (v0.7.2)
+UnitValue baseAttraction = result.BaseAttraction;
+UnitValue probability = flow.MigrationProbability;
+UnitValue resistance = MathUtils.DistanceDecay(distance, lambda);
+
+// Implicit conversion to double when needed
+double baseDouble = baseAttraction;  // Automatic conversion
+```
+
+#### API Improvements
+
+**1. `Guard.ThrowIfNull()` Removed**
+
+- **Removed**: Redundant wrapper around framework method
+- **Use instead**: `ArgumentNullException.ThrowIfNull()` directly
+- **Kept**: Domain-specific methods (`ThrowIfNullOrWhiteSpace`, `ThrowIfNotInRange`, etc.)
+
+```csharp
+// OLD (v0.7.1)
+Guard.ThrowIfNull(parameter);
+
+// NEW (v0.7.2)
+ArgumentNullException.ThrowIfNull(parameter);
+```
+
+**2. `FactorIntensity.Normalize()` Simplified**
+
+- **Old signature**: `Normalize(FactorDefinition factorDefinition)`
+- **New signature**: `Normalize()` (parameter removed)
+- **Reason**: Method already has `Definition` property, parameter was redundant
+
+```csharp
+// OLD (v0.7.1)
+var normalized = factorIntensity.Normalize(factor);
+
+// NEW (v0.7.2)
+var normalized = factorIntensity.Normalize();
+```
+
+**3. `City.GetPopulationRatio()` Added**
+
+- New helper method for consistent population ratio calculations
+- Eliminates duplication across feedback strategies
+- Returns 1.0 when capacity is null/zero (no constraint)
+
+```csharp
+// Replaces manual calculations
+double ratio = city.GetPopulationRatio();
+```
+
+**4. `AttractionResult.AdjustedAttraction` Now Computed**
+
+- Changed from stored property to computed property
+- Calculated as: `BaseAttraction × (1 - CapacityResistance) × DistanceResistance`
+- Ensures consistency, reduces storage
+
+### Code Quality Improvements
+
+**Eliminated Duplication**:
+
+- Population ratio calculated 3 different ways → Single `City.GetPopulationRatio()` helper
+- Redundant `Guard.ThrowIfNull()` → Use framework method directly
+
+**Improved Consistency**:
+
+- All 0-1 range values use `UnitValue` (complete type safety)
+- Feedback strategies use consistent `GetPopulationRatio()` helper
+- Cleaner API surface with fewer redundant parameters
+
+**Performance**:
+
+- No runtime performance changes (same underlying double values)
+- Compile-time type safety prevents out-of-range errors
+- `AttractionResult` uses 8 fewer bytes per instance (computed property)
+
+### Migration from v0.7.1-beta to v0.7.2-beta
+
+Most changes are mechanical type updates. The compiler will guide you:
+
+1. **Update property/variable types**: `double` → `UnitValue` for all 0-1 range values
+2. **Update method calls**: Replace `Guard.ThrowIfNull()` with `ArgumentNullException.ThrowIfNull()`
+3. **Remove redundant parameters**: `Normalize()` no longer needs parameter
+4. **Use implicit conversion**: `UnitValue` converts to `double` implicitly when needed
+
+**Note**: If you haven't yet migrated from v0.7.0 to v0.7.1, see v0.7.1-beta changelog below for the major value system
+redesign.
+
+---
+
+## Version 0.7.1-beta (Unified Value System)
 
 **Version 0.7.1-beta** introduces a complete redesign of the value system with type-safe `UnitValue` values,
 separation of immediate vs lazy evaluation, and dramatic simplification of the codebase (from 16 to 7 files).

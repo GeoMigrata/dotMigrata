@@ -1,26 +1,11 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-<!--
-  dotMigrata Snapshot v3.0 - Unified Spec Format
-  
-  This snapshot demonstrates the v0.7.1-beta unified value system:
-  - Single <Person> element for both templates and generators
-  - Generator mode: includes Seed attribute with randomized specs
-  - Template mode: no Seed, uses fixed values
-  - All values are in [0, 1] range for UnitValue compatibility
-  - Single <Spec> format with V (fixed) or Min/Max (range)
--->
-<Snapshot xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xmlns="http://geomigrata.pages.dev/snapshot"
-          xsi:schemaLocation="http://geomigrata.pages.dev/snapshot ../schemas/snapshot.xsd"
-          Version="3.0"
-          Id="c8836553-be0c-42c5-be58-abbae82c6918"
-          Status="Seed"
-          CreatedAt="2025-12-19T09:00:00.0000000Z"
-          Tick="0">
+﻿<?xml version='1.0' encoding='utf-8'?>
+<Snapshot xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://geomigrata.pages.dev/snapshot"
+          xsi:schemaLocation="http://geomigrata.pages.dev/snapshot ../schemas/snapshot.xsd" Version="3.0"
+          Id="c8836553-be0c-42c5-be58-abbae82c6918" Status="Seed" CreatedAt="2025-12-19T09:00:00.0000000Z" Tick="0">
 
     <World Name="Example Migration Simulation - v0.7.1-beta">
 
-        <!-- Factor Definitions: characteristics that influence migration -->
+
         <Factors>
             <Factor Id="pollution" Name="Pollution" Type="Negative" Min="0" Max="12" Transform="Linear"/>
             <Factor Id="transport" Name="Transport" Type="Positive" Min="0" Max="10" Transform="Linear"/>
@@ -28,11 +13,11 @@
             <Factor Id="security" Name="Security" Type="Positive" Min="0" Max="10"/>
         </Factors>
 
-        <!-- Population Groups: unified person specifications (templates and generators) -->
+
         <Population>
             <Group Id="young_people">
 
-                <!-- Template: Fixed values, no Seed attribute -->
+
                 <Person Count="1" Type="StandardPerson">
                     <Willingness V="0.5"/>
                     <Retention V="0.3"/>
@@ -48,7 +33,7 @@
                     <Tags>template;young</Tags>
                 </Person>
 
-                <!-- Generator: Randomized specs with Seed attribute -->
+
                 <Person Count="100000" Seed="42" Type="StandardPerson">
                     <Willingness Min="0.5" Max="1.0"/>
                     <Retention V="0.1"/>
@@ -56,7 +41,6 @@
                     <Scaling Min="0.5" Max="1.0"/>
                     <MinAttraction V="0.1"/>
                     <Sensitivities>
-                        <!-- All values now in [0, 1] range -->
                         <S Id="pollution" Min="0.3" Max="0.8"/>
                         <S Id="transport" Min="0.4" Max="0.9"/>
                         <S Id="income" Min="0.1" Max="0.3"/>
@@ -65,7 +49,7 @@
                     <Tags>generated;young</Tags>
                 </Person>
 
-                <!-- Smaller generator with mixed fixed/range specs -->
+
                 <Person Count="100" Seed="132" Type="StandardPerson">
                     <Willingness V="0.5"/>
                     <Retention V="0.3"/>
@@ -84,12 +68,10 @@
             </Group>
         </Population>
 
-        <!-- Cities with factor values and population assignments -->
+
         <Cities>
-            <City Id="shanghai_cn" Name="Shanghai" Lat="31.2304" Lon="121.4737"
-                  Area="6340.5" Capacity="30000000">
+            <City Id="shanghai_cn" Name="Shanghai" Lat="31.2304" Lon="121.4737" Area="6340.5" Capacity="30000000">
                 <Factors>
-                    <!-- Raw values (not normalized) -->
                     <F Id="pollution" V="8"/>
                     <F Id="transport" V="7"/>
                     <F Id="income" V="900"/>
@@ -100,8 +82,7 @@
                 </Population>
             </City>
 
-            <City Id="sydney_au" Name="Sydney" Lat="-33.8688" Lon="151.2093"
-                  Area="12367.7" Capacity="6000000">
+            <City Id="sydney_au" Name="Sydney" Lat="-33.8688" Lon="151.2093" Area="12367.7" Capacity="6000000">
                 <Factors>
                     <F Id="pollution" V="3"/>
                     <F Id="transport" V="8"/>

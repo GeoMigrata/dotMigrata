@@ -54,7 +54,7 @@ public class CityXml
     /// </summary>
     [XmlArray("Factors")]
     [XmlArrayItem("F")]
-    public List<Spec>? FactorValues { get; set; }
+    public List<ValueSpecXml>? FactorValues { get; set; }
 
     /// <summary>
     /// Gets or sets the population group references.

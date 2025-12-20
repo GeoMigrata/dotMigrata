@@ -29,7 +29,7 @@ namespace dotMigrata.Snapshot.Models;
 ///     Template mode uses only fixed values.
 ///     </para>
 /// </remarks>
-public class PersonSpec
+public class PersonSpecXml
 {
     /// <summary>
     /// Gets or sets the number of persons to create from this specification.
@@ -41,7 +41,7 @@ public class PersonSpec
     /// Gets or sets the random seed for reproducible generation.
     /// </summary>
     /// <remarks>
-    /// When specified, this PersonSpec acts as a generator with randomized attributes.
+    /// When specified, this PersonSpecXml acts as a generator with randomized attributes.
     /// When not specified, acts as a template with fixed attributes.
     /// </remarks>
     [XmlAttribute("Seed")]
@@ -62,37 +62,37 @@ public class PersonSpec
     /// </summary>
     [XmlArray("Sensitivities")]
     [XmlArrayItem("S")]
-    public List<Spec>? Sensitivities { get; set; }
+    public List<ValueSpecXml>? Sensitivities { get; set; }
 
     /// <summary>
     /// Gets or sets the moving willingness specification (0-1 range).
     /// </summary>
     [XmlElement("Willingness")]
-    public Spec? Willingness { get; set; }
+    public ValueSpecXml? Willingness { get; set; }
 
     /// <summary>
     /// Gets or sets the retention rate specification (0-1 range).
     /// </summary>
     [XmlElement("Retention")]
-    public Spec? Retention { get; set; }
+    public ValueSpecXml? Retention { get; set; }
 
     /// <summary>
     /// Gets or sets the attraction threshold specification (0-1 range).
     /// </summary>
     [XmlElement("Threshold")]
-    public Spec? Threshold { get; set; }
+    public ValueSpecXml? Threshold { get; set; }
 
     /// <summary>
     /// Gets or sets the sensitivity scaling coefficient specification (0-1 range).
     /// </summary>
     [XmlElement("Scaling")]
-    public Spec? Scaling { get; set; }
+    public ValueSpecXml? Scaling { get; set; }
 
     /// <summary>
     /// Gets or sets the minimum acceptable attraction score specification (0-1 range).
     /// </summary>
     [XmlElement("MinAttraction")]
-    public Spec? MinAttraction { get; set; }
+    public ValueSpecXml? MinAttraction { get; set; }
 
     /// <summary>
     /// Gets or sets the semicolon-separated tags for categorization.

@@ -30,12 +30,12 @@ public static class UnitValueExtensions
         }
 
         /// <summary>
-        /// Creates a fixed <see cref="UnitValueSpec" /> from this value.
+        /// Creates a fixed <see cref="UnitValuePromise" /> from this value.
         /// </summary>
-        /// <returns>A new <see cref="UnitValueSpec" /> with a fixed value.</returns>
-        public UnitValueSpec AsSpec()
+        /// <returns>A new <see cref="UnitValuePromise" /> with a fixed value.</returns>
+        public UnitValuePromise AsSpec()
         {
-            return UnitValueSpec.Fixed(value);
+            return UnitValuePromise.Fixed(value);
         }
     }
 
@@ -53,12 +53,12 @@ public static class UnitValueExtensions
         }
 
         /// <summary>
-        /// Creates a fixed <see cref="UnitValueSpec" /> from this value.
+        /// Creates a fixed <see cref="UnitValuePromise" /> from this value.
         /// </summary>
-        /// <returns>A new <see cref="UnitValueSpec" /> with a fixed value.</returns>
-        public UnitValueSpec AsSpec()
+        /// <returns>A new <see cref="UnitValuePromise" /> with a fixed value.</returns>
+        public UnitValuePromise AsSpec()
         {
-            return UnitValueSpec.Fixed(value);
+            return UnitValuePromise.Fixed(value);
         }
     }
 }

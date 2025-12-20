@@ -17,7 +17,7 @@ namespace dotMigrata.Core.Entities;
 ///     The <see cref="CurrentCity" /> property is mutable to support migration operations.
 ///     </para>
 ///     <para>
-///     As of v0.7.1-beta, all sensitivity values are <see cref="UnitValue" /> (0-1 range).
+///     all sensitivity values are <see cref="UnitValue"/> (0-1 range).
 ///     Factor direction (positive/negative) is determined by <see cref="FactorDefinition.Type" />.
 ///     </para>
 /// </remarks>

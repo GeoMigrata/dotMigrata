@@ -12,7 +12,7 @@ namespace dotMigrata.Snapshot.Conversion;
 /// <remarks>
 ///     <para>
 ///     Use this registry to register custom person types for snapshot serialization/deserialization.
-///     StandardPerson is registered by default and does not need explicit registration.
+///     <see cref="StandardPerson"/> is registered by default and does not need explicit registration.
 ///     </para>
 ///     <para>
 ///     Thread Safety: Registration methods are not thread-safe. Register all custom types during
@@ -22,11 +22,11 @@ namespace dotMigrata.Snapshot.Conversion;
 public static class PersonTypeRegistry
 {
     private static readonly
-        Dictionary<string, Func<PersonSpec, Dictionary<FactorDefinition, UnitValue>, List<string>, PersonBase>>
+        Dictionary<string, Func<PersonSpecXml, Dictionary<FactorDefinition, UnitValue>, List<string>, PersonBase>>
         PersonFactories = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly
-        Dictionary<string, Func<PersonSpec, Dictionary<FactorDefinition, UnitValueSpec>, List<string>,
+        Dictionary<string, Func<PersonSpecXml, Dictionary<FactorDefinition, UnitValuePromise>, List<string>,
             IPersonGenerator<PersonBase>>> GeneratorFactories = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly Dictionary<string, Func<PersonBase, XmlDocument, XmlElement?>> PersonSerializers =
@@ -87,10 +87,10 @@ public static class PersonTypeRegistry
     }
 
     /// <summary>
-    /// Creates a person from PersonSpec XML.
+    /// Creates a person from <see cref="PersonSpecXml"/> XML.
     /// </summary>
     internal static PersonBase CreatePerson(
-        PersonSpec spec,
+        PersonSpecXml spec,
         Dictionary<FactorDefinition, UnitValue> sensitivities,
         List<string> tags)
     {
@@ -105,11 +105,11 @@ public static class PersonTypeRegistry
     }
 
     /// <summary>
-    /// Creates a generator from PersonSpec XML.
+    /// Creates a generator from <see cref="PersonSpecXml"/> XML.
     /// </summary>
     internal static IPersonGenerator<PersonBase> CreateGenerator(
-        PersonSpec spec,
-        Dictionary<FactorDefinition, UnitValueSpec> factorSpecs,
+        PersonSpecXml spec,
+        Dictionary<FactorDefinition, UnitValuePromise> factorSpecs,
         List<string> tags)
     {
         var typeName = spec.Type;
@@ -173,7 +173,7 @@ public static class PersonTypeRegistry
         PersonSerializers["StandardPerson"] = (_, _) => null;
     }
 
-    private static UnitValue GetSpecValue(Spec? spec, double defaultValue)
+    private static UnitValue GetSpecValue(ValueSpecXml? spec, double defaultValue)
     {
         if (spec?.Value.HasValue == true)
         {
@@ -191,25 +191,25 @@ public static class PersonTypeRegistry
         return UnitValue.FromRatio(midpoint);
     }
 
-    private static UnitValueSpec ConvertSpecToUnitValueSpec(Spec? spec, double defaultValue)
+    private static UnitValuePromise ConvertSpecToUnitValueSpec(ValueSpecXml? spec, double defaultValue)
     {
         if (spec == null)
-            return UnitValueSpec.Fixed(Math.Clamp(defaultValue, 0, 1));
+            return UnitValuePromise.Fixed(Math.Clamp(defaultValue, 0, 1));
 
         // Fixed value
         if (spec.Value.HasValue)
         {
             var value = Math.Clamp(spec.Value.Value, 0, 1);
-            return UnitValueSpec.Fixed(value);
+            return UnitValuePromise.Fixed(value);
         }
 
         // Range
         if (spec is not { Min: not null, Max: not null })
-            return UnitValueSpec.Fixed(Math.Clamp(defaultValue, 0, 1));
+            return UnitValuePromise.Fixed(Math.Clamp(defaultValue, 0, 1));
 
         var min = Math.Clamp(spec.Min.Value, 0, 1);
         var max = Math.Clamp(spec.Max.Value, 0, 1);
-        return UnitValueSpec.InRange(min, max);
+        return UnitValuePromise.InRange(min, max);
 
         // Default
     }
