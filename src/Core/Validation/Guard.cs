@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace dotMigrata.Core.Validation;
 
@@ -7,26 +6,11 @@ namespace dotMigrata.Core.Validation;
 /// Provides domain-specific guard clauses for parameter validation.
 /// </summary>
 /// <remarks>
-/// For null checks, use <see cref="ArgumentNullException.ThrowIfNull(object?, string?)"/> directly.
+/// For null checks, use <see cref="ArgumentNullException.ThrowIfNull(object?, string?)" /> directly.
 /// This class provides additional domain-specific validation methods.
 /// </remarks>
 public static class Guard
 {
-    /// <summary>
-    /// Throws an <see cref="ArgumentException" /> if the string is null or whitespace.
-    /// </summary>
-    /// <param name="value">The string to check.</param>
-    /// <param name="paramName">The name of the parameter.</param>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="value" /> is null or whitespace.</exception>
-    public static void ThrowIfNullOrWhiteSpace(
-        [NotNull] string? value,
-        [CallerArgumentExpression(nameof(value))]
-        string? paramName = null)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value, paramName);
-    }
-
-
     /// <summary>
     /// Throws an <see cref="ArgumentOutOfRangeException" /> if the value is not in the specified range.
     /// </summary>

@@ -15,7 +15,7 @@ namespace dotMigrata.Core.Entities;
 ///     with domain-specific properties instead of modifying this class.
 ///     </para>
 ///     <para>
-///     all numeric properties use <see cref="UnitValue"/> for type safety.
+///     all numeric properties use <see cref="UnitValue" /> for type safety.
 ///     </para>
 /// </remarks>
 public sealed class StandardPerson : PersonBase

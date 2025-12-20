@@ -7,8 +7,8 @@ namespace dotMigrata.Logic.Models;
 /// Represents the result of an attraction calculation for a city and population group.
 /// </summary>
 /// <remarks>
-/// All attraction and resistance values are type-safe <see cref="UnitValue"/> instances,
-/// guaranteeing they remain in the [0, 1] range. The <see cref="AdjustedAttraction"/> property
+/// All attraction and resistance values are type-safe <see cref="UnitValue" /> instances,
+/// guaranteeing they remain in the [0, 1] range. The <see cref="AdjustedAttraction" /> property
 /// is computed from the base values for consistency.
 /// </remarks>
 public sealed record AttractionResult

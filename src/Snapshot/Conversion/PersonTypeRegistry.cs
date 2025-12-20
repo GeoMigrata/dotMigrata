@@ -12,7 +12,7 @@ namespace dotMigrata.Snapshot.Conversion;
 /// <remarks>
 ///     <para>
 ///     Use this registry to register custom person types for snapshot serialization/deserialization.
-///     <see cref="StandardPerson"/> is registered by default and does not need explicit registration.
+///     <see cref="StandardPerson" /> is registered by default and does not need explicit registration.
 ///     </para>
 ///     <para>
 ///     Thread Safety: Registration methods are not thread-safe. Register all custom types during
@@ -87,7 +87,7 @@ public static class PersonTypeRegistry
     }
 
     /// <summary>
-    /// Creates a person from <see cref="PersonSpecXml"/> XML.
+    /// Creates a person from <see cref="PersonSpecXml" /> XML.
     /// </summary>
     internal static PersonBase CreatePerson(
         PersonSpecXml spec,
@@ -105,7 +105,7 @@ public static class PersonTypeRegistry
     }
 
     /// <summary>
-    /// Creates a generator from <see cref="PersonSpecXml"/> XML.
+    /// Creates a generator from <see cref="PersonSpecXml" /> XML.
     /// </summary>
     internal static IPersonGenerator<PersonBase> CreateGenerator(
         PersonSpecXml spec,

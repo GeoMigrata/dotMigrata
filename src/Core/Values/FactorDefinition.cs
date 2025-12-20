@@ -67,7 +67,7 @@ public record FactorDefinition
     /// When null, linear normalization is used.
     /// </summary>
     /// <remarks>
-    /// uses <see cref="UnitValuePromise.TransformFunc"/> delegate type
+    /// uses <see cref="UnitValuePromise.TransformFunc" /> delegate type
     /// for better integration with the unified value system.
     /// </remarks>
     public UnitValuePromise.TransformFunc? TransformFunction { get; init; }

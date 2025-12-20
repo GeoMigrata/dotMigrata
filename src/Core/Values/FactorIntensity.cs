@@ -6,7 +6,7 @@
 /// </summary>
 /// <remarks>
 ///     <para>
-///     intensity values are stored directly as <see cref="UnitValue"/> for optimal
+///     intensity values are stored directly as <see cref="UnitValue" /> for optimal
 ///     runtime performance. This ensures type safety and eliminates overhead during simulation.
 ///     </para>
 ///     <para>

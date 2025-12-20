@@ -214,7 +214,7 @@ public static class SnapshotConverter
     }
 
     /// <summary>
-    /// Converts a <see cref="ValueSpecXml"/> to a <see cref="UnitValuePromise"/> for generator mode.
+    /// Converts a <see cref="ValueSpecXml" /> to a <see cref="UnitValuePromise" /> for generator mode.
     /// </summary>
     private static UnitValuePromise ConvertSpec(ValueSpecXml? spec)
     {
@@ -247,7 +247,7 @@ public static class SnapshotConverter
     }
 
     /// <summary>
-    /// Converts a <see cref="ValueSpecXml"/> to a fixed <see cref="UnitValue"/> for template mode.
+    /// Converts a <see cref="ValueSpecXml" /> to a fixed <see cref="UnitValue" /> for template mode.
     /// </summary>
     private static UnitValue ConvertValueSpecToValue(ValueSpecXml? spec)
     {
@@ -371,7 +371,7 @@ public static class SnapshotConverter
 
     private static WorldStateXml ConvertWorldState(World world)
     {
-        return new WorldStateXml()
+        return new WorldStateXml
         {
             DisplayName = world.DisplayName,
             FactorDefinitions = world.FactorDefinitions.Select(ConvertToFactorDefXml).ToList(),
@@ -382,7 +382,7 @@ public static class SnapshotConverter
 
     private static FactorDefXml ConvertToFactorDefXml(FactorDefinition factor)
     {
-        return new FactorDefXml()
+        return new FactorDefXml
         {
             Id = GetFactorId(factor),
             DisplayName = factor.DisplayName,
@@ -430,7 +430,7 @@ public static class SnapshotConverter
 
     private static ValueSpecXml ConvertToFactorValueSpec(FactorIntensity fi)
     {
-        return new ValueSpecXml()
+        return new ValueSpecXml
         {
             Id = GetFactorId(fi.Definition),
             Value = fi.Value

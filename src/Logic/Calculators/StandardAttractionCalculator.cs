@@ -38,7 +38,7 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
         var distanceResistance = UnitValue.One;
         if (originCity != null)
             distanceResistance = CalculateDistanceResistance(originCity, city);
-        
+
         return new AttractionResult
         {
             City = city,

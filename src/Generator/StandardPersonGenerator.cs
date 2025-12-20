@@ -16,7 +16,7 @@ namespace dotMigrata.Generator;
 ///     Uses deterministic random generation when seeded, allowing reproducible person generation.
 ///     </para>
 ///     <para>
-///     uses <see cref="UnitValuePromise"/> for all value specifications,
+///     uses <see cref="UnitValuePromise" /> for all value specifications,
 ///     ensuring type-safe generation of values in the [0, 1] range.
 ///     </para>
 /// </remarks>

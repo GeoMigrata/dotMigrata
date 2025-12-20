@@ -6,7 +6,7 @@ namespace dotMigrata.Logic.Common;
 /// Provides common mathematical functions for migration calculations.
 /// </summary>
 /// <remarks>
-/// All methods returning values in the [0, 1] range now return <see cref="UnitValue"/> for type safety.
+/// All methods returning values in the [0, 1] range now return <see cref="UnitValue" /> for type safety.
 /// </remarks>
 public static class MathUtils
 {
@@ -16,7 +16,7 @@ public static class MathUtils
     /// <param name="x">Input value.</param>
     /// <param name="steepness">Controls the steepness of the curve (default: 10).</param>
     /// <param name="midpoint">The midpoint where sigmoid equals 0.5 (default: 0).</param>
-    /// <returns>A value between 0 and 1 as <see cref="UnitValue"/>.</returns>
+    /// <returns>A value between 0 and 1 as <see cref="UnitValue" />.</returns>
     public static UnitValue Sigmoid(double x, double steepness, double midpoint = .0)
     {
         var result = 1.0 / (1.0 + Math.Exp(-steepness * (x - midpoint)));
@@ -28,7 +28,7 @@ public static class MathUtils
     /// </summary>
     /// <param name="distance">The distance in kilometers.</param>
     /// <param name="lambda">The decay coefficient (default: 0.001).</param>
-    /// <returns>A decay factor between 0 and 1 as <see cref="UnitValue"/>.</returns>
+    /// <returns>A decay factor between 0 and 1 as <see cref="UnitValue" />.</returns>
     public static UnitValue DistanceDecay(double distance, double lambda = .001)
     {
         var result = Math.Exp(-lambda * distance);
@@ -42,7 +42,7 @@ public static class MathUtils
     /// <param name="currentPopulation">Current population in the city.</param>
     /// <param name="capacity">Maximum capacity of the city.</param>
     /// <param name="steepness">Controls how sharply resistance increases near capacity (default: 5).</param>
-    /// <returns>A resistance factor between 0 and 1 (higher = more resistance) as <see cref="UnitValue"/>.</returns>
+    /// <returns>A resistance factor between 0 and 1 (higher = more resistance) as <see cref="UnitValue" />.</returns>
     public static UnitValue CapacityResistance(double currentPopulation, double capacity, double steepness = 5.0)
     {
         if (capacity <= 0)
@@ -56,7 +56,7 @@ public static class MathUtils
     /// Normalizes a collection of values to sum to 1 (softmax for probabilities).
     /// </summary>
     /// <param name="values">The values to normalize.</param>
-    /// <returns>Normalized values that sum to 1 as <see cref="UnitValue"/> collection.</returns>
+    /// <returns>Normalized values that sum to 1 as <see cref="UnitValue" /> collection.</returns>
     public static IReadOnlyList<UnitValue> Softmax(IEnumerable<double> values)
     {
         var valueList = values.ToList();
@@ -79,7 +79,7 @@ public static class MathUtils
     /// <param name="value">The value to normalize.</param>
     /// <param name="min">Minimum value in the range.</param>
     /// <param name="max">Maximum value in the range.</param>
-    /// <returns>Normalized value between 0 and 1 as <see cref="UnitValue"/>.</returns>
+    /// <returns>Normalized value between 0 and 1 as <see cref="UnitValue" />.</returns>
     public static UnitValue LinearNormalize(double value, double min, double max)
     {
         if (max <= min)

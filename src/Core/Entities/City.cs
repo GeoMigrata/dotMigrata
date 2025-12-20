@@ -131,7 +131,7 @@ public sealed class City : IDisposable
     /// Thrown when <paramref name="factorIntensity" /> is <see langword="null" />.
     /// </exception>
     /// <remarks>
-    /// Intensities are immutable <see cref="UnitValue"/> values.
+    /// Intensities are immutable <see cref="UnitValue" /> values.
     /// This method replaces the entire FactorIntensity instance with the provided one.
     /// </remarks>
     public void UpdateFactorIntensity(FactorIntensity factorIntensity)
