@@ -47,5 +47,11 @@ public sealed class StandardModelConfigXml
     /// Gets or sets the maximum degree of parallelism.
     /// </summary>
     [XmlAttribute("MaxDegreeOfParallelism")]
-    public int? MaxDegreeOfParallelism { get; set; }
+    public int MaxDegreeOfParallelism { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether MaxDegreeOfParallelism should be serialized.
+    /// </summary>
+    [XmlIgnore]
+    public bool MaxDegreeOfParallelismSpecified { get; set; }
 }

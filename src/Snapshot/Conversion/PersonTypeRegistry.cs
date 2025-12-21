@@ -32,11 +32,7 @@ public static class PersonTypeRegistry
     private static readonly Dictionary<string, Func<PersonBase, XmlDocument, XmlElement?>> PersonSerializers =
         new(StringComparer.OrdinalIgnoreCase);
 
-    static PersonTypeRegistry()
-    {
-        RegisterStandardPerson();
-        // Register StandardPerson by default
-    }
+    static PersonTypeRegistry() => RegisterStandardPerson(); // Register StandardPerson by default
 
     /// <summary>
     /// Registers a custom person type with its serializer.
@@ -125,12 +121,10 @@ public static class PersonTypeRegistry
     /// <summary>
     /// Serializes custom properties for a person.
     /// </summary>
-    internal static XmlElement? SerializePersonCustomProperties(PersonBase person, XmlDocument doc, string typeName)
-    {
-        return PersonSerializers.TryGetValue(typeName, out var serializer)
+    internal static XmlElement? SerializePersonCustomProperties(PersonBase person, XmlDocument doc, string typeName) =>
+        PersonSerializers.TryGetValue(typeName, out var serializer)
             ? serializer(person, doc)
             : null;
-    }
 
     private static void RegisterStandardPerson()
     {
@@ -148,7 +142,7 @@ public static class PersonTypeRegistry
         // StandardPersonGenerator factory
         GeneratorFactories["StandardPerson"] = (spec, factorSpecs, tags) =>
         {
-            var seed = spec.Seed ?? Random.Shared.Next();
+            var seed = spec.SeedSpecified ? spec.Seed : Random.Shared.Next();
 
             return new StandardPersonGenerator(seed)
             {
@@ -175,18 +169,18 @@ public static class PersonTypeRegistry
 
     private static UnitValue GetSpecValue(ValueSpecXml? spec, double defaultValue)
     {
-        if (spec?.Value.HasValue == true)
+        if (spec?.ValueSpecified == true)
         {
-            var value = Math.Clamp(spec.Value.Value, 0, 1);
+            var value = Math.Clamp(spec.Value, 0, 1);
             return UnitValue.FromRatio(value);
         }
 
         // If range specified, use midpoint
-        if (spec?.Min.HasValue != true || !spec.Max.HasValue)
+        if (spec?.MinSpecified != true || !spec.MaxSpecified)
             return UnitValue.FromRatio(Math.Clamp(defaultValue, 0, 1));
 
-        var min = Math.Clamp(spec.Min!.Value, 0, 1);
-        var max = Math.Clamp(spec.Max.Value, 0, 1);
+        var min = Math.Clamp(spec.Min, 0, 1);
+        var max = Math.Clamp(spec.Max, 0, 1);
         var midpoint = (min + max) / 2.0;
         return UnitValue.FromRatio(midpoint);
     }
@@ -197,18 +191,18 @@ public static class PersonTypeRegistry
             return UnitValuePromise.Fixed(Math.Clamp(defaultValue, 0, 1));
 
         // Fixed value
-        if (spec.Value.HasValue)
+        if (spec.ValueSpecified)
         {
-            var value = Math.Clamp(spec.Value.Value, 0, 1);
+            var value = Math.Clamp(spec.Value, 0, 1);
             return UnitValuePromise.Fixed(value);
         }
 
         // Range
-        if (spec is not { Min: not null, Max: not null })
+        if (!spec.MinSpecified || !spec.MaxSpecified)
             return UnitValuePromise.Fixed(Math.Clamp(defaultValue, 0, 1));
 
-        var min = Math.Clamp(spec.Min.Value, 0, 1);
-        var max = Math.Clamp(spec.Max.Value, 0, 1);
+        var min = Math.Clamp(spec.Min, 0, 1);
+        var max = Math.Clamp(spec.Max, 0, 1);
         return UnitValuePromise.InRange(min, max);
 
         // Default

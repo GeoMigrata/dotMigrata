@@ -13,13 +13,13 @@ namespace dotMigrata.Snapshot.Models;
 ///     <list type="bullet">
 ///         <item>
 ///             <description>
-///             <strong>Template mode</strong>: No seed specified - creates persons with fixed attribute
+///             <b>Template mode</b>: No seed specified - creates persons with fixed attribute
 ///             values
 ///             </description>
 ///         </item>
 ///         <item>
 ///             <description>
-///             <strong>Generator mode</strong>: Seed specified - creates persons with randomized attributes
+///             <b>Generator mode</b>: Seed specified - creates persons with randomized attributes
 ///             from specifications
 ///             </description>
 ///         </item>
@@ -45,7 +45,13 @@ public class PersonSpecXml
     /// When not specified, acts as a template with fixed attributes.
     /// </remarks>
     [XmlAttribute("Seed")]
-    public int? Seed { get; set; }
+    public int Seed { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether Seed should be serialized.
+    /// </summary>
+    [XmlIgnore]
+    public bool SeedSpecified { get; set; }
 
     /// <summary>
     /// Gets or sets the person type name (e.g., "StandardPerson", "DemographicPerson").
@@ -114,5 +120,5 @@ public class PersonSpecXml
     /// Determines whether this specification is a generator (has seed) or template (no seed).
     /// </summary>
     [XmlIgnore]
-    public bool IsGenerator => Seed.HasValue;
+    public bool IsGenerator => SeedSpecified;
 }

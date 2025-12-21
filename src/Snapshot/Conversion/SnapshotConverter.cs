@@ -250,27 +250,27 @@ public static class SnapshotConverter
             return UnitValuePromise.InRange(0, 1);
 
         // Fixed value
-        if (spec.Value.HasValue)
+        if (spec.ValueSpecified)
         {
-            var value = Math.Clamp(spec.Value.Value, 0, 1);
+            var value = Math.Clamp(spec.Value, 0, 1);
             return UnitValuePromise.Fixed(value);
         }
 
         // Approximately (normal distribution)
-        if (spec.Approximately.HasValue)
+        if (spec.ApproximatelySpecified)
         {
-            var mean = Math.Clamp(spec.Approximately.Value, 0, 1);
-            var stdDev = spec.StandardDeviation ?? 0.1; // Default standard deviation
+            var mean = Math.Clamp(spec.Approximately, 0, 1);
+            var stdDev = spec.StandardDeviationSpecified ? spec.StandardDeviation : 0.1; // Default standard deviation
             return UnitValuePromise.Approximately(mean, stdDev);
         }
 
         // Range
-        if (spec is not { Min: not null, Max: not null })
+        if (!spec.MinSpecified || !spec.MaxSpecified)
             return UnitValuePromise.InRange(0, 1);
 
         // Default: random 0-1
-        var min = Math.Clamp(spec.Min.Value, 0, 1);
-        var max = Math.Clamp(spec.Max.Value, 0, 1);
+        var min = Math.Clamp(spec.Min, 0, 1);
+        var max = Math.Clamp(spec.Max, 0, 1);
         return UnitValuePromise.InRange(min, max);
     }
 
@@ -279,18 +279,18 @@ public static class SnapshotConverter
     /// </summary>
     private static UnitValue ConvertValueSpecToValue(ValueSpecXml? spec)
     {
-        if (spec?.Value.HasValue == true)
+        if (spec?.ValueSpecified == true)
         {
-            var value = Math.Clamp(spec.Value.Value, 0, 1);
+            var value = Math.Clamp(spec.Value, 0, 1);
             return UnitValue.FromRatio(value);
         }
 
         // If no value specified, use midpoint of range or default to 0.5
-        if (spec?.Min.HasValue != true || !spec.Max.HasValue)
+        if (spec?.MinSpecified != true || !spec.MaxSpecified)
             return UnitValue.FromRatio(0.5);
 
-        var min = Math.Clamp(spec.Min!.Value, 0, 1);
-        var max = Math.Clamp(spec.Max.Value, 0, 1);
+        var min = Math.Clamp(spec.Min, 0, 1);
+        var max = Math.Clamp(spec.Max, 0, 1);
         var midpoint = (min + max) / 2.0;
         return UnitValue.FromRatio(midpoint);
     }
@@ -318,7 +318,7 @@ public static class SnapshotConverter
                 if (!string.IsNullOrEmpty(fv.Id) && factorLookup.TryGetValue(fv.Id, out var factor))
                 {
                     // Factor values in XML are raw values that need to be normalized
-                    var rawValue = fv.Value ?? 0.0;
+                    var rawValue = fv.ValueSpecified ? fv.Value : 0.0;
                     var clamped = Math.Clamp(rawValue, factor.MinValue, factor.MaxValue);
                     var range = factor.MaxValue - factor.MinValue;
                     var normalizedValue = range == 0 ? 0 : (clamped - factor.MinValue) / range;
@@ -397,20 +397,17 @@ public static class SnapshotConverter
 
     #region ToSnapshot Conversion Helpers
 
-    private static WorldStateXml ConvertWorldState(World world)
-    {
-        return new WorldStateXml
+    private static WorldStateXml ConvertWorldState(World world) =>
+        new()
         {
             DisplayName = world.DisplayName,
             FactorDefinitions = world.FactorDefinitions.Select(ConvertToFactorDefXml).ToList(),
             Cities = world.Cities.Select(ConvertToCityXml).ToList(),
             PersonCollections = [] // Note: Population groups are not reconstructed from live World
         };
-    }
 
-    private static FactorDefXml ConvertToFactorDefXml(FactorDefinition factor)
-    {
-        return new FactorDefXml
+    private static FactorDefXml ConvertToFactorDefXml(FactorDefinition factor) =>
+        new()
         {
             Id = GetFactorId(factor),
             DisplayName = factor.DisplayName,
@@ -419,7 +416,6 @@ public static class SnapshotConverter
             Max = factor.MaxValue,
             CustomTransformName = GetTransformName(factor.TransformFunction)
         };
-    }
 
     private static string? GetTransformName(UnitValuePromise.TransformFunc? transformFunc)
     {
@@ -456,14 +452,13 @@ public static class SnapshotConverter
         return cityXml;
     }
 
-    private static ValueSpecXml ConvertToFactorValueSpec(FactorIntensity fi)
-    {
-        return new ValueSpecXml
+    private static ValueSpecXml ConvertToFactorValueSpec(FactorIntensity fi) =>
+        new()
         {
             Id = GetFactorId(fi.Definition),
-            Value = fi.Value
+            Value = fi.Value,
+            ValueSpecified = true
         };
-    }
 
     #endregion
 }
