@@ -6,11 +6,14 @@ This guide provides detailed examples and usage instructions for dotMigrata.
 
 - [Installation](#installation)
 - [Quick Start Example](#quick-start-example)
+- [Value Specifications](#value-specifications)
 - [PersonCollection System](#personcollection-system)
-- [Custom Person Generation](#custom-person-generation)
 - [Creating Custom Person Types](#creating-custom-person-types)
-- [Configuring Simulation Parameters](#configuring-simulation-parameters)
 - [Working with Snapshots](#working-with-snapshots)
+- [Event System](#event-system)
+- [Configuring Simulation Parameters](#configuring-simulation-parameters)
+- [Simulation Metrics](#simulation-metrics)
+- [Performance Optimization](#performance-optimization)
 
 ## Installation
 
@@ -32,17 +35,6 @@ Factors represent characteristics of cities (like income or pollution) that infl
 as `FactorDefinition` objects that will be referenced throughout your simulation.
 
 ```csharp
-using dotMigrata.Core.Entities;
-using dotMigrata.Core.Enums;
-using dotMigrata.Core.Values;
-using dotMigrata.Generator;
-using dotMigrata.Logic.Calculators;
-using dotMigrata.Simulation.Engine;
-using dotMigrata.Simulation.Interfaces;
-using dotMigrata.Simulation.Models;
-using dotMigrata.Simulation.Pipeline;
-
-// Define factor objects that will be referenced throughout the simulation
 var incomeFactor = new FactorDefinition
 {
     DisplayName = "Income",
@@ -58,7 +50,7 @@ var pollutionFactor = new FactorDefinition
     Type = FactorType.Negative,
     MinValue = 0,
     MaxValue = 100,
-        TransformFunction = null  // Linear normalization
+    TransformFunction = null  // Linear normalization
 };
 
 var allFactors = new[] { incomeFactor, pollutionFactor };
@@ -75,14 +67,14 @@ collection.Add(new StandardPersonGenerator
 {
     Count = 100000,
     // Use FactorDefinition references for type safety
-    FactorSensitivities = new Dictionary<FactorDefinition, UnitValueSpec>
+    FactorSensitivities = new Dictionary<FactorDefinition, UnitValuePromise>
     {
-        [incomeFactor] = UnitValueSpec.InRange(0.3, 0.8),        // Sensitivity to income (0-1)
-        [pollutionFactor] = UnitValueSpec.InRange(0.2, 0.6)      // Sensitivity to pollution (0-1)
+        [incomeFactor] = UnitValuePromise.InRange(0.3, 0.8),        // Sensitivity to income (0-1)
+        [pollutionFactor] = UnitValuePromise.InRange(0.2, 0.6)      // Sensitivity to pollution (0-1)
     },
-    // Person behavioral properties via UnitValueSpec
-    MovingWillingness = UnitValueSpec.InRange(0.4, 0.7),
-    RetentionRate = UnitValueSpec.InRange(0.3, 0.6),
+    // Person behavioral properties
+    MovingWillingness = UnitValuePromise.InRange(0.4, 0.7),
+    RetentionRate = UnitValuePromise.InRange(0.3, 0.6),
     Tags = ["urban_resident"]
 });
 ```
@@ -135,8 +127,6 @@ var world = new World([cityA, cityB], allFactors)
 Set up the simulation using the fluent builder API (recommended approach).
 
 ```csharp
-using dotMigrata.Simulation.Builders;
-
 var engine = SimulationBuilder.Create()
     .WithConsoleOutput()
     .ConfigureSimulation(s => s.MaxTicks(100))
@@ -146,8 +136,6 @@ var engine = SimulationBuilder.Create()
 Alternatively, for advanced scenarios with custom calculators:
 
 ```csharp
-using dotMigrata.Simulation.Pipeline;
-
 var attractionCalc = new StandardAttractionCalculator();
 using var migrationCalc = new StandardMigrationCalculator();
 
@@ -177,32 +165,42 @@ await engine.DisposeAsync();
 
 ## Value Specifications
 
-The framework provides several ways to specify values for person attributes:
+The framework provides `UnitValuePromise` for specifying values in generators with lazy evaluation:
 
 ### Fixed Values
 
 ```csharp
-UnitValueSpec.Fixed(0.75)  // All persons get exactly 0.75 (clamped 0-1)
+UnitValuePromise.Fixed(0.75)  // All persons get exactly 0.75 (clamped 0-1)
 ```
 
 ### Range Values (Uniform Distribution)
 
 ```csharp
-UnitValueSpec.InRange(0.4, 0.8)  // Uniformly distributed between 0.4 and 0.8
+UnitValuePromise.InRange(0.4, 0.8)  // Uniformly distributed between 0.4 and 0.8
 ```
 
 ### Approximate Values (Normal Distribution)
 
 ```csharp
 // Values sampled from normal distribution with mean=0.6, stddev=0.15
-UnitValueSpec.Approximately(mean: 0.6, standardDeviation: 0.15)
+UnitValuePromise.Approximately(mean: 0.6, standardDeviation: 0.15)
 ```
 
 ### Random with Scale
 
 ```csharp
 // Scale > 1.0 biases toward higher values, < 1.0 toward lower values
-UnitValueSpec.RandomWithScale(scale: 1.5)
+UnitValuePromise.RandomWithScale(scale: 1.5)
+```
+
+For direct value assignment (not in generators), use `UnitValue`:
+
+```csharp
+var cityFactor = new FactorIntensity 
+{ 
+    Definition = incomeFactor, 
+    Value = UnitValue.FromRatio(0.5) 
+};
 ```
 
 ## PersonCollection System
@@ -212,11 +210,6 @@ duplicates, or use generators with specifications. Always use `FactorDefinition`
 strings.
 
 ```csharp
-using dotMigrata.Core.Entities;
-using dotMigrata.Core.Enums;
-using dotMigrata.Core.Values;
-using dotMigrata.Generator;
-
 // First, define your factor objects
 var incomeFactor = new FactorDefinition
 {
@@ -282,13 +275,13 @@ collection.Add(middleClassPerson, count: 10_000);
 collection.Add(new StandardPersonGenerator(seed: 42)
 {
     Count = 100_000,
-    FactorSensitivities = new Dictionary<FactorDefinition, UnitValueSpec>
+    FactorSensitivities = new Dictionary<FactorDefinition, UnitValuePromise>
     {
-        [incomeFactor] = UnitValueSpec.InRange(0.3, 0.9),
-        [pollutionFactor] = UnitValueSpec.Fixed(0.5)
+        [incomeFactor] = UnitValuePromise.InRange(0.3, 0.9),
+        [pollutionFactor] = UnitValuePromise.Fixed(0.5)
     },
-    MovingWillingness = UnitValueSpec.InRange(0.6, 0.9),
-    RetentionRate = UnitValueSpec.InRange(0.3, 0.6),
+    MovingWillingness = UnitValuePromise.InRange(0.6, 0.9),
+    RetentionRate = UnitValuePromise.InRange(0.3, 0.6),
     Tags = ["young_professional", "tech_worker"]
 });
 
@@ -329,59 +322,6 @@ var tagStats = world.AllPersons
 - Efficient duplicate handling
 - Type-safe FactorDefinition references
 
-## Custom Person Generation
-
-For more control over person attributes, configure individual generators with custom parameters:
-
-```csharp
-using dotMigrata.Core.Entities;
-using dotMigrata.Core.Enums;
-using dotMigrata.Core.Values;
-using dotMigrata.Generator;
-
-// Define factors first (full-reference architecture)
-var incomeFactor = new FactorDefinition
-{
-    DisplayName = "Income",
-    Type = FactorType.Positive,
-    MinValue = 20000,
-    MaxValue = 100000,
-    TransformFunction = null
-};
-
-FactorDefinition[] allFactors = [incomeFactor];
-
-// Create PersonCollection with custom generator configuration
-var collection = new PersonCollection();
-
-// Configure generator with custom seed and sensitivity parameters
-collection.Add(new StandardPersonGenerator(seed: 42)
-{
-    Count = 50000,
-    FactorSensitivities = new Dictionary<FactorDefinition, UnitValueSpec>
-    {
-        [incomeFactor] = UnitValueSpec.InRange(0.5, 0.9)
-    },
-    MovingWillingness = UnitValueSpec.InRange(0.4, 0.7),
-    RetentionRate = UnitValueSpec.InRange(0.3, 0.6)
-});
-
-IEnumerable<PersonBase> persons = collection.GenerateAllPersons(allFactors);
-
-// Add persons to city
-var city = new City(
-    factorValues: [
-        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.8) }
-    ],
-    persons: persons)
-{
-    DisplayName = "City A",
-    Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
-    Area = 100.0,
-    Capacity = 500000
-};
-```
-
 ## Creating Custom Person Types
 
 The framework introduces an inheritance-based architecture for creating custom person types by
@@ -398,37 +338,26 @@ Create a custom person type when you need:
 ### Example: Creating a Demographic Person Type
 
 ```csharp
-using dotMigrata.Core.Entities;
-using dotMigrata.Core.Values;
-
 /// <summary>
 /// Custom person type with demographic attributes.
 /// </summary>
 public sealed class DemographicPerson : PersonBase
 {
-    public DemographicPerson(IDictionary<FactorDefinition, double> factorSensitivities)
+    public DemographicPerson(IDictionary<FactorDefinition, UnitValue> factorSensitivities)
         : base(factorSensitivities)
     {
     }
 
-    /// <summary>
-    /// Age of the person in years.
-    /// </summary>
+    /// <summary>Age of the person in years.</summary>
     public int Age { get; init; }
 
-    /// <summary>
-    /// Annual income in local currency.
-    /// </summary>
+    /// <summary>Annual income in local currency.</summary>
     public double Income { get; init; }
 
-    /// <summary>
-    /// Education level (e.g., "HighSchool", "Bachelor", "Master", "PhD").
-    /// </summary>
+    /// <summary>Education level (e.g., "HighSchool", "Bachelor", "Master", "PhD").</summary>
     public string EducationLevel { get; init; } = string.Empty;
 
-    /// <summary>
-    /// Employment status.
-    /// </summary>
+    /// <summary>Employment status.</summary>
     public bool IsEmployed { get; init; }
 }
 ```
@@ -438,11 +367,6 @@ public sealed class DemographicPerson : PersonBase
 When using custom person types, you'll typically need custom calculators to access the additional properties:
 
 ```csharp
-using dotMigrata.Core.Entities;
-using dotMigrata.Logic.Calculators;
-using dotMigrata.Logic.Interfaces;
-using dotMigrata.Logic.Models;
-
 /// <summary>
 /// Custom attraction calculator that considers demographic attributes.
 /// </summary>
@@ -513,15 +437,10 @@ The framework provides a type-safe way to generate custom person types by implem
 pattern.
 
 ```csharp
-using dotMigrata.Core.Entities;
-using dotMigrata.Core.Enums;
-using dotMigrata.Core.Values;
-using dotMigrata.Generator;
-
 // Define your custom person type
 public sealed class DemographicPerson : PersonBase
 {
-    public DemographicPerson(IDictionary<FactorDefinition, double> factorSensitivities)
+    public DemographicPerson(IDictionary<FactorDefinition, UnitValue> factorSensitivities)
         : base(factorSensitivities)
     {
     }
@@ -543,11 +462,11 @@ public sealed class DemographicPersonGenerator : IPersonGenerator<DemographicPer
     }
 
     public required int Count { get; init; }
-    public required ValueSpec MovingWillingness { get; init; }
-    public required ValueSpec RetentionRate { get; init; }
-    public required ValueSpec Age { get; init; }
-    public required ValueSpec Income { get; init; }
-    public Dictionary<FactorDefinition, ValueSpec> FactorSensitivities { get; init; } = [];
+    public required UnitValuePromise MovingWillingness { get; init; }
+    public required UnitValuePromise RetentionRate { get; init; }
+    public required UnitValuePromise Age { get; init; }
+    public required UnitValuePromise Income { get; init; }
+    public Dictionary<FactorDefinition, UnitValuePromise> FactorSensitivities { get; init; } = [];
     public IReadOnlyList<string> Tags { get; init; } = [];
 
     public IEnumerable<DemographicPerson> Generate(IEnumerable<FactorDefinition> factorDefinitions)
@@ -556,25 +475,25 @@ public sealed class DemographicPersonGenerator : IPersonGenerator<DemographicPer
         for (var i = 0; i < Count; i++)
         {
             // Generate base properties
-            var sensitivities = new Dictionary<FactorDefinition, double>();
+            var sensitivities = new Dictionary<FactorDefinition, UnitValue>();
             foreach (var factor in factors)
             {
                 if (FactorSensitivities.TryGetValue(factor, out var spec))
-                    sensitivities[factor] = GenerateValue(spec);
+                    sensitivities[factor] = spec.Generate(_random);
                 else
-                    sensitivities[factor] = _random.NextDouble() * 10 - 5; // Default range
+                    sensitivities[factor] = UnitValue.FromRatio(_random.NextDouble());
             }
 
-            var age = (int)GenerateValue(Age);
-            var income = GenerateValue(Income);
+            var age = (int)Age.Generate(_random).Value;
+            var income = Income.Generate(_random).Value;
             var educationLevel = age < 25 ? "HighSchool" : 
                                age < 30 ? "Bachelor" :
                                age < 40 ? "Master" : "PhD";
 
             yield return new DemographicPerson(sensitivities)
             {
-                MovingWillingness = NormalizedValue.FromRatio(GenerateValue(MovingWillingness)),
-                RetentionRate = NormalizedValue.FromRatio(GenerateValue(RetentionRate)),
+                MovingWillingness = MovingWillingness.Generate(_random),
+                RetentionRate = RetentionRate.Generate(_random),
                 Age = age,
                 Income = income,
                 EducationLevel = educationLevel,
@@ -582,17 +501,6 @@ public sealed class DemographicPersonGenerator : IPersonGenerator<DemographicPer
                 Tags = Tags.ToList()
             };
         }
-    }
-
-    private double GenerateValue(ValueSpec spec)
-    {
-        if (spec.IsFixed) return spec.FixedValue!.Value;
-        if (spec.HasRange)
-        {
-            var (min, max) = spec.Range!.Value;
-            return min + _random.NextDouble() * (max - min);
-        }
-        return _random.NextDouble();
     }
 }
 
@@ -612,14 +520,14 @@ var collection = new PersonCollection();
 collection.Add(new DemographicPersonGenerator(seed: 42)
 {
     Count = 10000,
-    FactorSensitivities = new Dictionary<FactorDefinition, UnitValueSpec>
+    FactorSensitivities = new Dictionary<FactorDefinition, UnitValuePromise>
     {
-        [incomeFactor] = UnitValueSpec.InRange(0.3, 0.8)
+        [incomeFactor] = UnitValuePromise.InRange(0.3, 0.8)
     },
-    MovingWillingness = UnitValueSpec.InRange(0.4, 0.7),
-    RetentionRate = UnitValueSpec.InRange(0.3, 0.6),
-    Age = UnitValueSpec.InRange(18, 65),
-    Income = UnitValueSpec.InRange(25000, 120000),
+    MovingWillingness = UnitValuePromise.InRange(0.4, 0.7),
+    RetentionRate = UnitValuePromise.InRange(0.3, 0.6),
+    Age = UnitValuePromise.InRange(18, 65),
+    Income = UnitValuePromise.InRange(25000, 120000),
     Tags = ["demographic_study"]
 });
 
@@ -633,7 +541,7 @@ Console.WriteLine($"Average age: {demographicPersons.Average(p => p.Age):F1}");
 
 - **Type-safe**: Define exactly the properties your person type needs
 - **Flexible**: Full control over generation logic
-- **Clean API**: No unwieldy 7-parameter functions
+- **Clean API**: No unwieldy multi-parameter functions
 - **Testable**: Easy to unit test generator logic
 - **Discoverable**: Clear interface makes implementation obvious
 
@@ -641,22 +549,11 @@ Console.WriteLine($"Average age: {demographicPersons.Average(p => p.Age):F1}");
 
 The snapshot system fully supports custom person types through the type discriminator pattern.
 
-### Using Custom Person Types with Snapshots
-
-The framework supports custom person types in snapshots. You can:
-
-- Save and load snapshots with custom person types
-- Implement custom serialization for additional properties
-- Use type-safe deserialization with the `PersonTypeRegistry`
-
 #### Default Behavior
 
 Without registration, snapshots default to `StandardPerson`:
 
 ```csharp
-using dotMigrata.Snapshot.Serialization;
-using dotMigrata.Snapshot.Conversion;
-
 // Converting a world to snapshot
 var snapshot = SnapshotConverter.ToSnapshot(world);
 XmlSnapshotSerializer.SerializeToFile(snapshot, "world-snapshot.xml");
@@ -671,17 +568,12 @@ var loadedWorld = SnapshotConverter.ToWorld(loadedSnapshot);
 To support custom person types in snapshots, implement the serializer interfaces and register:
 
 ```csharp
-using dotMigrata.Snapshot.Conversion;
-using dotMigrata.Core.Entities;
-using dotMigrata.Core.Values;
-using System.Xml;
-
 // 1. Create a custom person serializer
 public class DemographicPersonSerializer : ICustomPersonSerializer<DemographicPerson>
 {
     public DemographicPerson CreateFromTemplate(
         PersonTemplateXml template,
-        Dictionary<FactorDefinition, double> sensitivities,
+        Dictionary<FactorDefinition, UnitValue> sensitivities,
         List<string> tags)
     {
         // Extract custom properties from XML
@@ -772,14 +664,13 @@ public class DemographicGeneratorSerializer :
 {
     public DemographicPersonGenerator CreateFromXml(
         GeneratorXml generatorXml,
-        Dictionary<FactorDefinition, UnitValueSpec> factorSpecs,
+        Dictionary<FactorDefinition, UnitValuePromise> factorSpecs,
         List<string> tags)
     {
         return new DemographicPersonGenerator(generatorXml.Seed)
         {
             Count = generatorXml.Count,
-            // Convert UnitValueSpec to generator properties as needed
-            // ...
+            // Convert specifications as needed
             Tags = tags
         };
     }
@@ -799,67 +690,12 @@ PersonTypeRegistry.RegisterGeneratorType<DemographicPerson, DemographicPersonGen
     new DemographicGeneratorSerializer());
 ```
 
-### Key Points
+**Key Points:**
 
 - **Register once**: Register custom types at application startup before loading/saving snapshots
 - **Type names**: Use consistent type names (e.g., "DemographicPerson") across registration and XML
 - **Backward compatible**: Existing snapshots without `PersonType` attribute default to "StandardPerson"
 - **Clean separation**: CustomProperties keeps core schema simple while allowing extensibility
-
-## Configuring Simulation Parameters
-
-You can configure the simulation execution and model parameters using modern C# syntax:
-
-```csharp
-using dotMigrata.Logic.Calculators;
-using dotMigrata.Logic.Models;
-using dotMigrata.Simulation.Builders;
-using dotMigrata.Simulation.Models;
-
-// Configure model parameters
-StandardModelConfig modelConfig = new()
-{
-    CapacitySteepness = 5.0,
-    DistanceDecayLambda = 0.001,
-    MigrationProbabilitySteepness = 10.0,
-    MigrationProbabilityThreshold = 0.0,
-    FactorSmoothingAlpha = 0.2
-};
-
-// Configure simulation parameters
-SimulationConfig simConfig = new()
-{
-    MaxTicks = 500,
-    CheckStability = true,
-    StabilityThreshold = 100,  // Consider stable if <100 persons migrate
-    StabilityCheckInterval = 5,
-    MinTicksBeforeStabilityCheck = 20
-};
-
-// Create simulation engine with custom configuration using builder (recommended)
-var engine = SimulationBuilder.Create()
-    .ConfigureModel(m => 
-    {
-        m.CapacitySteepness = 5.0;
-        m.DistanceDecayLambda = 0.001;
-        m.MigrationProbabilitySteepness = 10.0;
-        m.MigrationProbabilityThreshold = 0.0;
-        m.FactorSmoothingAlpha = 0.2;
-    })
-    .ConfigureSimulation(s => 
-    {
-        s.MaxTicks = 500;
-        s.CheckStability = true;
-        s.StabilityThreshold = 100;
-        s.StabilityCheckInterval = 5;
-        s.MinTicksBeforeStabilityCheck = 20;
-    })
-    .WithConsoleOutput()
-    .Build();
-
-// Run simulation
-var result = await engine.RunAsync(world);
-```
 
 ## Working with Snapshots
 
@@ -869,8 +705,6 @@ PersonCollection specifications for efficient storage and deterministic reproduc
 ### Loading a Snapshot from File
 
 ```csharp
-using dotMigrata.Snapshot.Serialization;
-
 // Deserialize snapshot from XML file
 var snapshot = XmlSnapshotSerializer.DeserializeFromFile("examples/example-snapshot-v4.xml");
 
@@ -890,14 +724,10 @@ if (snapshot?.World != null)
 Snapshots are typically created as XML files. Here's how to create one programmatically using modern C# syntax:
 
 ```csharp
-using dotMigrata.Snapshot.Enums;
-using dotMigrata.Snapshot.Models;
-using dotMigrata.Snapshot.Serialization;
-
 // Create snapshot structure
 WorldSnapshotXml snapshot = new()
 {
-    Version = "1.0",
+    Version = "v4",
     Status = SnapshotStatus.Seed,
     CreatedAt = DateTime.UtcNow,
     LastModifiedAt = DateTime.UtcNow,
@@ -946,12 +776,12 @@ WorldSnapshotXml snapshot = new()
                             new SensitivitySpecXml
                             {
                                 Id = "income",
-                                InRange = new RangeValueXml { Min = 3, Max = 8 }
+                                InRange = new RangeValueXml { Min = 0.3, Max = 0.8 }
                             },
                             new SensitivitySpecXml
                             {
                                 Id = "pollution",
-                                InRange = new RangeValueXml { Min = -7, Max = -3 }
+                                InRange = new RangeValueXml { Min = 0.2, Max = 0.6 }
                             }
                         ],
                         MovingWillingness = new ValueSpecXml
@@ -1017,10 +847,6 @@ Console.WriteLine("Snapshot saved to my-simulation-snapshot.xml");
 Use `SnapshotConverter` to convert snapshots to runnable World objects:
 
 ```csharp
-using dotMigrata.Snapshot.Conversion;
-using dotMigrata.Snapshot.Serialization;
-using dotMigrata.Simulation.Builders;
-
 // Load and convert snapshot
 var snapshot = XmlSnapshotSerializer.DeserializeFromFile("examples/example-snapshot-v4.xml");
 var world = SnapshotConverter.ToWorld(snapshot!);
@@ -1042,10 +868,6 @@ var result = await engine.RunAsync(world);
 Convert simulation results back to snapshot format:
 
 ```csharp
-using dotMigrata.Snapshot.Conversion;
-using dotMigrata.Snapshot.Serialization;
-using dotMigrata.Snapshot.Enums;
-
 // After running simulation...
 var outputSnapshot = SnapshotConverter.ToSnapshot(
     result.World,
@@ -1070,18 +892,263 @@ A snapshot contains:
 - **FactorDefinitions**: Global factor definitions used across all cities
 - **PersonCollections**: Reusable population specifications (templates and generators)
 - **Cities**: City definitions with factor values and person collection references
+- **Events**: Optional simulation events for dynamic scenarios
 - **Steps**: Optional simulation steps for reproducibility
 
 See [examples/example-snapshot-v4.xml](examples/example-snapshot-v4.xml) for a complete working example.
+
+## Event System
+
+The event system provides a powerful mechanism for creating dynamic simulation scenarios by modifying city factors
+during runtime. Events support various triggers and effects for modeling policy changes, disasters, economic shifts, and
+feedback mechanisms.
+
+### Event Basics
+
+Events consist of:
+
+- **Trigger**: Defines when the event executes (one-time, periodic, continuous, or conditional)
+- **Effect**: Defines what happens when the event executes (factor changes, feedback, or composite effects)
+
+### Creating Events Programmatically
+
+```csharp
+// One-time event at specific tick
+var pollutionSpike = new SimulationEvent(
+    displayName: "Pollution Spike",
+    trigger: new TickTrigger(tick: 50),
+    effect: new FactorChangeEffect(
+        targetFactor: pollutionFactor,
+        changeValue: UnitValuePromise.Fixed(10.5),
+        applicationType: EffectApplicationType.Temporary,
+        duration: EffectDuration.OverTicks(20)
+    ),
+    description: "Industrial accident causes temporary pollution increase"
+);
+
+// Periodic event every N ticks
+var seasonalChange = new SimulationEvent(
+    displayName: "Seasonal Economic Cycle",
+    trigger: new PeriodicTrigger(startTick: 0, interval: 90),
+    effect: new FactorChangeEffect(
+        targetFactor: incomeFactor,
+        changeValue: UnitValuePromise.InRange(0.9, 1.1),
+        applicationType: EffectApplicationType.Multiply,
+        duration: EffectDuration.Instant()
+    )
+);
+
+// Continuous event active during a time window
+var infrastructureUpgrade = new SimulationEvent(
+    displayName: "Transport Infrastructure Upgrade",
+    trigger: new ContinuousTrigger(startTick: 100, endTick: 200),
+    effect: new FactorChangeEffect(
+        targetFactor: transportFactor,
+        changeValue: UnitValuePromise.Fixed(9.5),
+        applicationType: EffectApplicationType.Permanent
+    ),
+    description: "Gradual transport quality improvement"
+);
+
+// Composite effect modifying multiple factors
+var economicBoom = new SimulationEvent(
+    displayName: "Economic Boom",
+    trigger: new TickTrigger(tick: 150),
+    effect: new CompositeEffect([
+        new FactorChangeEffect(
+            targetFactor: incomeFactor,
+            changeValue: UnitValuePromise.Fixed(1050),
+            applicationType: EffectApplicationType.Permanent
+        ),
+        new FactorChangeEffect(
+            targetFactor: housingCostFactor,
+            changeValue: UnitValuePromise.Fixed(4000),
+            applicationType: EffectApplicationType.Permanent
+        )
+    ])
+);
+```
+
+### Application Types
+
+Events can apply changes in different ways:
+
+```csharp
+// Absolute: Set factor to specific value
+EffectApplicationType.Permanent  // Immediate permanent change
+EffectApplicationType.Temporary  // Temporary change (requires duration)
+
+// Delta: Add/subtract from current value
+EffectApplicationType.Delta
+
+// Multiply: Scale current value
+EffectApplicationType.Multiply
+
+// Transitions: Gradual changes
+EffectApplicationType.LinearTransition    // Linear interpolation
+EffectApplicationType.LogarithmicTransition  // Logarithmic curve
+```
+
+### Effect Duration
+
+```csharp
+// Instant change
+EffectDuration.Instant()
+
+// Change applied over N ticks
+EffectDuration.OverTicks(20)
+```
+
+### Adding Events to Simulation
+
+```csharp
+// Add events to world before running simulation
+world.Events.Add(pollutionSpike);
+world.Events.Add(seasonalChange);
+world.Events.Add(infrastructureUpgrade);
+
+// Or configure in SimulationBuilder
+var engine = SimulationBuilder.Create()
+    .WithConsoleOutput()
+    .AddEventStage()  // Add event processing stage
+    .ConfigureSimulation(s => s.MaxTicks(500))
+    .Build();
+
+var result = await engine.RunAsync(world);
+```
+
+### Events in Snapshots
+
+Events are fully supported in XML snapshots:
+
+```xml
+
+<Events>
+    <Event Id="pollution_spike" Name="Pollution Spike Event"
+           Description="Temporary pollution increase" Completed="false">
+        <Trigger Type="TickTrigger" Tick="50"/>
+        <Effects>
+            <Effect Type="FactorChangeEffect" FactorId="pollution"
+                    ApplicationType="Temporary" Duration="20">
+                <ValueSpec V="10.5"/>
+            </Effect>
+        </Effects>
+    </Event>
+
+    <Event Id="economic_boom" Name="Economic Boom" Completed="false">
+        <Trigger Type="TickTrigger" Tick="150"/>
+        <Effects>
+            <Effect Type="CompositeEffect">
+                <CompositeEffects>
+                    <Effect Type="FactorChangeEffect" FactorId="income"
+                            ApplicationType="Permanent">
+                        <ValueSpec V="1050"/>
+                    </Effect>
+                    <Effect Type="FactorChangeEffect" FactorId="housing_cost"
+                            ApplicationType="Permanent">
+                        <ValueSpec V="4000"/>
+                    </Effect>
+                </CompositeEffects>
+            </Effect>
+        </Effects>
+    </Event>
+</Events>
+```
+
+### Conditional Events
+
+For advanced scenarios, implement `IEventTrigger` with custom conditions:
+
+```csharp
+public class PopulationThresholdTrigger : IEventTrigger
+{
+    private readonly int _threshold;
+    private bool _triggered;
+
+    public PopulationThresholdTrigger(int threshold)
+    {
+        _threshold = threshold;
+    }
+
+    public bool ShouldTrigger(SimulationContext context)
+    {
+        if (_triggered) return false;
+        
+        var totalPop = context.World.Population;
+        if (totalPop > _threshold)
+        {
+            _triggered = true;
+            return true;
+        }
+        return false;
+    }
+}
+```
+
+### Event System Benefits
+
+- **Dynamic Scenarios**: Model real-world events affecting migration patterns
+- **Flexible Triggers**: One-time, periodic, continuous, or conditional execution
+- **Multiple Effect Types**: Permanent, temporary, delta, multiply, and transition effects
+- **Composable**: Combine multiple effects in a single event
+- **Snapshot Support**: Events are serializable and reproducible
+- **Extensible**: Implement custom triggers and effects for specialized scenarios
+
+## Configuring Simulation Parameters
+
+You can configure the simulation execution and model parameters using modern C# syntax:
+
+```csharp
+// Configure model parameters
+StandardModelConfig modelConfig = new()
+{
+    CapacitySteepness = 5.0,
+    DistanceDecayLambda = 0.001,
+    MigrationProbabilitySteepness = 10.0,
+    MigrationProbabilityThreshold = 0.0,
+    FactorSmoothingAlpha = 0.2
+};
+
+// Configure simulation parameters
+SimulationConfig simConfig = new()
+{
+    MaxTicks = 500,
+    CheckStability = true,
+    StabilityThreshold = 100,  // Consider stable if <100 persons migrate
+    StabilityCheckInterval = 5,
+    MinTicksBeforeStabilityCheck = 20
+};
+
+// Create simulation engine with custom configuration using builder (recommended)
+var engine = SimulationBuilder.Create()
+    .ConfigureModel(m => 
+    {
+        m.CapacitySteepness = 5.0;
+        m.DistanceDecayLambda = 0.001;
+        m.MigrationProbabilitySteepness = 10.0;
+        m.MigrationProbabilityThreshold = 0.0;
+        m.FactorSmoothingAlpha = 0.2;
+    })
+    .ConfigureSimulation(s => 
+    {
+        s.MaxTicks = 500;
+        s.CheckStability = true;
+        s.StabilityThreshold = 100;
+        s.StabilityCheckInterval = 5;
+        s.MinTicksBeforeStabilityCheck = 20;
+    })
+    .WithConsoleOutput()
+    .Build();
+
+// Run simulation
+var result = await engine.RunAsync(world);
+```
 
 ## Simulation Metrics
 
 The framework provides metrics collection for academic analysis:
 
 ```csharp
-using dotMigrata.Simulation.Metrics;
-using dotMigrata.Simulation.Builders;
-
 // Create metrics observer
 var metricsObserver = new MetricsObserver();
 
@@ -1157,4 +1224,3 @@ during setup.
 - Snapshots include a Version field that is checked during deserialization.
 - Unsupported or missing versions will produce clear errors with suggested remediation.
 - Older known-compatible versions may load with warnings; re-export with the current runtime to adopt the latest format.
-
