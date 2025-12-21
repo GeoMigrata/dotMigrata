@@ -1,4 +1,4 @@
-﻿﻿# dotMigrata
+﻿# dotMigrata
 
 [![.NET8.0](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
 [![.NET9.0](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
