@@ -75,14 +75,14 @@ collection.Add(new StandardPersonGenerator
 {
     Count = 100000,
     // Use FactorDefinition references for type safety
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpec>
+    FactorSensitivities = new Dictionary<FactorDefinition, UnitValueSpec>
     {
-        [incomeFactor] = ValueSpec.InRange(3, 8),        // Sensitivity to income
-        [pollutionFactor] = ValueSpec.InRange(-7, -3)    // Negative sensitivity to pollution
+        [incomeFactor] = UnitValueSpec.InRange(0.3, 0.8),        // Sensitivity to income (0-1)
+        [pollutionFactor] = UnitValueSpec.InRange(0.2, 0.6)      // Sensitivity to pollution (0-1)
     },
-    // Direct ValueSpec methods for person behavioral properties
-    MovingWillingness = ValueSpec.InRange(0.4, 0.7),
-    RetentionRate = ValueSpec.InRange(0.3, 0.6),
+    // Person behavioral properties via UnitValueSpec
+    MovingWillingness = UnitValueSpec.InRange(0.4, 0.7),
+    RetentionRate = UnitValueSpec.InRange(0.3, 0.6),
     Tags = ["urban_resident"]
 });
 ```
@@ -94,8 +94,8 @@ Create cities with factor values and assign the generated population. Again, use
 ```csharp
 var cityA = new City(
     factorValues: [
-        new FactorIntensity { Definition = incomeFactor, Intensity = ValueSpec.Fixed(50000) },    // Reference the object
-        new FactorIntensity { Definition = pollutionFactor, Intensity = ValueSpec.Fixed(30) }      // Not a string
+        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.5) },   // Use UnitValue (0-1 normalized)
+        new FactorIntensity { Definition = pollutionFactor, Value = UnitValue.FromRatio(0.3) } // Use UnitValue
     ],
     persons: collection.GenerateAllPersons(allFactors))
 {
@@ -107,8 +107,8 @@ var cityA = new City(
 
 var cityB = new City(
     factorValues: [
-        new FactorIntensity { Definition = incomeFactor, Intensity = ValueSpec.Fixed(40000) },
-        new FactorIntensity { Definition = pollutionFactor, Intensity = ValueSpec.Fixed(20) }
+        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.4) },
+        new FactorIntensity { Definition = pollutionFactor, Value = UnitValue.FromRatio(0.2) }
     ],
     persons: [])  // Empty initially
 {
@@ -182,27 +182,27 @@ The framework provides several ways to specify values for person attributes:
 ### Fixed Values
 
 ```csharp
-ValueSpec.Fixed(0.75)  // All persons get exactly 0.75
+UnitValueSpec.Fixed(0.75)  // All persons get exactly 0.75 (clamped 0-1)
 ```
 
 ### Range Values (Uniform Distribution)
 
 ```csharp
-ValueSpec.InRange(0.4, 0.8)  // Uniformly distributed between 0.4 and 0.8
+UnitValueSpec.InRange(0.4, 0.8)  // Uniformly distributed between 0.4 and 0.8
 ```
 
 ### Approximate Values (Normal Distribution)
 
 ```csharp
 // Values sampled from normal distribution with mean=0.6, stddev=0.15
-ValueSpec.Approximately(mean: 0.6, standardDeviation: 0.15)
+UnitValueSpec.Approximately(mean: 0.6, standardDeviation: 0.15)
 ```
 
 ### Random with Scale
 
 ```csharp
 // Scale > 1.0 biases toward higher values, < 1.0 toward lower values
-ValueSpec.RandomWithScale(scale: 1.5)
+UnitValueSpec.RandomWithScale(scale: 1.5)
 ```
 
 ## PersonCollection System
@@ -251,29 +251,29 @@ FactorDefinition[] allFactors = [incomeFactor, pollutionFactor, housingFactor];
 var collection = new PersonCollection();
 
 // 1. Add a specific individual with exact attributes
-var wealthyPerson = new StandardPerson(new Dictionary<FactorDefinition, double>
+var wealthyPerson = new StandardPerson(new Dictionary<FactorDefinition, UnitValue>
 {
-    [incomeFactor] = 8.5,      // Use object reference, not string
-    [pollutionFactor] = -6.0,
-    [housingFactor] = -7.0
+    [incomeFactor] = UnitValue.FromRatio(0.85),
+    [pollutionFactor] = UnitValue.FromRatio(0.2),
+    [housingFactor] = UnitValue.FromRatio(0.3)
 })
 {
-    MovingWillingness = NormalizedValue.FromRatio(0.85),
-    RetentionRate = NormalizedValue.FromRatio(0.15),
+    MovingWillingness = UnitValue.FromRatio(0.85),
+    RetentionRate = UnitValue.FromRatio(0.15),
     Tags = ["high_mobility", "wealthy"]
 };
 collection.Add(wealthyPerson);
 
 // 2. Add 10,000 identical persons (duplicates)
-var middleClassPerson = new StandardPerson(new Dictionary<FactorDefinition, double>
+var middleClassPerson = new StandardPerson(new Dictionary<FactorDefinition, UnitValue>
 {
-    [incomeFactor] = 5.0,
-    [pollutionFactor] = -3.0,
-    [housingFactor] = -4.0
+    [incomeFactor] = UnitValue.FromRatio(0.5),
+    [pollutionFactor] = UnitValue.FromRatio(0.4),
+    [housingFactor] = UnitValue.FromRatio(0.4)
 })
 {
-    MovingWillingness = NormalizedValue.FromRatio(0.5),
-    RetentionRate = NormalizedValue.FromRatio(0.5),
+    MovingWillingness = UnitValue.FromRatio(0.5),
+    RetentionRate = UnitValue.FromRatio(0.5),
     Tags = ["middle_class"]
 };
 collection.Add(middleClassPerson, count: 10_000);
@@ -282,27 +282,23 @@ collection.Add(middleClassPerson, count: 10_000);
 collection.Add(new StandardPersonGenerator(seed: 42)
 {
     Count = 100_000,
-    // Use FactorDefinition references for type safety
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpec>
+    FactorSensitivities = new Dictionary<FactorDefinition, UnitValueSpec>
     {
-        [incomeFactor] = ValueSpec.InRange(3, 15),  // Custom range for Income sensitivity
-        [pollutionFactor] = ValueSpec.Fixed(-5.0)      // Fixed value - all persons get -5.0
-        // Note: housingFactor sensitivity will use default range with normal distribution
+        [incomeFactor] = UnitValueSpec.InRange(0.3, 0.9),
+        [pollutionFactor] = UnitValueSpec.Fixed(0.5)
     },
-    // Direct ValueSpec methods for person behavioral properties
-    MovingWillingness = ValueSpec.InRange(0.6, 0.9),
-    RetentionRate = ValueSpec.InRange(0.3, 0.6),
+    MovingWillingness = UnitValueSpec.InRange(0.6, 0.9),
+    RetentionRate = UnitValueSpec.InRange(0.3, 0.6),
     Tags = ["young_professional", "tech_worker"]
 });
 
-// Generate all persons and use in city
 IEnumerable<PersonBase> persons = collection.GenerateAllPersons(allFactors);
 
 var city = new City(
     factorValues: [
-        new FactorIntensity { Definition = incomeFactor, Intensity = ValueSpec.Fixed(80000 },
-        new FactorIntensity { Definition = pollutionFactor, Intensity = ValueSpec.Fixed(30) },
-        new FactorIntensity { Definition = housingFactor, Intensity = ValueSpec.Fixed(2500 }
+        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.8) },
+        new FactorIntensity { Definition = pollutionFactor, Value = UnitValue.FromRatio(0.3) },
+        new FactorIntensity { Definition = housingFactor, Value = UnitValue.FromRatio(0.25) }
     ],
     persons: persons)
 {
@@ -362,16 +358,12 @@ var collection = new PersonCollection();
 collection.Add(new StandardPersonGenerator(seed: 42)
 {
     Count = 50000,
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpec>
+    FactorSensitivities = new Dictionary<FactorDefinition, UnitValueSpec>
     {
-        [incomeFactor] = ValueSpec.InRange(5, 9)  // Use FactorDefinition reference
+        [incomeFactor] = UnitValueSpec.InRange(0.5, 0.9)
     },
-    // Direct ValueSpec methods for person behavioral properties
-    MovingWillingness = ValueSpec.InRange(0.4, 0.7),
-    RetentionRate = ValueSpec.InRange(0.3, 0.6),
-    // Advanced generator options
-    DefaultSensitivityRange = new ValueRange(-10.0, 10.0),  // Default range for unspecified factors
-    SensitivityStdDev = 3.0  // Standard deviation for normal distribution
+    MovingWillingness = UnitValueSpec.InRange(0.4, 0.7),
+    RetentionRate = UnitValueSpec.InRange(0.3, 0.6)
 });
 
 IEnumerable<PersonBase> persons = collection.GenerateAllPersons(allFactors);
@@ -379,7 +371,7 @@ IEnumerable<PersonBase> persons = collection.GenerateAllPersons(allFactors);
 // Add persons to city
 var city = new City(
     factorValues: [
-        new FactorIntensity { Definition = incomeFactor, Intensity = ValueSpec.Fixed(80000 }
+        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.8) }
     ],
     persons: persons)
 {
@@ -610,7 +602,8 @@ var incomeFactor = new FactorDefinition
     DisplayName = "Income",
     Type = FactorType.Positive,
     MinValue = 20000,
-    MaxValue = 100000
+    MaxValue = 100000,
+    TransformFunction = null
 };
 
 FactorDefinition[] allFactors = [incomeFactor];
@@ -619,14 +612,14 @@ var collection = new PersonCollection();
 collection.Add(new DemographicPersonGenerator(seed: 42)
 {
     Count = 10000,
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpec>
+    FactorSensitivities = new Dictionary<FactorDefinition, UnitValueSpec>
     {
-        [incomeFactor] = ValueSpec.InRange(3, 8)
+        [incomeFactor] = UnitValueSpec.InRange(0.3, 0.8)
     },
-    MovingWillingness = ValueSpec.InRange(0.4, 0.7),
-    RetentionRate = ValueSpec.InRange(0.3, 0.6),
-    Age = ValueSpec.InRange(18, 65),
-    Income = ValueSpec.InRange(25000, 120000),
+    MovingWillingness = UnitValueSpec.InRange(0.4, 0.7),
+    RetentionRate = UnitValueSpec.InRange(0.3, 0.6),
+    Age = UnitValueSpec.InRange(18, 65),
+    Income = UnitValueSpec.InRange(25000, 120000),
     Tags = ["demographic_study"]
 });
 
@@ -710,8 +703,8 @@ public class DemographicPersonSerializer : ICustomPersonSerializer<DemographicPe
 
         return new DemographicPerson(sensitivities)
         {
-            MovingWillingness = NormalizedValue.FromRatio(template.MovingWillingness),
-            RetentionRate = NormalizedValue.FromRatio(template.RetentionRate),
+            MovingWillingness = UnitValue.FromRatio(template.MovingWillingness),
+            RetentionRate = UnitValue.FromRatio(template.RetentionRate),
             Age = age,
             Income = income,
             EducationLevel = education,
@@ -779,15 +772,14 @@ public class DemographicGeneratorSerializer :
 {
     public DemographicPersonGenerator CreateFromXml(
         GeneratorXml generatorXml,
-        Dictionary<FactorDefinition, ValueSpec> factorSpecs,
+        Dictionary<FactorDefinition, UnitValueSpec> factorSpecs,
         List<string> tags)
     {
-        // Create generator with custom specifications
         return new DemographicPersonGenerator(generatorXml.Seed)
         {
             Count = generatorXml.Count,
-            FactorSensitivities = factorSpecs,
-            // ... set custom generator properties from generatorXml.CustomProperties
+            // Convert UnitValueSpec to generator properties as needed
+            // ...
             Tags = tags
         };
     }
@@ -989,8 +981,8 @@ WorldSnapshotXml snapshot = new()
                 Capacity = 1000000,
                 FactorValues =
                 [
-                    new FactorIntensityXml { Id = "income", Value = 50000) },
-                    new FactorIntensityXml { Id = "pollution", Value = 30) }
+                    new FactorIntensityXml { Id = "income", Value = 50000 },
+                    new FactorIntensityXml { Id = "pollution", Value = 30 }
                 ],
                 PersonCollections =
                 [
@@ -1007,8 +999,8 @@ WorldSnapshotXml snapshot = new()
                 Capacity = 800000,
                 FactorValues =
                 [
-                    new FactorIntensityXml { Id = "income", Value = 40000) },
-                    new FactorIntensityXml { Id = "pollution", Value = 20) }
+                    new FactorIntensityXml { Id = "income", Value = 40000 },
+                    new FactorIntensityXml { Id = "pollution", Value = 20 }
                 ]
             }
         ]
@@ -1043,7 +1035,6 @@ var engine = SimulationBuilder.Create()
 
 // Run simulation
 var result = await engine.RunAsync(world);
-Console.WriteLine($"Final population: {result.World.Population:N0}");
 ```
 
 ### Exporting World to Snapshot
@@ -1081,7 +1072,7 @@ A snapshot contains:
 - **Cities**: City definitions with factor values and person collection references
 - **Steps**: Optional simulation steps for reproducibility
 
-See [examples/example-snapshot-v4.xml](../examples/example-snapshot-v4.xml) for a complete working example.
+See [examples/example-snapshot-v4.xml](examples/example-snapshot-v4.xml) for a complete working example.
 
 ## Simulation Metrics
 
@@ -1160,3 +1151,10 @@ for (int step = 0; step < 100; step++)
 
 This eliminates ValueSpec evaluation overhead during simulation while preserving the safety and convenience of ValueSpec
 during setup.
+
+## Note on version validation:
+
+- Snapshots include a Version field that is checked during deserialization.
+- Unsupported or missing versions will produce clear errors with suggested remediation.
+- Older known-compatible versions may load with warnings; re-export with the current runtime to adopt the latest format.
+

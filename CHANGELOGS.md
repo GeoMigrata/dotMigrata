@@ -1,4 +1,47 @@
-﻿## Version 0.7.2-beta (Complete Type Safety & Code Cleanup)
+﻿# GeoMigrata Framework Changelog
+
+## Version 0.7.3-beta (Snapshot Version Validation and Schema Updates)
+
+This release focuses on strengthening snapshot compatibility, adding stricter version validation, and aligning the
+snapshot XML structure with the latest codebase.
+
+### Highlights
+
+- Strict snapshot version validation with clearer errors and upgrade guidance
+- Snapshot XML structure adjusted to better reflect current runtime models
+- Backward-compatible loading for older snapshots with warnings when applicable
+- Minor documentation fixes and example corrections
+
+### Snapshot Version Validation
+
+- Introduced explicit version checks when deserializing snapshots
+- Clear error messages for unsupported or mismatched versions (e.g., "Snapshot version vX is not supported by runtime
+  vY")
+- Added compatibility mapping to support loading known prior versions when safe
+- Validation covers: Version field presence, supported range, and schema compliance
+
+### Snapshot Structure Changes
+
+- World and PersonCollection sections aligned to current generator APIs
+- Factor definitions and factor values normalized for consistency
+- Person entries clarified: templates/generators preferred over inline enumerations for scale
+- Custom person type serialization contracts refined for determinism
+
+### Migration Notes
+
+- If your snapshot lacks a Version field, the loader will attempt to infer and may warn; add Version to avoid ambiguity
+- Ensure PersonCollections prefer generator specifications over explicit persons for large populations
+- Verify type names for custom person serializers match registration keys
+- Re-export snapshots using the new serializer to adopt updated structure
+
+### Documentation
+
+- Updated README and USAGE to reflect version validation and new snapshot structure
+- Fixed minor example typos and consistency issues in code snippets
+
+---
+
+## Version 0.7.2-beta (Complete Type Safety & Code Cleanup)
 
 **Version 0.7.2-beta** achieves complete type safety throughout the codebase, eliminates code duplication, and improves
 API consistency. All 0-1 range values now use `UnitValue` for compile-time guarantees.

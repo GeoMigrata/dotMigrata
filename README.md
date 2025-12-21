@@ -271,6 +271,13 @@ XmlSnapshotSerializer.SerializeToFile(snapshot, "output-snapshot.xml");
 - See [API.md](API.md) for detailed snapshot schema and examples
 - See [examples/example-snapshot-v4.xml](examples/example-snapshot-v4.xml) for a complete working snapshot
 
+**Version Validation:**
+
+- Snapshots include a `Version` field that is validated on load.
+- If the version is unsupported or missing, deserialization will throw with a clear message and suggested upgrade path.
+- Known prior versions may load with warnings when structurally compatible.
+- Recommended: Re-export snapshots with the current runtime to adopt the latest format.
+
 ## Simulation Metrics
 
 The framework includes metrics collection for academic analysis:
