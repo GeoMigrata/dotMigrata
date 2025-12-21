@@ -125,10 +125,10 @@ public sealed class City : IDisposable
     /// </summary>
     /// <param name="factorIntensity">The new factor intensity to apply. Must already exist in this city.</param>
     /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="factor" /> is <see langword="null" />.
+    /// Thrown when <paramref name="factorIntensity" /> is <see langword="null" />.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="factorIntensity" /> is <see langword="null" />.
+    /// Thrown when the factor definition in <paramref name="factorIntensity" /> is not found in this city.
     /// </exception>
     /// <remarks>
     /// Intensities are immutable <see cref="UnitValue" /> values.
