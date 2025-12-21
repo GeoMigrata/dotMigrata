@@ -269,7 +269,7 @@ XmlSnapshotSerializer.SerializeToFile(snapshot, "output-snapshot.xml");
 - Snapshots use PersonCollection specifications rather than individual person instances
 - Random seeds ensure deterministic reproducibility
 - See [API.md](API.md) for detailed snapshot schema and examples
-- See [examples/example-snapshot.xml](examples/example-snapshot.xml) for a complete working snapshot
+- See [examples/example-snapshot-v4.xml](examples/example-snapshot-v4.xml) for a complete working snapshot
 
 ## Simulation Metrics
 

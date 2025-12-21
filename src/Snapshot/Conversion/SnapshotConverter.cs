@@ -4,6 +4,7 @@ using dotMigrata.Core.Exceptions;
 using dotMigrata.Core.Values;
 using dotMigrata.Snapshot.Enums;
 using dotMigrata.Snapshot.Models;
+using dotMigrata.Snapshot.Version;
 
 namespace dotMigrata.Snapshot.Conversion;
 
@@ -11,13 +12,10 @@ namespace dotMigrata.Snapshot.Conversion;
 /// Converts between <see cref="World" /> domain objects and <see cref="WorldSnapshotXml" /> serialization models.
 /// </summary>
 /// <remarks>
-/// Provides bidirectional conversion for loading and saving simulation states using v2.0 XML format.
+/// Provides bidirectional conversion for loading and saving simulation states.
 /// </remarks>
 public static class SnapshotConverter
 {
-    private const string SupportedVersion = "v4";
-    private const string FrameworkVersion = "v0.7.x";
-
     /// <summary>
     /// Converts a <see cref="WorldSnapshotXml" /> to a <see cref="World" /> domain object.
     /// </summary>
@@ -37,7 +35,7 @@ public static class SnapshotConverter
         ArgumentNullException.ThrowIfNull(snapshot);
 
         // Validate version compatibility
-        ValidateVersion(snapshot.Version);
+        ValidateSnapshotVersion(snapshot.Version);
 
         if (snapshot.World == null)
             throw new InvalidOperationException("Snapshot does not contain a World definition.");
@@ -85,7 +83,7 @@ public static class SnapshotConverter
 
         return new WorldSnapshotXml
         {
-            Version = "v4",
+            Version = SnapshotVersion.Current.ToString(),
             Id = Guid.NewGuid().ToString(),
             Status = status,
             CreatedAt = DateTime.UtcNow,
@@ -101,19 +99,22 @@ public static class SnapshotConverter
     /// <summary>
     /// Validates that the snapshot version is compatible with the current framework.
     /// </summary>
-    /// <param name="version">The snapshot version to validate.</param>
+    /// <param name="versionString">The snapshot version string to validate.</param>
     /// <exception cref="SnapshotException">
     /// Thrown when snapshot version is incompatible with current framework.
     /// </exception>
-    private static void ValidateVersion(string? version)
+    private static void ValidateSnapshotVersion(string? versionString)
     {
-        if (string.IsNullOrWhiteSpace(version))
+        if (string.IsNullOrWhiteSpace(versionString))
             throw new SnapshotException("Snapshot version is required.");
 
-        if (!string.Equals(version, SupportedVersion, StringComparison.OrdinalIgnoreCase))
+        if (!SnapshotVersion.TryParse(versionString, out var version))
+            throw new SnapshotException($"Invalid snapshot version format: '{versionString}'.");
+
+        if (!version.IsCompatible())
             throw new SnapshotException(
-                $"Unsupported snapshot version '{version}'. " +
-                $"This framework ({FrameworkVersion}) supports snapshot version '{SupportedVersion}'.");
+                $"Incompatible snapshot version '{versionString}'. " +
+                $"This framework ({SnapshotVersion.FrameworkVersion}) supports version {SnapshotVersion.Current}.");
     }
 
     private static List<FactorDefinition> ConvertFactorDefinitions(List<FactorDefXml>? definitions)

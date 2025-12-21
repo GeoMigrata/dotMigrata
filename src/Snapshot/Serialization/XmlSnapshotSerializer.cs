@@ -10,7 +10,7 @@ namespace dotMigrata.Snapshot.Serialization;
 /// XML snapshot serializer using C# XML serialization attributes.
 /// </summary>
 /// <remarks>
-///     <para>Provides attribute-based XML serialization with v3.0 format:</para>
+///     Provides attribute-based XML serialization with features including:
 ///     <list type="bullet">
 ///         <item>
 ///             <description>Single namespace for all elements</description>
@@ -43,11 +43,8 @@ public static class XmlSnapshotSerializer
 
     private static readonly XmlSerializerNamespaces Namespaces = new();
 
-    static XmlSnapshotSerializer()
-    {
-        // Single namespace for all elements (v3.0 format)
-        Namespaces.Add("", "https://geomigrata.pages.dev/snapshot");
-    }
+    static XmlSnapshotSerializer() =>
+        Namespaces.Add("", "https://geomigrata.pages.dev/snapshot"); // Single namespace for all elements
 
     /// <summary>
     /// Serializes a snapshot to an XML string with proper namespace handling.

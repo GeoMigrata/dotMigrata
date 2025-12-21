@@ -578,7 +578,7 @@ static WorldSnapshotXml? DeserializeFromFile(string filePath)
 
 <Snapshot xmlns="https://geomigrata.pages.dev/snapshot"
           xmlns:c="https://geomigrata.pages.dev/code"
-          Version="1.0" Id="..." Status="Seed" CreatedAt="..." CurrentStep="0">
+          Version="v4" Id="..." Status="Seed" CreatedAt="..." CurrentStep="0">
     <World DisplayName="Example World">
         <!-- FactorDefinitions is a snapshot container (default namespace) -->
         <FactorDefinitions>
@@ -951,8 +951,7 @@ catch (WorldValidationException ex)
 
 ### Simulation Lifecycle Hooks
 
-The `ISimulationStageLifecycle` interface is available for future extension. Note: SimulationEngine does not currently
-invoke these methods automatically. This interface is designed for custom implementations:
+The `ISimulationStageLifecycle` interface is available for future extension. The SimulationEngine does not currently
 
 ```csharp
 public class MyCustomStage : ISimulationStage, ISimulationStageLifecycle
@@ -980,7 +979,7 @@ public class MyCustomStage : ISimulationStage, ISimulationStageLifecycle
 ### Custom Stability Criteria
 
 The `IStabilityCriteria` interface and `DefaultStabilityCriteria` implementation are available for future extension.
-Note: SimulationEngine currently uses built-in stability checking. The interface is designed for custom stability
+The SimulationEngine currently uses built-in stability checking. The interface is designed for custom stability
 detection strategies:
 
 ```csharp
@@ -1000,7 +999,7 @@ public class MyStabilityCriteria : IStabilityCriteria
 }
 ```
 
-**Note:** To use custom stability criteria, you would need to extend `SimulationEngine` or create a custom
+To use custom stability criteria, you would need to extend `SimulationEngine` or create a custom
 implementation.
 
 ### Snapshot Validation

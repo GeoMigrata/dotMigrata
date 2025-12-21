@@ -1,5 +1,6 @@
 ﻿using System.Xml.Serialization;
 using dotMigrata.Snapshot.Enums;
+using dotMigrata.Snapshot.Version;
 
 namespace dotMigrata.Snapshot.Models;
 
@@ -7,7 +8,7 @@ namespace dotMigrata.Snapshot.Models;
 /// Root snapshot model with XML serialization support.
 /// </summary>
 /// <remarks>
-///     <para>Snapshot format v4 for framework v0.7.x with support for:</para>
+///     Snapshot format for framework v0.7.x with support for:
 ///     <list type="bullet">
 ///         <item>
 ///             <description>No namespace (simplified structure)</description>
@@ -31,10 +32,9 @@ public sealed class WorldSnapshotXml
 {
     /// <summary>
     /// Gets the snapshot format version for compatibility tracking.
-    /// Must be "v4" for framework v0.7.x compatibility.
     /// </summary>
     [XmlAttribute("Version")]
-    public string Version { get; init; } = "v4";
+    public string Version { get; init; } = SnapshotVersion.Current.ToString();
 
     /// <summary>
     /// Gets the unique identifier for this snapshot.

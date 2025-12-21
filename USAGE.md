@@ -1,4 +1,4 @@
-﻿﻿# Usage Guide
+﻿# Usage Guide
 
 This guide provides detailed examples and usage instructions for dotMigrata.
 
@@ -208,7 +208,7 @@ ValueSpec.RandomWithScale(scale: 1.5)
 ## PersonCollection System
 
 The **PersonCollection** system gives you fine-grained control over population generation. Add individual persons,
-duplicates, or use generators with specifications. **Important:** Always use `FactorDefinition` object references, not
+duplicates, or use generators with specifications. Always use `FactorDefinition` object references, not
 strings.
 
 ```csharp
@@ -392,7 +392,7 @@ var city = new City(
 
 ## Creating Custom Person Types
 
-Version `0.5.0-beta` introduces an inheritance-based architecture for creating custom person types by
+The framework introduces an inheritance-based architecture for creating custom person types by
 inheriting from `PersonBase`. This lets you add domain-specific properties while maintaining framework compatibility.
 
 ### When to Create Custom Person Types
@@ -516,7 +516,7 @@ public class DemographicAttractionCalculator : IAttractionCalculator
 
 ### Generating Custom Person Types
 
-Version `0.5.2-beta` provides a type-safe way to generate custom person types by implementing the
+The framework provides a type-safe way to generate custom person types by implementing the
 `IPersonGenerator<TPerson>` interface. This approach is cleaner and more flexible than the deprecated PersonFactory
 pattern.
 
@@ -650,7 +650,7 @@ The snapshot system fully supports custom person types through the type discrimi
 
 ### Using Custom Person Types with Snapshots
 
-**Version 0.6.4+** introduces complete support for custom person types in snapshots. You can now:
+The framework supports custom person types in snapshots. You can:
 
 - Save and load snapshots with custom person types
 - Implement custom serialization for additional properties
@@ -880,7 +880,7 @@ PersonCollection specifications for efficient storage and deterministic reproduc
 using dotMigrata.Snapshot.Serialization;
 
 // Deserialize snapshot from XML file
-var snapshot = XmlSnapshotSerializer.DeserializeFromFile("examples/example-snapshot.xml");
+var snapshot = XmlSnapshotSerializer.DeserializeFromFile("examples/example-snapshot-v4.xml");
 
 if (snapshot?.World != null)
 {
@@ -1030,7 +1030,7 @@ using dotMigrata.Snapshot.Serialization;
 using dotMigrata.Simulation.Builders;
 
 // Load and convert snapshot
-var snapshot = XmlSnapshotSerializer.DeserializeFromFile("examples/example-snapshot.xml");
+var snapshot = XmlSnapshotSerializer.DeserializeFromFile("examples/example-snapshot-v4.xml");
 var world = SnapshotConverter.ToWorld(snapshot!);
 
 // Create simulation with fluent builder
@@ -1081,7 +1081,7 @@ A snapshot contains:
 - **Cities**: City definitions with factor values and person collection references
 - **Steps**: Optional simulation steps for reproducibility
 
-See [examples/example-snapshot.xml](../examples/example-snapshot.xml) for a complete working example.
+See [examples/example-snapshot-v4.xml](../examples/example-snapshot-v4.xml) for a complete working example.
 
 ## Simulation Metrics
 
