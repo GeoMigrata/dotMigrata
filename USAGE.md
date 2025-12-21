@@ -58,15 +58,13 @@ var allFactors = new[] { incomeFactor, pollutionFactor };
 
 ### Step 2: Generate Population
 
-Use `PersonCollection` to define how persons are generated. Notice how we reference the `FactorDefinition` objects
-directly, not strings.
+Use `PersonCollection` to define how persons are generated:
 
 ```csharp
 var collection = new PersonCollection();
 collection.Add(new StandardPersonGenerator
 {
     Count = 100000,
-    // Use FactorDefinition references for type safety
     FactorSensitivities = new Dictionary<FactorDefinition, UnitValuePromise>
     {
         [incomeFactor] = UnitValuePromise.InRange(0.3, 0.8),        // Sensitivity to income (0-1)
@@ -81,13 +79,13 @@ collection.Add(new StandardPersonGenerator
 
 ### Step 3: Create Cities
 
-Create cities with factor values and assign the generated population. Again, use `FactorDefinition` object references.
+Create cities with factor intensities and assign the generated population:
 
 ```csharp
 var cityA = new City(
     factorValues: [
-        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.5) },   // Use UnitValue (0-1 normalized)
-        new FactorIntensity { Definition = pollutionFactor, Value = UnitValue.FromRatio(0.3) } // Use UnitValue
+        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.5) },
+        new FactorIntensity { Definition = pollutionFactor, Value = UnitValue.FromRatio(0.3) }
     ],
     persons: collection.GenerateAllPersons(allFactors))
 {
@@ -206,8 +204,7 @@ var cityFactor = new FactorIntensity
 ## PersonCollection System
 
 The **PersonCollection** system gives you fine-grained control over population generation. Add individual persons,
-duplicates, or use generators with specifications. Always use `FactorDefinition` object references, not
-strings.
+duplicates, or use generators with specifications.
 
 ```csharp
 // First, define your factor objects
@@ -320,7 +317,7 @@ var tagStats = world.AllPersons
 - Precise control with fixed values, custom ranges, or biased random
 - Reproducible generation with seeds
 - Efficient duplicate handling
-- Type-safe FactorDefinition references
+- Type-safe factor definitions
 
 ## Creating Custom Person Types
 
@@ -891,7 +888,7 @@ A snapshot contains:
 
 - **FactorDefinitions**: Global factor definitions used across all cities
 - **PersonCollections**: Reusable population specifications (templates and generators)
-- **Cities**: City definitions with factor values and person collection references
+- **Cities**: City definitions with factor intensities and person collection references
 - **Events**: Optional simulation events for dynamic scenarios
 - **Steps**: Optional simulation steps for reproducibility
 
