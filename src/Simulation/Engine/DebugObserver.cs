@@ -69,7 +69,7 @@ public sealed class DebugObserver : ISimulationObserver
             SetColor(ConsoleColor.White);
             Write(factor.DisplayName);
             SetColor(ConsoleColor.DarkGray);
-            Write($" ({factor.Type}, Range: {factor.MinValue}-{factor.MaxValue})");
+            Write($" ({factor.Type})");
             WriteLine();
         }
 

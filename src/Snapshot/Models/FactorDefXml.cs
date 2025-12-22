@@ -32,24 +32,11 @@ public class FactorDefXml
     public string Type { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the minimum raw value for normalization.
-    /// </summary>
-    [XmlAttribute("Min")]
-    public double Min { get; set; }
-
-    /// <summary>
-    /// Gets or sets the maximum raw value for normalization.
-    /// </summary>
-    [XmlAttribute("Max")]
-    public double Max { get; set; }
-
-    /// <summary>
-    /// Gets or sets the transform function name (v0.6.1+).
+    /// Gets or sets the optional transform function name.
     /// </summary>
     /// <remarks>
-    /// Built-in transforms: "Linear", "Logarithmic", "Sigmoid".
-    /// Custom transforms store their name but must be provided at load time.
-    /// When null or unrecognized, defaults to Linear.
+    /// Built-in transforms: "Linear", "Logarithmic", "Sigmoid", "Exponential", "SquareRoot".
+    /// When null or unrecognized, no transformation is applied.
     /// </remarks>
     [XmlAttribute("Transform")]
     public string? CustomTransformName { get; set; }

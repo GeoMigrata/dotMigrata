@@ -20,10 +20,8 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
     /// </summary>
     /// <param name="config">Configuration parameters for the calculator. If null, uses default configuration.</param>
     /// <exception cref="Core.Exceptions.ConfigurationException">Thrown when the configuration is invalid.</exception>
-    public StandardAttractionCalculator(StandardModelConfig? config = null)
-    {
+    public StandardAttractionCalculator(StandardModelConfig? config = null) =>
         _config = (config ?? StandardModelConfig.Default).Validate();
-    }
 
     /// <inheritdoc />
     public AttractionResult CalculateAttraction(City city, PersonBase person, City? originCity = null)
@@ -52,12 +50,10 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
     public IDictionary<City, AttractionResult> CalculateAttractionForAllCities(
         IEnumerable<City> cities,
         PersonBase person,
-        City? originCity = null)
-    {
-        return cities.ToDictionary(
+        City? originCity = null) =>
+        cities.ToDictionary(
             city => city,
             city => CalculateAttraction(city, person, originCity));
-    }
 
     /// <summary>
     /// Calculates the base attraction score from the factor system for an individual person.
@@ -75,8 +71,8 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
             if (!city.TryGetFactorIntensity(factor, out var factorIntensity))
                 continue;
 
-            // Normalize the factor intensity
-            var normalizedIntensity = factorIntensity.Normalize();
+            // Intensity values are already normalized UnitValues (0-1 range)
+            var normalizedIntensity = factorIntensity.Value;
 
             // Determine the factor direction
             var direction = factor.Type == FactorType.Positive ? 1.0 : -1.0;

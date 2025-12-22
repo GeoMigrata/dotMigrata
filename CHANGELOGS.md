@@ -1,5 +1,7 @@
 ﻿# GeoMigrata Framework Changelog
 
+## Version 0.7.4-beta ()
+
 ## Version 0.7.3-beta (Snapshot Version Validation and Schema Updates)
 
 This release focuses on strengthening snapshot compatibility, adding stricter version validation, and aligning the

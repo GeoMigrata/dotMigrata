@@ -157,16 +157,16 @@ public static class SnapshotConverter
             {
                 "LINEAR" => UnitValuePromise.Transforms.Linear,
                 "LOGARITHMIC" => UnitValuePromise.Transforms.Logarithmic,
+                "EXPONENTIAL" => UnitValuePromise.Transforms.Exponential,
                 "SIGMOID" => UnitValuePromise.Transforms.Sigmoid,
-                _ => null // Unknown custom transforms fallback to linear (default)
+                "SQUAREROOT" => UnitValuePromise.Transforms.SquareRoot,
+                _ => null // Unknown transforms or null default to no transformation
             };
 
         return new FactorDefinition
         {
             DisplayName = def.DisplayName,
             Type = factorType,
-            MinValue = def.Min,
-            MaxValue = def.Max,
             TransformFunction = transformFunction
         };
     }
@@ -318,15 +318,9 @@ public static class SnapshotConverter
             foreach (var fv in cityXml.FactorValues!)
                 if (!string.IsNullOrEmpty(fv.Id) && factorLookup.TryGetValue(fv.Id, out var factor))
                 {
-                    // Factor values in XML are raw values that need to be normalized
-                    var rawValue = fv.ValueSpecified ? fv.Value : 0.0;
-                    var clamped = Math.Clamp(rawValue, factor.MinValue, factor.MaxValue);
-                    var range = factor.MaxValue - factor.MinValue;
-                    var normalizedValue = range == 0 ? 0 : (clamped - factor.MinValue) / range;
+                    // Factor values in XML are already normalized UnitValues (0-1 range)
+                    var normalizedValue = fv.ValueSpecified ? fv.Value : 0.0;
 
-                    // Apply transform if specified
-                    if (factor.TransformFunction != null)
-                        normalizedValue = factor.TransformFunction(clamped, factor.MinValue, factor.MaxValue);
                     factorIntensities.Add(new FactorIntensity
                     {
                         Definition = factor,
@@ -413,8 +407,6 @@ public static class SnapshotConverter
             Id = GetFactorId(factor),
             DisplayName = factor.DisplayName,
             Type = factor.Type.ToString(),
-            Min = factor.MinValue,
-            Max = factor.MaxValue,
             CustomTransformName = GetTransformName(factor.TransformFunction)
         };
 

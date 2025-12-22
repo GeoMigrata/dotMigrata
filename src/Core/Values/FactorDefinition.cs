@@ -3,14 +3,22 @@
 namespace dotMigrata.Core.Values;
 
 /// <summary>
-/// Defines a factor including its transformation type, direction, and normalization rule.
+/// Defines a factor's metadata including its direction and optional transformation.
 /// Factors represent measurable characteristics of cities that influence migration decisions.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Since city factor intensities are stored as <see cref="UnitValue"/> (0-1 range),
+/// FactorDefinition only needs to define the factor's semantic meaning (type) and
+/// optional transformation behavior.
+/// </para>
+/// <para>
+/// Raw value normalization is no longer handled by FactorDefinition because all
+/// factor intensities are already stored as normalized UnitValues.
+/// </para>
+/// </remarks>
 public record FactorDefinition
 {
-    private readonly double _maxValue;
-    private readonly double _minValue;
-
     /// <summary>
     /// Gets or initializes the display name of the factor.
     /// </summary>
@@ -23,73 +31,12 @@ public record FactorDefinition
     public required FactorType Type { get; init; }
 
     /// <summary>
-    /// Gets or initializes the minimum value for normalization.
-    /// Values below this will be clamped to this minimum.
-    /// Must be non-negative (>= 0).
-    /// </summary>
-    /// <exception cref="ArgumentException">Thrown when the value is NaN, Infinity, or negative.</exception>
-    public required double MinValue
-    {
-        get => _minValue;
-        init
-        {
-            if (double.IsNaN(value) || double.IsInfinity(value))
-                throw new ArgumentException("MinValue must be a valid number.", nameof(MinValue));
-            if (value < 0)
-                throw new ArgumentException("MinValue must be non-negative (>= 0).", nameof(MinValue));
-            _minValue = value;
-        }
-    }
-
-    /// <summary>
-    /// Gets or initializes the maximum value for normalization.
-    /// Values above this will be clamped to this maximum.
-    /// Must be greater than MinValue and non-negative.
-    /// </summary>
-    /// <exception cref="ArgumentException">Thrown when the value is NaN, Infinity, not greater than MinValue, or negative.</exception>
-    public required double MaxValue
-    {
-        get => _maxValue;
-        init
-        {
-            if (double.IsNaN(value) || double.IsInfinity(value))
-                throw new ArgumentException("MaxValue must be a valid number.", nameof(MaxValue));
-            if (value < 0)
-                throw new ArgumentException("MaxValue must be non-negative (>= 0).", nameof(MaxValue));
-            if (value <= MinValue)
-                throw new ArgumentException("MaxValue must be greater than MinValue.", nameof(MaxValue));
-            _maxValue = value;
-        }
-    }
-
-    /// <summary>
-    /// Gets or initializes the transformation function for normalization.
-    /// When null, linear normalization is used.
+    /// Gets or initializes the optional transformation function.
+    /// When null, values are used as-is without transformation.
     /// </summary>
     /// <remarks>
     /// Uses <see cref="UnitValuePromise.TransformFunc" /> delegate type
-    /// for better integration with the unified value system.
+    /// for transformation behavior when needed in specific scenarios.
     /// </remarks>
     public UnitValuePromise.TransformFunc? TransformFunction { get; init; }
-
-    /// <summary>
-    /// Normalizes a raw value using this factor's transformation.
-    /// </summary>
-    /// <param name="rawValue">The raw value to normalize.</param>
-    /// <returns>A normalized value.</returns>
-    internal UnitValue Normalize(UnitValue rawValue)
-    {
-        var clamped = Math.Clamp(rawValue, _minValue, _maxValue);
-
-        if (TransformFunction != null)
-        {
-            var transformed = TransformFunction(clamped, _minValue, _maxValue);
-            return UnitValue.FromRatio(transformed);
-        }
-
-        // Default to linear normalization
-        var range = _maxValue - _minValue;
-        var normalized = range == 0 ? 0 : (clamped - _minValue) / range;
-        return UnitValue.FromRatio(normalized);
-    }
 }
