@@ -66,7 +66,7 @@ public static class SnapshotConverter
     /// </summary>
     /// <param name="world">The world to convert.</param>
     /// <param name="status">The snapshot status. Default is <see cref="SnapshotStatus.Seed" />.</param>
-    /// <param name="currentStep">The current simulation tick. Default is 0.</param>
+    /// <param name="currentStep">The current simulation step. Default is 0.</param>
     /// <returns>A <see cref="WorldSnapshotXml" /> representing the world state.</returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="world" /> is <see langword="null" />.

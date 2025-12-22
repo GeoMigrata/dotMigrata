@@ -27,16 +27,16 @@ public sealed class EventEffectXml
     public string? ApplicationType { get; set; }
 
     /// <summary>
-    /// Gets or sets the duration in ticks (for FactorChangeEffect with transitions).
+    /// Gets or sets the duration in steps (for FactorChangeEffect with transitions).
     /// </summary>
     [XmlAttribute("Duration")]
-    public int DurationTicks { get; set; }
+    public int DurationSteps { get; set; }
 
     /// <summary>
-    /// Gets or sets whether DurationTicks should be serialized.
+    /// Gets or sets whether DurationSteps should be serialized.
     /// </summary>
     [XmlIgnore]
-    public bool DurationTicksSpecified { get; set; }
+    public bool DurationStepsSpecified { get; set; }
 
     /// <summary>
     /// Gets or sets the value specification for the effect.

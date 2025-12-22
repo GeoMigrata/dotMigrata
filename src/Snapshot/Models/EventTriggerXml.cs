@@ -14,16 +14,16 @@ public sealed class EventTriggerXml
     public string Type { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the tick number (for TickTrigger).
+    /// Gets or sets the step number (for StepTrigger).
     /// </summary>
-    [XmlAttribute("Tick")]
-    public int Tick { get; set; }
+    [XmlAttribute("Step")]
+    public int Step { get; set; }
 
     /// <summary>
-    /// Gets or sets whether Tick should be serialized.
+    /// Gets or sets whether Step should be serialized.
     /// </summary>
     [XmlIgnore]
-    public bool TickSpecified { get; set; }
+    public bool StepSpecified { get; set; }
 
     /// <summary>
     /// Gets or sets the interval (for PeriodicTrigger).
@@ -38,40 +38,40 @@ public sealed class EventTriggerXml
     public bool IntervalSpecified { get; set; }
 
     /// <summary>
-    /// Gets or sets the start tick (for PeriodicTrigger and ContinuousTrigger).
+    /// Gets or sets the start step (for PeriodicTrigger and ContinuousTrigger).
     /// </summary>
-    [XmlAttribute("StartTick")]
-    public int StartTick { get; set; }
+    [XmlAttribute("StartStep")]
+    public int StartStep { get; set; }
 
     /// <summary>
-    /// Gets or sets whether StartTick should be serialized.
-    /// </summary>
-    [XmlIgnore]
-    public bool StartTickSpecified { get; set; }
-
-    /// <summary>
-    /// Gets or sets the end tick (for PeriodicTrigger and ContinuousTrigger).
-    /// </summary>
-    [XmlAttribute("EndTick")]
-    public int EndTick { get; set; }
-
-    /// <summary>
-    /// Gets or sets whether EndTick should be serialized.
+    /// Gets or sets whether StartStep should be serialized.
     /// </summary>
     [XmlIgnore]
-    public bool EndTickSpecified { get; set; }
+    public bool StartStepSpecified { get; set; }
 
     /// <summary>
-    /// Gets or sets the cooldown in ticks (for ConditionalTrigger).
+    /// Gets or sets the end step (for PeriodicTrigger and ContinuousTrigger).
+    /// </summary>
+    [XmlAttribute("EndStep")]
+    public int EndStep { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether EndStep should be serialized.
+    /// </summary>
+    [XmlIgnore]
+    public bool EndStepSpecified { get; set; }
+
+    /// <summary>
+    /// Gets or sets the cooldown in steps (for ConditionalTrigger).
     /// </summary>
     [XmlAttribute("Cooldown")]
-    public int CooldownTicks { get; set; }
+    public int CooldownSteps { get; set; }
 
     /// <summary>
-    /// Gets or sets whether CooldownTicks should be serialized.
+    /// Gets or sets whether CooldownSteps should be serialized.
     /// </summary>
     [XmlIgnore]
-    public bool CooldownTicksSpecified { get; set; }
+    public bool CooldownStepsSpecified { get; set; }
 
     /// <summary>
     /// Gets or sets the condition expression (for ConditionalTrigger).

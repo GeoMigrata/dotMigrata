@@ -10,18 +10,15 @@ namespace dotMigrata.Simulation.Models;
 /// </remarks>
 public sealed class PerformanceMetrics
 {
-    private readonly List<TimeSpan> _tickDurations = [];
-    private readonly Stopwatch _tickStopwatch = new();
+    private readonly List<TimeSpan> _stepDurations = [];
+    private readonly Stopwatch _stepStopwatch = new();
     private readonly Stopwatch _totalStopwatch = new();
     private long _lastGcMemory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PerformanceMetrics" /> class.
     /// </summary>
-    public PerformanceMetrics()
-    {
-        _lastGcMemory = GC.GetTotalMemory(false);
-    }
+    public PerformanceMetrics() => _lastGcMemory = GC.GetTotalMemory(false);
 
     /// <summary>
     /// Gets the total elapsed time since simulation start.
@@ -29,32 +26,32 @@ public sealed class PerformanceMetrics
     public TimeSpan TotalElapsed => _totalStopwatch.Elapsed;
 
     /// <summary>
-    /// Gets the elapsed time for the current tick.
+    /// Gets the elapsed time for the current step.
     /// </summary>
-    public TimeSpan CurrentTickElapsed => _tickStopwatch.Elapsed;
+    public TimeSpan CurrentStepElapsed => _stepStopwatch.Elapsed;
 
     /// <summary>
-    /// Gets the average duration per tick.
+    /// Gets the average duration per step.
     /// </summary>
-    public TimeSpan AverageTickDuration =>
-        _tickDurations.Count > 0
-            ? TimeSpan.FromTicks((long)_tickDurations.Average(t => t.Ticks))
+    public TimeSpan AverageStepDuration =>
+        _stepDurations.Count > 0
+            ? TimeSpan.FromTicks((long)_stepDurations.Average(t => t.Ticks))
             : TimeSpan.Zero;
 
     /// <summary>
-    /// Gets the minimum tick duration observed.
+    /// Gets the minimum step duration observed.
     /// </summary>
-    public TimeSpan MinTickDuration =>
-        _tickDurations.Count > 0
-            ? TimeSpan.FromTicks(_tickDurations.Min(t => t.Ticks))
+    public TimeSpan MinStepDuration =>
+        _stepDurations.Count > 0
+            ? TimeSpan.FromTicks(_stepDurations.Min(t => t.Ticks))
             : TimeSpan.Zero;
 
     /// <summary>
-    /// Gets the maximum tick duration observed.
+    /// Gets the maximum step duration observed.
     /// </summary>
-    public TimeSpan MaxTickDuration =>
-        _tickDurations.Count > 0
-            ? TimeSpan.FromTicks(_tickDurations.Max(t => t.Ticks))
+    public TimeSpan MaxStepDuration =>
+        _stepDurations.Count > 0
+            ? TimeSpan.FromTicks(_stepDurations.Max(t => t.Ticks))
             : TimeSpan.Zero;
 
     /// <summary>
@@ -77,16 +74,16 @@ public sealed class PerformanceMetrics
     }
 
     /// <summary>
-    /// Gets the total number of ticks executed.
+    /// Gets the total number of steps executed.
     /// </summary>
-    public int TotalTicks => _tickDurations.Count;
+    public int TotalSteps => _stepDurations.Count;
 
     /// <summary>
-    /// Gets the average ticks per second based on total elapsed time.
+    /// Gets the average steps per second based on total elapsed time.
     /// </summary>
-    public double TicksPerSecond =>
+    public double StepsPerSecond =>
         TotalElapsed.TotalSeconds > 0
-            ? TotalTicks / TotalElapsed.TotalSeconds
+            ? TotalSteps / TotalElapsed.TotalSeconds
             : 0;
 
     /// <summary>
@@ -104,54 +101,47 @@ public sealed class PerformanceMetrics
     internal void StopSimulation()
     {
         _totalStopwatch.Stop();
-        _tickStopwatch.Stop();
+        _stepStopwatch.Stop();
     }
 
     /// <summary>
-    /// Starts timing a new tick.
+    /// Starts timing a new step.
     /// </summary>
-    internal void StartTick()
-    {
-        _tickStopwatch.Restart();
-    }
+    internal void StartStep() => _stepStopwatch.Restart();
 
     /// <summary>
-    /// Completes timing the current tick and records the duration.
+    /// Completes timing the current step and records the duration.
     /// </summary>
-    internal void CompleteTick()
+    internal void CompleteStep()
     {
-        _tickStopwatch.Stop();
-        _tickDurations.Add(_tickStopwatch.Elapsed);
+        _stepStopwatch.Stop();
+        _stepDurations.Add(_stepStopwatch.Elapsed);
     }
 
     /// <summary>
     /// Gets a summary of performance metrics.
     /// </summary>
     /// <returns>A formatted string containing performance statistics.</returns>
-    public string GetSummary()
-    {
-        return $"Performance: {TotalTicks} ticks in {TotalElapsed:g} " +
-               $"(Avg: {AverageTickDuration.TotalMilliseconds:F2}ms/tick, " +
-               $"Rate: {TicksPerSecond:F2} ticks/sec, " +
-               $"Memory: {CurrentMemoryBytes / 1024.0 / 1024.0:F2} MB)";
-    }
+    public string GetSummary() =>
+        $"Performance: {TotalSteps} steps in {TotalElapsed:g} " +
+        $"(Avg: {AverageStepDuration.TotalMilliseconds:F2}ms/step, " +
+        $"Rate: {StepsPerSecond:F2} steps/sec, " +
+        $"Memory: {CurrentMemoryBytes / 1024.0 / 1024.0:F2} MB)";
 
     /// <summary>
     /// Gets detailed performance statistics.
     /// </summary>
     /// <returns>A dictionary of metric names and values.</returns>
-    public Dictionary<string, object> GetDetailedMetrics()
-    {
-        return new Dictionary<string, object>
+    public Dictionary<string, object> GetDetailedMetrics() =>
+        new()
         {
             ["TotalElapsed"] = TotalElapsed,
-            ["TotalTicks"] = TotalTicks,
-            ["AverageTickDuration"] = AverageTickDuration,
-            ["MinTickDuration"] = MinTickDuration,
-            ["MaxTickDuration"] = MaxTickDuration,
-            ["TicksPerSecond"] = TicksPerSecond,
+            ["TotalStepSteps"] = TotalSteps,
+            ["AverageStepDuration"] = AverageStepDuration,
+            ["MinStepDuration"] = MinStepDuration,
+            ["MaxStepDuration"] = MaxStepDuration,
+            ["StepsPerSecond"] = StepsPerSecond,
             ["CurrentMemoryMB"] = CurrentMemoryBytes / 1024.0 / 1024.0,
             ["MemoryDeltaKB"] = MemoryDeltaBytes / 1024.0
         };
-    }
 }

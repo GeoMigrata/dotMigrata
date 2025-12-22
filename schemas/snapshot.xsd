@@ -15,7 +15,7 @@
            xmlns="http://geomigrata.pages.dev/snapshot"
            targetNamespace="http://geomigrata.pages.dev/snapshot"
            elementFormDefault="qualified"
-           attributeFormDefault="unqualified">
+>
 
     <!-- ========== Root Element ========== -->
 
@@ -32,8 +32,8 @@
             <xs:attribute name="Id" type="xs:string" use="required"/>
             <xs:attribute name="Status" type="SnapshotStatusType" use="required"/>
             <xs:attribute name="CreatedAt" type="xs:dateTime" use="required"/>
-            <xs:attribute name="LastModifiedAt" type="xs:dateTime" use="optional"/>
-            <xs:attribute name="Tick" type="xs:nonNegativeInteger" default="0"/>
+            <xs:attribute name="LastModifiedAt" type="xs:dateTime"/>
+            <xs:attribute name="Step" type="xs:nonNegativeInteger" default="0"/>
         </xs:complexType>
     </xs:element>
 
@@ -71,7 +71,7 @@
             <xs:element name="Population" type="PopulationType" minOccurs="0"/>
             <xs:element name="Cities" type="CitiesType" minOccurs="0"/>
         </xs:sequence>
-        <xs:attribute name="Name" type="xs:string" use="optional"/>
+        <xs:attribute name="Name" type="xs:string"/>
     </xs:complexType>
 
     <!-- ========== Factor Definitions ========== -->
@@ -84,11 +84,11 @@
 
     <xs:complexType name="FactorType">
         <xs:attribute name="Id" type="xs:string" use="required"/>
-        <xs:attribute name="Name" type="xs:string" use="optional"/>
+        <xs:attribute name="Name" type="xs:string"/>
         <xs:attribute name="Type" type="FactorTypeEnum" use="required"/>
         <xs:attribute name="Min" type="xs:double" use="required"/>
         <xs:attribute name="Max" type="xs:double" use="required"/>
-        <xs:attribute name="Transform" type="TransformTypeEnum" use="optional"/>
+        <xs:attribute name="Transform" type="TransformTypeEnum"/>
     </xs:complexType>
 
     <!-- ========== Population Groups ========== -->
@@ -129,8 +129,8 @@
             <xs:element name="Tags" type="xs:string" minOccurs="0"/>
         </xs:sequence>
         <xs:attribute name="Count" type="xs:positiveInteger" use="required"/>
-        <xs:attribute name="Seed" type="xs:int" use="optional"/>
-        <xs:attribute name="Type" type="xs:string" use="optional" default="StandardPerson"/>
+        <xs:attribute name="Seed" type="xs:int"/>
+        <xs:attribute name="Type" type="xs:string" default="StandardPerson"/>
     </xs:complexType>
 
     <xs:complexType name="SensitivitySpecsType">
@@ -151,11 +151,11 @@
             </xs:documentation>
         </xs:annotation>
         <xs:attribute name="Id" type="xs:string" use="required"/>
-        <xs:attribute name="V" type="ZeroToOneType" use="optional"/>
-        <xs:attribute name="Min" type="ZeroToOneType" use="optional"/>
-        <xs:attribute name="Max" type="ZeroToOneType" use="optional"/>
-        <xs:attribute name="Approximately" type="ZeroToOneType" use="optional"/>
-        <xs:attribute name="StdDev" type="xs:double" use="optional"/>
+        <xs:attribute name="V" type="ZeroToOneType"/>
+        <xs:attribute name="Min" type="ZeroToOneType"/>
+        <xs:attribute name="Max" type="ZeroToOneType"/>
+        <xs:attribute name="Approximately" type="ZeroToOneType"/>
+        <xs:attribute name="StdDev" type="xs:double"/>
     </xs:complexType>
 
     <xs:complexType name="ValueSpecType">
@@ -164,11 +164,11 @@
                 Approximately+StdDev for normal distribution.
             </xs:documentation>
         </xs:annotation>
-        <xs:attribute name="V" type="ZeroToOneType" use="optional"/>
-        <xs:attribute name="Min" type="ZeroToOneType" use="optional"/>
-        <xs:attribute name="Max" type="ZeroToOneType" use="optional"/>
-        <xs:attribute name="Approximately" type="ZeroToOneType" use="optional"/>
-        <xs:attribute name="StdDev" type="xs:double" use="optional"/>
+        <xs:attribute name="V" type="ZeroToOneType"/>
+        <xs:attribute name="Min" type="ZeroToOneType"/>
+        <xs:attribute name="Max" type="ZeroToOneType"/>
+        <xs:attribute name="Approximately" type="ZeroToOneType"/>
+        <xs:attribute name="StdDev" type="xs:double"/>
     </xs:complexType>
 
     <!-- ========== Cities ========== -->
@@ -185,11 +185,11 @@
             <xs:element name="Population" type="CityPopulationType" minOccurs="0"/>
         </xs:sequence>
         <xs:attribute name="Id" type="xs:string" use="required"/>
-        <xs:attribute name="Name" type="xs:string" use="optional"/>
+        <xs:attribute name="Name" type="xs:string"/>
         <xs:attribute name="Lat" type="LatitudeType" use="required"/>
         <xs:attribute name="Lon" type="LongitudeType" use="required"/>
         <xs:attribute name="Area" type="PositiveDoubleType" use="required"/>
-        <xs:attribute name="Capacity" type="xs:positiveInteger" use="optional"/>
+        <xs:attribute name="Capacity" type="xs:positiveInteger"/>
     </xs:complexType>
 
     <xs:complexType name="CityFactorsType">
@@ -236,8 +236,8 @@
         <xs:sequence>
             <xs:element name="Migrations" type="MigrationsType" minOccurs="0"/>
         </xs:sequence>
-        <xs:attribute name="Tick" type="xs:nonNegativeInteger" use="required"/>
-        <xs:attribute name="Timestamp" type="xs:dateTime" use="optional"/>
+        <xs:attribute name="Step" type="xs:nonNegativeInteger" use="required"/>
+        <xs:attribute name="Timestamp" type="xs:dateTime"/>
     </xs:complexType>
 
     <xs:complexType name="MigrationsType">

@@ -8,6 +8,7 @@ using dotMigrata.Simulation.Events;
 using dotMigrata.Simulation.Events.Effects;
 using dotMigrata.Simulation.Events.Enums;
 using dotMigrata.Simulation.Events.Interfaces;
+using dotMigrata.Simulation.Exceptions;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
 using dotMigrata.Simulation.Pipeline;
@@ -41,10 +42,7 @@ public sealed class SimulationBuilder
     /// Creates a new <see cref="SimulationBuilder" /> instance.
     /// </summary>
     /// <returns>A new <see cref="SimulationBuilder" />.</returns>
-    public static SimulationBuilder Create()
-    {
-        return new SimulationBuilder();
-    }
+    public static SimulationBuilder Create() => new();
 
     /// <summary>
     /// Uses default stages for migration simulation (decision and execution).
@@ -113,7 +111,7 @@ public sealed class SimulationBuilder
     /// <param name="showPersonDetails">
     /// <see langword="true" /> to show individual person details during migration; otherwise, <see langword="false" />.
     /// </param>
-    /// <param name="maxPersonsToShow">Maximum number of persons to show details for per tick. Default is 10.</param>
+    /// <param name="maxPersonsToShow">Maximum number of persons to show details for per step. Default is 10.</param>
     /// <returns>This builder for method chaining.</returns>
     public SimulationBuilder WithDebugOutput(bool colored = true, bool showPersonDetails = true,
         int maxPersonsToShow = 10)
@@ -305,7 +303,7 @@ public sealed class SimulationBuilder
     /// <summary>
     /// Sets the default interval for periodic events.
     /// </summary>
-    /// <param name="interval">The interval in ticks between executions.</param>
+    /// <param name="interval">The interval in steps between executions.</param>
     /// <returns>This builder for method chaining.</returns>
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown when <paramref name="interval" /> is less than 1.

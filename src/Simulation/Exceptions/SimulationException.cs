@@ -1,4 +1,4 @@
-﻿namespace dotMigrata.Simulation;
+﻿namespace dotMigrata.Simulation.Exceptions;
 
 /// <summary>
 /// Represents errors that occur during simulation configuration or execution.
@@ -8,7 +8,7 @@ public class SimulationException : Exception
     /// <summary>
     /// Initializes a new instance of the <see cref="SimulationException" /> class.
     /// </summary>
-    public SimulationException()
+    protected SimulationException()
     {
     }
 
@@ -16,7 +16,7 @@ public class SimulationException : Exception
     /// Initializes a new instance of the <see cref="SimulationException" /> class with a specified error message.
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
-    public SimulationException(string message)
+    protected SimulationException(string message)
         : base(message)
     {
     }
@@ -27,7 +27,7 @@ public class SimulationException : Exception
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
     /// <param name="innerException">The exception that is the cause of the current exception.</param>
-    public SimulationException(string message, Exception innerException)
+    protected SimulationException(string message, Exception innerException)
         : base(message, innerException)
     {
     }

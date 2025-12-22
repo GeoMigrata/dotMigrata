@@ -8,7 +8,7 @@ namespace dotMigrata.Simulation.Interfaces;
 public interface IStabilityCriteria
 {
     /// <summary>
-    /// Determines whether stability should be checked at the current tick.
+    /// Determines whether stability should be checked at the current step.
     /// </summary>
     /// <param name="context">The current simulation context.</param>
     /// <param name="config">The simulation configuration.</param>

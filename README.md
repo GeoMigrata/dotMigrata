@@ -125,7 +125,7 @@ Provides calculation interfaces and implementations:
 Implements a pipeline-based simulation engine:
 
 - `ISimulationStage` - Extensible stage interface
-- `SimulationEngine` - Tick-based orchestrator
+- `SimulationEngine` - Step-based orchestrator
 - Built-in stages: `MigrationDecisionStage`, `MigrationExecutionStage`, `EventStage`
 - `ISimulationObserver` - Observer pattern for monitoring (includes `ConsoleObserver`)
 
@@ -137,7 +137,7 @@ Core event system for dynamic factor modifications:
   Event abstractions and implementations
 - `IEventTrigger` (`dotMigrata.Simulation.Events.Interfaces`) - Trigger interface with multiple implementations under
   `dotMigrata.Simulation.Events.Triggers`:
-    - `TickTrigger` - One-time execution at specific tick
+    - `StepTrigger` - One-time execution at specific step
     - `PeriodicTrigger` - Repeated execution at intervals
     - `ContinuousTrigger` - Continuous execution within time window
     - `ConditionalTrigger` - Condition-based execution (extension point for ECA patterns)
@@ -148,7 +148,7 @@ Core event system for dynamic factor modifications:
     - `CompositeEffect` - Multiple effects in sequence
 - `EffectApplicationType` (`dotMigrata.Simulation.Events.Enums`) - Application types (absolute, delta, multiply,
   linear/logarithmic transitions)
-- `EffectDuration` (`dotMigrata.Simulation.Events.Effects`) - Duration specification (instant or over N ticks)
+- `EffectDuration` (`dotMigrata.Simulation.Events.Effects`) - Duration specification (instant or over N steps)
 - `EventStage` (`dotMigrata.Simulation.Events.EventStage`) - Pipeline stage for event execution
 
 ### Generator Layer (`/src/Generator`)
@@ -175,9 +175,9 @@ Complete snapshot system for saving and restoring simulation states:
 
 The framework uses parallel processing (PLINQ) to efficiently handle large populations:
 
-- **Small**: 10,000 - 50,000 persons (~3-15 MB, <1-3 seconds per tick)
-- **Medium**: 50,000 - 200,000 persons (~15-60 MB, 3-10 seconds per tick)
-- **Large**: 200,000 - 1,000,000 persons (~60-300 MB, 10-90 seconds per tick)
+- **Small**: 10,000 - 50,000 persons (~3-15 MB, <1-3 seconds per step)
+- **Medium**: 50,000 - 200,000 persons (~15-60 MB, 3-10 seconds per step)
+- **Large**: 200,000 - 1,000,000 persons (~60-300 MB, 10-90 seconds per step)
 
 *Performance varies based on CPU cores, factor count, and city count*
 
@@ -236,11 +236,11 @@ var world = SnapshotConverter.ToWorld(snapshot!);
 var engine = SimulationBuilder.Create()
     .WithConsoleOutput()
     .WithRandomSeed(42)
-    .ConfigureSimulation(s => s.MaxTicks(100))
+    .ConfigureSimulation(s => s.MaxSteps(100))
     .Build();
 
 var result = await engine.RunAsync(world);
-Console.WriteLine($"Simulation completed in {result.CurrentTick} ticks");
+Console.WriteLine($"Simulation completed in {result.CurrentStep} steps");
 ```
 
 ### Exporting a Snapshot to File
@@ -256,7 +256,7 @@ using dotMigrata.Snapshot.Enums;
 var snapshot = SnapshotConverter.ToSnapshot(
     world, 
     SnapshotStatus.Completed, 
-    currentStep: result.CurrentTick);
+    currentStep: result.CurrentStep);
 
 // Save to file
 XmlSnapshotSerializer.SerializeToFile(snapshot, "output-snapshot.xml");
@@ -306,7 +306,7 @@ File.WriteAllText("simulation_metrics.csv", metrics.ExportToCsv());
 
 **Available Metrics:**
 
-- Migration rates and counts per tick
+- Migration rates and counts per step
 - Population distribution statistics (Gini, Entropy, CV)
 - Per-city metrics (incoming/outgoing migrations, capacity utilization)
 - Tag-based population analysis

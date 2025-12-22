@@ -8,24 +8,24 @@ namespace dotMigrata.Simulation.Builders;
 public sealed class SimulationConfigBuilder
 {
     private bool _checkStability = true;
-    private int _maxTicks = 1000;
-    private int _minTicksBeforeStabilityCheck = 10;
+    private int _maxSteps = 1000;
+    private int _minStepsBeforeStabilityCheck = 10;
     private int _stabilityCheckInterval = 1;
     private int _stabilityThreshold = 10;
 
     /// <summary>
-    /// Sets the maximum number of simulation ticks.
+    /// Sets the maximum number of simulation steps.
     /// </summary>
-    /// <param name="value">The maximum number of ticks. Must be positive.</param>
+    /// <param name="value">The maximum number of steps. Must be positive.</param>
     /// <returns>This builder for method chaining.</returns>
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown when <paramref name="value" /> is not positive.
     /// </exception>
-    public SimulationConfigBuilder MaxTicks(int value)
+    public SimulationConfigBuilder MaxSteps(int value)
     {
-        _maxTicks = value > 0
+        _maxSteps = value > 0
             ? value
-            : throw new ArgumentOutOfRangeException(nameof(value), value, "MaxTicks must be positive.");
+            : throw new ArgumentOutOfRangeException(nameof(value), value, "MaxSteps must be positive.");
         return this;
     }
 
@@ -61,7 +61,7 @@ public sealed class SimulationConfigBuilder
     /// <summary>
     /// Sets how often to check for stability.
     /// </summary>
-    /// <param name="value">The interval in ticks. Must be positive.</param>
+    /// <param name="value">The interval in steps. Must be positive.</param>
     /// <returns>This builder for method chaining.</returns>
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown when <paramref name="value" /> is not positive.
@@ -75,31 +75,29 @@ public sealed class SimulationConfigBuilder
     }
 
     /// <summary>
-    /// Sets the minimum ticks before checking stability.
+    /// Sets the minimum steps before checking stability.
     /// </summary>
-    /// <param name="value">The minimum number of ticks. Must be non-negative.</param>
+    /// <param name="value">The minimum number of steps. Must be non-negative.</param>
     /// <returns>This builder for method chaining.</returns>
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown when <paramref name="value" /> is negative.
     /// </exception>
-    public SimulationConfigBuilder MinTicksBeforeStabilityCheck(int value)
+    public SimulationConfigBuilder MinStepsBeforeStabilityCheck(int value)
     {
-        _minTicksBeforeStabilityCheck = value >= 0
+        _minStepsBeforeStabilityCheck = value >= 0
             ? value
             : throw new ArgumentOutOfRangeException(nameof(value), value,
-                "MinTicksBeforeStabilityCheck must be non-negative.");
+                "MinStepsBeforeStabilityCheck must be non-negative.");
         return this;
     }
 
-    internal SimulationConfig Build()
-    {
-        return new SimulationConfig
+    internal SimulationConfig Build() =>
+        new()
         {
-            MaxTicks = _maxTicks,
+            MaxSteps = _maxSteps,
             CheckStability = _checkStability,
             StabilityThreshold = _stabilityThreshold,
             StabilityCheckInterval = _stabilityCheckInterval,
-            MinTicksBeforeStabilityCheck = _minTicksBeforeStabilityCheck
+            MinStepsBeforeStabilityCheck = _minStepsBeforeStabilityCheck
         };
-    }
 }

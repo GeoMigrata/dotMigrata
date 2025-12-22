@@ -7,15 +7,15 @@ namespace dotMigrata.Simulation.Engine;
 /// Represents a simulation checkpoint that can be used to resume execution.
 /// </summary>
 /// <remarks>
-/// Checkpoints capture the complete state of a simulation at a specific tick,
+/// Checkpoints capture the complete state of a simulation at a specific step,
 /// enabling pause/resume functionality for long-running simulations.
 /// </remarks>
 public sealed record SimulationCheckpoint
 {
     /// <summary>
-    /// Gets the tick number when this checkpoint was created.
+    /// Gets the step number when this checkpoint was created.
     /// </summary>
-    public required int TickNumber { get; init; }
+    public required int StepNumber { get; init; }
 
     /// <summary>
     /// Gets the timestamp when this checkpoint was created.
@@ -68,7 +68,7 @@ public sealed record SimulationCheckpoint
 
         return new SimulationCheckpoint
         {
-            TickNumber = context.CurrentTick,
+            StepNumber = context.CurrentStep,
             CreatedAt = DateTime.UtcNow,
             World = context.World,
             Configuration = config,
@@ -82,9 +82,7 @@ public sealed record SimulationCheckpoint
     /// Gets a human-readable summary of this checkpoint.
     /// </summary>
     /// <returns>A formatted string describing the checkpoint.</returns>
-    public string GetSummary()
-    {
-        return $"Checkpoint at tick {TickNumber} (Created: {CreatedAt:g}, " +
-               $"Population: {World.Population}, Stabilized: {IsStabilized})";
-    }
+    public string GetSummary() =>
+        $"Checkpoint at step {StepNumber} (Created: {CreatedAt:g}, " +
+        $"Population: {World.Population}, Stabilized: {IsStabilized})";
 }

@@ -4,7 +4,7 @@ using dotMigrata.Simulation.Models;
 namespace dotMigrata.Simulation.Metrics;
 
 /// <summary>
-/// Observer that collects simulation metrics at each tick.
+/// Observer that collects simulation metrics at each step.
 /// Integrates with the MetricsCollector for comprehensive statistics tracking.
 /// </summary>
 public sealed class MetricsObserver : ISimulationObserver
@@ -18,14 +18,14 @@ public sealed class MetricsObserver : ISimulationObserver
     public void OnSimulationStart(SimulationContext context)
     {
         Collector.Clear();
-        // Collect initial state (tick -1 or 0 before any changes)
+        // Collect initial state (step -1 or 0 before any changes)
         Collector.Collect(context.World, -1);
     }
 
     /// <inheritdoc />
-    public void OnTickStart(SimulationContext context)
+    public void OnStepStart(SimulationContext context)
     {
-        // Nothing to do at tick start
+        // Nothing to do at step start
     }
 
     /// <inheritdoc />
@@ -35,7 +35,7 @@ public sealed class MetricsObserver : ISimulationObserver
     }
 
     /// <inheritdoc />
-    public void OnTickComplete(SimulationContext context)
+    public void OnStepComplete(SimulationContext context)
     {
         // Calculate migration counts per city
         var incomingMigrations = new Dictionary<string, int>();
@@ -52,13 +52,13 @@ public sealed class MetricsObserver : ISimulationObserver
             outgoingMigrations[originName] = outgoingMigrations.GetValueOrDefault(originName) + 1;
         }
 
-        Collector.Collect(context.World, context.CurrentTick, incomingMigrations, outgoingMigrations);
+        Collector.Collect(context.World, context.CurrentStep, incomingMigrations, outgoingMigrations);
     }
 
     /// <inheritdoc />
     public void OnSimulationEnd(SimulationContext context, string reason)
     {
-        // Final metrics are already collected in OnTickComplete
+        // Final metrics are already collected in OnStepComplete
     }
 
     /// <inheritdoc />

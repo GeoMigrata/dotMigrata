@@ -21,14 +21,14 @@ public sealed class MetricsCollector
     public SimulationMetrics? CurrentMetrics => _history.LastOrDefault();
 
     /// <summary>
-    /// Gets the average migration rate across all ticks.
+    /// Gets the average migration rate across all steps.
     /// </summary>
     public double AverageMigrationRate => _history.Count > 0
         ? _history.Average(m => m.MigrationRate)
         : 0;
 
     /// <summary>
-    /// Gets the total number of migrations across all ticks.
+    /// Gets the total number of migrations across all steps.
     /// </summary>
     public long TotalMigrations => _history.Sum(m => m.MigrationCount);
 
@@ -36,13 +36,13 @@ public sealed class MetricsCollector
     /// Collects metrics for the current simulation state.
     /// </summary>
     /// <param name="world">The world to collect metrics from.</param>
-    /// <param name="tick">The current tick number.</param>
+    /// <param name="step">The current step number.</param>
     /// <param name="incomingMigrations">Dictionary mapping city names to incoming migration counts.</param>
     /// <param name="outgoingMigrations">Dictionary mapping city names to outgoing migration counts.</param>
     /// <returns>The collected metrics.</returns>
     public SimulationMetrics Collect(
         World world,
-        int tick,
+        int step,
         IReadOnlyDictionary<string, int>? incomingMigrations = null,
         IReadOnlyDictionary<string, int>? outgoingMigrations = null)
     {
@@ -78,7 +78,7 @@ public sealed class MetricsCollector
 
         var metrics = new SimulationMetrics
         {
-            Tick = tick,
+            Step = step,
             Timestamp = DateTime.UtcNow,
             TotalPopulation = world.Population,
             MigrationCount = totalMigrations,
@@ -109,14 +109,14 @@ public sealed class MetricsCollector
     public string ExportToCsv()
     {
         if (_history.Count == 0)
-            return "Tick,Timestamp,TotalPopulation,MigrationCount,MigrationRate,GiniCoefficient,Entropy,CV";
+            return "Step,Timestamp,TotalPopulation,MigrationCount,MigrationRate,GiniCoefficient,Entropy,CV";
 
         var lines = new List<string>
         {
-            "Tick,Timestamp,TotalPopulation,MigrationCount,MigrationRate,GiniCoefficient,Entropy,CV"
+            "Step,Timestamp,TotalPopulation,MigrationCount,MigrationRate,GiniCoefficient,Entropy,CV"
         };
         lines.AddRange(_history.Select(m =>
-            $"{m.Tick},{m.Timestamp:O},{m.TotalPopulation},{m.MigrationCount}," +
+            $"{m.Step},{m.Timestamp:O},{m.TotalPopulation},{m.MigrationCount}," +
             $"{m.MigrationRate:F6},{m.PopulationGiniCoefficient:F6}," +
             $"{m.PopulationEntropy:F6},{m.PopulationCoefficientOfVariation:F6}"));
 

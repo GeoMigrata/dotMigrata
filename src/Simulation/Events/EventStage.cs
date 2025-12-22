@@ -11,7 +11,7 @@ namespace dotMigrata.Simulation.Events;
 /// </summary>
 /// <remarks>
 ///     <para>
-///     This stage evaluates all registered events each tick and executes those
+///     This stage evaluates all registered events each step and executes those
 ///     whose triggers fire.
 ///     </para>
 ///     <para>
@@ -102,7 +102,7 @@ public sealed class EventStage : ISimulationStage
             evt.Trigger.OnExecuted(context);
 
             // Mark one-time events as completed
-            if (evt.Trigger is TickTrigger)
+            if (evt.Trigger is StepTrigger)
                 evt.MarkCompleted();
         }
     }
@@ -119,7 +119,7 @@ public sealed class EventStage : ISimulationStage
             evt.Trigger.OnExecuted(context);
 
             // Mark one-time events as completed (thread-safe)
-            if (evt.Trigger is TickTrigger)
+            if (evt.Trigger is StepTrigger)
                 evt.MarkCompleted();
         });
     }

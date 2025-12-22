@@ -6,7 +6,7 @@ namespace dotMigrata.Simulation.Interfaces;
 /// Represents a single stage in the simulation pipeline.
 /// </summary>
 /// <remarks>
-/// Stages are executed in sequence during each simulation tick.
+/// Stages are executed in sequence during each simulation step.
 /// </remarks>
 public interface ISimulationStage
 {
@@ -18,12 +18,12 @@ public interface ISimulationStage
     /// <summary>
     /// Executes this stage of the simulation.
     /// </summary>
-    /// <param name="context">The current simulation context containing world state and tick information.</param>
+    /// <param name="context">The current simulation context containing world state and step information.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task ExecuteAsync(SimulationContext context);
 
     /// <summary>
-    /// Determines whether this stage should be executed for the current tick.
+    /// Determines whether this stage should be executed for the current step.
     /// </summary>
     /// <param name="context">The current simulation context.</param>
     /// <returns>
@@ -31,11 +31,8 @@ public interface ISimulationStage
     /// <see langword="false" /> to skip the stage.
     /// </returns>
     /// <remarks>
-    /// Can be used to skip stages conditionally (for example, feedback only every N ticks).
+    /// Can be used to skip stages conditionally (for example, feedback only every N steps).
     /// The default implementation returns <see langword="true" />.
     /// </remarks>
-    bool ShouldExecute(SimulationContext context)
-    {
-        return true;
-    }
+    bool ShouldExecute(SimulationContext context) => true;
 }

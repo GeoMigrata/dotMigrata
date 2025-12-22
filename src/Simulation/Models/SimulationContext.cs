@@ -5,7 +5,7 @@ namespace dotMigrata.Simulation.Models;
 
 /// <summary>
 /// Represents the context and state for a single simulation execution.
-/// Contains the world being simulated, current tick information, performance metrics, and shared data between stages.
+/// Contains the world being simulated, current step information, performance metrics, and shared data between stages.
 /// </summary>
 public sealed class SimulationContext
 {
@@ -27,9 +27,9 @@ public sealed class SimulationContext
     public World World { get; }
 
     /// <summary>
-    /// Gets or sets the current tick number (0-based).
+    /// Gets or sets the current step number (0-based).
     /// </summary>
-    public int CurrentTick { get; set; }
+    public int CurrentStep { get; set; }
 
     /// <summary>
     /// Gets or sets whether the simulation has stabilized.
@@ -37,7 +37,7 @@ public sealed class SimulationContext
     public bool IsStabilized { get; set; }
 
     /// <summary>
-    /// Gets or sets the total population change in the current tick.
+    /// Gets or sets the total population change in the current step.
     /// </summary>
     public int TotalPopulationChange { get; set; }
 
@@ -47,7 +47,7 @@ public sealed class SimulationContext
     public int MaxCityPopulationChange { get; set; }
 
     /// <summary>
-    /// Gets or sets the collection of migration flows calculated for the current tick.
+    /// Gets or sets the collection of migration flows calculated for the current step.
     /// </summary>
     public IEnumerable<MigrationFlow> CurrentMigrationFlows { get; set; } = [];
 
@@ -63,10 +63,7 @@ public sealed class SimulationContext
     /// <typeparam name="T">The type of data to store.</typeparam>
     /// <param name="key">The key to identify the data.</param>
     /// <param name="value">The value to store.</param>
-    public void SetData<T>(string key, T value) where T : notnull
-    {
-        _sharedData[key] = value;
-    }
+    public void SetData<T>(string key, T value) where T : notnull => _sharedData[key] = value;
 
 
     /// <summary>
@@ -75,12 +72,10 @@ public sealed class SimulationContext
     /// <typeparam name="T">The type of data to retrieve.</typeparam>
     /// <param name="key">The key to identify the data.</param>
     /// <returns>The stored value, or default if not found.</returns>
-    public T? GetData<T>(string key)
-    {
-        return _sharedData.TryGetValue(key, out var value) && value is T typedValue
+    public T? GetData<T>(string key) =>
+        _sharedData.TryGetValue(key, out var value) && value is T typedValue
             ? typedValue
             : default;
-    }
 
     /// <summary>
     /// Tries to retrieve data from the shared context.

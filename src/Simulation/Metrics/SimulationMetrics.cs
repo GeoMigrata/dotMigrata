@@ -1,15 +1,15 @@
 ﻿namespace dotMigrata.Simulation.Metrics;
 
 /// <summary>
-/// Represents a snapshot of simulation metrics at a specific tick.
+/// Represents a snapshot of simulation metrics at a specific step.
 /// Provides comprehensive statistics for academic analysis and visualization.
 /// </summary>
 public sealed record SimulationMetrics
 {
     /// <summary>
-    /// Gets the tick number when these metrics were captured.
+    /// Gets the step number when these metrics were captured.
     /// </summary>
-    public required int Tick { get; init; }
+    public required int Step { get; init; }
 
     /// <summary>
     /// Gets the timestamp when the metrics were captured.
@@ -22,12 +22,12 @@ public sealed record SimulationMetrics
     public required int TotalPopulation { get; init; }
 
     /// <summary>
-    /// Gets the number of migrations in this tick.
+    /// Gets the number of migrations in this step.
     /// </summary>
     public required int MigrationCount { get; init; }
 
     /// <summary>
-    /// Gets the migration rate (migrations per person) for this tick.
+    /// Gets the migration rate (migrations per person) for this step.
     /// </summary>
     public double MigrationRate => TotalPopulation > 0 ? (double)MigrationCount / TotalPopulation : 0;
 

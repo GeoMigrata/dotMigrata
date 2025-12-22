@@ -1,4 +1,6 @@
-﻿namespace dotMigrata.Simulation.Models;
+﻿using dotMigrata.Simulation.Exceptions;
+
+namespace dotMigrata.Simulation.Models;
 
 /// <summary>
 /// Configuration for simulation execution behavior.
@@ -17,7 +19,7 @@ public sealed record SimulationConfig
     public static SimulationConfig Default => _default ??= new SimulationConfig();
 
     /// <summary>
-    /// Gets or initializes the maximum number of ticks to simulate.
+    /// Gets or initializes the maximum number of steps to simulate.
     /// </summary>
     /// <value>
     /// Must be greater than 0. The default value is 1000.
@@ -25,14 +27,14 @@ public sealed record SimulationConfig
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown when the value is less than or equal to 0.
     /// </exception>
-    public int MaxTicks
+    public int MaxSteps
     {
         get;
         init
         {
             if (value <= 0)
-                throw new ArgumentOutOfRangeException(nameof(MaxTicks), value,
-                    "MaxTicks must be greater than 0.");
+                throw new ArgumentOutOfRangeException(nameof(MaxSteps), value,
+                    "MaxSteps must be greater than 0.");
             field = value;
         }
     } = 1000;
@@ -69,10 +71,10 @@ public sealed record SimulationConfig
     } = 10;
 
     /// <summary>
-    /// Gets or initializes how often (in ticks) to check for stability.
+    /// Gets or initializes how often (in steps) to check for stability.
     /// </summary>
     /// <value>
-    /// Must be greater than 0. The default value is 1 (check every tick).
+    /// Must be greater than 0. The default value is 1 (check every step).
     /// </value>
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown when the value is less than or equal to 0.
@@ -90,24 +92,24 @@ public sealed record SimulationConfig
     } = 1;
 
     /// <summary>
-    /// Gets or initializes the minimum number of ticks before checking for stability.
+    /// Gets or initializes the minimum number of steps before checking for stability.
     /// Prevents premature termination during initial settling.
     /// </summary>
     /// <value>
-    /// Must be greater than or equal to 0 and less than <see cref="MaxTicks" />.
+    /// Must be greater than or equal to 0 and less than <see cref="MaxSteps" />.
     /// The default value is 10.
     /// </value>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// Thrown when the value is less than 0 or greater than or equal to MaxTicks when CheckStability is true.
+    /// Thrown when the value is less than 0 or greater than or equal to MaxSteps when CheckStability is true.
     /// </exception>
-    public int MinTicksBeforeStabilityCheck
+    public int MinStepsBeforeStabilityCheck
     {
         get;
         init
         {
             if (value < 0)
-                throw new ArgumentOutOfRangeException(nameof(MinTicksBeforeStabilityCheck), value,
-                    "MinTicksBeforeStabilityCheck must be greater than or equal to 0.");
+                throw new ArgumentOutOfRangeException(nameof(MinStepsBeforeStabilityCheck), value,
+                    "MinStepsBeforeStabilityCheck must be greater than or equal to 0.");
             field = value;
         }
     } = 10;
@@ -124,7 +126,7 @@ public sealed record SimulationConfig
     /// </exception>
     /// <remarks>
     /// Individual properties are validated during initialization, but this method checks
-    /// cross-property constraints (e.g., MinTicksBeforeStabilityCheck must be less than MaxTicks).
+    /// cross-property constraints (e.g., MinStepsBeforeStabilityCheck must be less than MaxSteps).
     /// </remarks>
     public SimulationConfig Validate()
     {
@@ -133,10 +135,10 @@ public sealed record SimulationConfig
             // Individual property validation happens in setters
             // This method validates cross-property constraints
 
-            if (CheckStability && MinTicksBeforeStabilityCheck >= MaxTicks)
-                throw new ArgumentOutOfRangeException(nameof(MinTicksBeforeStabilityCheck),
-                    MinTicksBeforeStabilityCheck,
-                    "MinTicksBeforeStabilityCheck must be less than MaxTicks when stability checks are enabled.");
+            if (CheckStability && MinStepsBeforeStabilityCheck >= MaxSteps)
+                throw new ArgumentOutOfRangeException(nameof(MinStepsBeforeStabilityCheck),
+                    MinStepsBeforeStabilityCheck,
+                    "MinStepsBeforeStabilityCheck must be less than MaxSteps when stability checks are enabled.");
 
             return this;
         }

@@ -1,4 +1,4 @@
-﻿﻿# dotMigrata
+﻿# dotMigrata
 
 A .NET simulation framework for modeling individual-based population migration and city evolution in multi-city systems.
 
@@ -109,7 +109,7 @@ var world = new World([cityA, cityB], [incomeFactor, pollutionFactor])
 
 var engine = SimulationBuilder.Create()
     .WithConsoleOutput()
-    .ConfigureSimulation(s => s.MaxTicks(100))
+    .ConfigureSimulation(s => s.MaxSteps(100))
     .Build();
 
 var result = await engine.RunAsync(world);
@@ -133,7 +133,7 @@ await engine.DisposeAsync();
 
 ### Simulation Engine
 
-- **SimulationEngine**: Tick-based orchestrator with pipeline architecture
+- **SimulationEngine**: Step-based orchestrator with pipeline architecture
 - **ISimulationStage**: Extensible stage interface for custom logic
 - **ISimulationObserver**: Observer pattern for real-time monitoring
 
@@ -157,9 +157,9 @@ await engine.DisposeAsync();
 
 | Scale      | Population | Memory    | Processing Time |
 |------------|------------|-----------|-----------------|
-| **Small**  | 10K - 50K  | 3-15 MB   | <1-3 sec/tick   |
-| **Medium** | 50K - 200K | 15-60 MB  | 3-10 sec/tick   |
-| **Large**  | 200K - 1M  | 60-300 MB | 10-90 sec/tick  |
+| **Small**  | 10K - 50K  | 3-15 MB   | <1-3 sec/step   |
+| **Medium** | 50K - 200K | 15-60 MB  | 3-10 sec/step   |
+| **Large**  | 200K - 1M  | 60-300 MB | 10-90 sec/step  |
 
 *Performance varies based on CPU cores, factor count, and city count*
 
@@ -240,7 +240,7 @@ File.WriteAllText("metrics.csv", metrics.ExportToCsv());
 
 **Available Metrics:**
 
-- Migration rates and counts per tick
+- Migration rates and counts per step
 - Population distribution statistics (Gini, Entropy, Coefficient of Variation)
 - Per-city metrics (incoming/outgoing migrations, capacity utilization)
 - Tag-based population analysis

@@ -34,9 +34,9 @@ public class SimulationRuntimeException : SimulationException
     }
 
     /// <summary>
-    /// Gets or sets the tick number when the error occurred.
+    /// Gets or sets the step number when the error occurred.
     /// </summary>
-    public int? TickNumber { get; init; }
+    public int? StepNumber { get; init; }
 
     /// <summary>
     /// Gets or sets the stage name where the error occurred.
@@ -58,8 +58,8 @@ public class SimulationRuntimeException : SimulationException
             var baseMessage = base.Message;
             var context = new List<string>();
 
-            if (TickNumber.HasValue)
-                context.Add($"Tick: {TickNumber}");
+            if (StepNumber.HasValue)
+                context.Add($"Step: {StepNumber}");
             if (!string.IsNullOrEmpty(StageName))
                 context.Add($"Stage: {StageName}");
             if (TotalPopulation.HasValue)

@@ -12,7 +12,7 @@ namespace dotMigrata.Simulation.Events.Interfaces;
 public interface IEventTrigger
 {
     /// <summary>
-    /// Determines whether the event should execute in the current simulation tick.
+    /// Determines whether the event should execute in the current simulation step.
     /// </summary>
     /// <param name="context">The current simulation context.</param>
     /// <returns><see langword="true" /> if the event should execute; otherwise, <see langword="false" />.</returns>

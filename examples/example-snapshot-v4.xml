@@ -5,11 +5,11 @@
   Schema: ../schemas/snapshot-v4.xsd
 -->
 <Snapshot Version="v4" Id="c8836553-be0c-42c5-be58-abbae82c6918" Status="Seed"
-          CreatedAt="2025-12-19T09:00:00.0000000Z" LastModifiedAt="2025-12-20T17:30:00.0000000Z" Tick="0">
+          CreatedAt="2025-12-19T09:00:00.0000000Z" LastModifiedAt="2025-12-20T17:30:00.0000000Z" Step="0">
 
     <!-- Simulation execution configuration -->
-    <SimulationConfig MaxTicks="1000" CheckStability="true" StabilityThreshold="10"
-                      StabilityCheckInterval="1" MinTicksBeforeStabilityCheck="10"/>
+    <SimulationConfig MaxSteps="1000" CheckStability="true" StabilityThreshold="10"
+                      StabilityCheckInterval="1" MinStepsBeforeStabilityCheck="10"/>
 
     <!-- Standard migration model configuration -->
     <ModelConfig CapacitySteepness="5.0" DistanceDecayLambda="0.001"
@@ -159,10 +159,10 @@
 
         <!-- Event system examples -->
         <Events>
-            <!-- One-time event triggered at specific tick -->
+            <!-- One-time event triggered at specific step -->
             <Event Id="pollution_spike" Name="Pollution Spike Event"
                    Description="Temporary pollution increase due to industrial accident" Completed="false">
-                <Trigger Type="TickTrigger" Tick="50"/>
+                <Trigger Type="StepTrigger" Step="50"/>
                 <Effects>
                     <Effect Type="FactorChangeEffect" FactorId="pollution" ApplicationType="Temporary" Duration="20">
                         <ValueSpec V="10.5"/>
@@ -170,10 +170,10 @@
                 </Effects>
             </Event>
 
-            <!-- Continuous event active between ticks -->
+            <!-- Continuous event active between steps -->
             <Event Id="transport_improvement" Name="Transport Infrastructure Upgrade"
                    Description="Gradual transport quality improvement" Completed="false">
-                <Trigger Type="ContinuousTrigger" StartTick="100" EndTick="200"/>
+                <Trigger Type="ContinuousTrigger" StartStep="100" EndStep="200"/>
                 <Effects>
                     <Effect Type="FactorChangeEffect" FactorId="transport" ApplicationType="Permanent">
                         <ValueSpec V="9.5"/>
@@ -184,7 +184,7 @@
             <!-- Composite effect with multiple changes -->
             <Event Id="economic_boom" Name="Economic Boom"
                    Description="Economic growth affecting income and housing" Completed="false">
-                <Trigger Type="TickTrigger" Tick="150"/>
+                <Trigger Type="StepTrigger" Step="150"/>
                 <Effects>
                     <Effect Type="CompositeEffect">
                         <CompositeEffects>
@@ -204,20 +204,20 @@
 
     <!-- Simulation history for reproducibility -->
     <History>
-        <Step Tick="0">
+        <Step Step="0">
             <Migrations>
                 <M From="shanghai_cn" To="sydney_au" Count="150"/>
                 <M From="shanghai_cn" To="tokyo_jp" Count="200"/>
                 <M From="sydney_au" To="tokyo_jp" Count="75"/>
             </Migrations>
         </Step>
-        <Step Tick="1">
+        <Step Step="1">
             <Migrations>
                 <M From="shanghai_cn" To="sydney_au" Count="120"/>
                 <M From="tokyo_jp" To="sydney_au" Count="50"/>
             </Migrations>
         </Step>
-        <Step Tick="2">
+        <Step Step="2">
             <Migrations>
                 <M From="shanghai_cn" To="tokyo_jp" Count="180"/>
             </Migrations>

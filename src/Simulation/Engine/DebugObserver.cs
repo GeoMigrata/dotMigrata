@@ -14,14 +14,14 @@ public sealed class DebugObserver : ISimulationObserver
     private readonly Dictionary<string, int> _initialPopulations = new();
     private readonly int _maxPersonsToShow;
     private readonly bool _showPersonDetails;
-    private int _totalMigrationsThisTick;
+    private int _totalMigrationsThisStep;
 
     /// <summary>
     /// Initializes a new instance of the DebugObserver.
     /// </summary>
     /// <param name="colored">If true, outputs colored text. Default is true.</param>
     /// <param name="showPersonDetails">If true, shows individual person details during migration. Default is true.</param>
-    /// <param name="maxPersonsToShow">Maximum number of persons to show details for per tick. Default is 10.</param>
+    /// <param name="maxPersonsToShow">Maximum number of persons to show details for per step. Default is 10.</param>
     public DebugObserver(bool colored = true, bool showPersonDetails = true, int maxPersonsToShow = 10)
     {
         _colored = colored;
@@ -127,12 +127,12 @@ public sealed class DebugObserver : ISimulationObserver
     }
 
     /// <inheritdoc />
-    public void OnTickStart(SimulationContext context)
+    public void OnStepStart(SimulationContext context)
     {
-        _totalMigrationsThisTick = 0;
+        _totalMigrationsThisStep = 0;
         SetColor(ConsoleColor.Yellow);
         WriteLine("┌─────────────────────────────────────────────────────────────────┐");
-        WriteLine($"│  TICK {context.CurrentTick,-3}                                                      │");
+        WriteLine($"│  STEP {context.CurrentStep,-3}                                                      │");
         WriteLine("└─────────────────────────────────────────────────────────────────┘");
         ResetColor();
     }
@@ -148,7 +148,7 @@ public sealed class DebugObserver : ISimulationObserver
         if (stageName.Contains("Decision", StringComparison.OrdinalIgnoreCase))
         {
             var flowCount = context.CurrentMigrationFlows.Count();
-            _totalMigrationsThisTick = flowCount;
+            _totalMigrationsThisStep = flowCount;
             SetColor(ConsoleColor.DarkGray);
             Write($" ({flowCount:N0} migration decisions)");
 
@@ -161,7 +161,7 @@ public sealed class DebugObserver : ISimulationObserver
         else if (stageName.Contains("Execution", StringComparison.OrdinalIgnoreCase))
         {
             SetColor(ConsoleColor.DarkGray);
-            Write($" ({_totalMigrationsThisTick:N0} migrations executed)");
+            Write($" ({_totalMigrationsThisStep:N0} migrations executed)");
         }
 
         ResetColor();
@@ -169,15 +169,15 @@ public sealed class DebugObserver : ISimulationObserver
     }
 
     /// <inheritdoc />
-    public void OnTickComplete(SimulationContext context)
+    public void OnStepComplete(SimulationContext context)
     {
         WriteLine();
-        WriteLabel("  Tick Summary: ");
+        WriteLabel("  Step Summary: ");
 
-        if (_totalMigrationsThisTick > 0)
+        if (_totalMigrationsThisStep > 0)
         {
             SetColor(ConsoleColor.Green);
-            Write($"{_totalMigrationsThisTick:N0} migrations");
+            Write($"{_totalMigrationsThisStep:N0} migrations");
         }
         else
         {
@@ -225,8 +225,8 @@ public sealed class DebugObserver : ISimulationObserver
         WriteValue(reason);
         WriteLine();
 
-        WriteLabel("Total Ticks: ");
-        WriteValue($"{context.CurrentTick}");
+        WriteLabel("Total Steps: ");
+        WriteValue($"{context.CurrentStep}");
         WriteLine();
 
         WriteLabel("Stabilized: ");
@@ -281,7 +281,7 @@ public sealed class DebugObserver : ISimulationObserver
         WriteLine("║                    DEBUG MODE - ERROR                          ║");
         WriteLine("╚════════════════════════════════════════════════════════════════╝");
         WriteLine();
-        WriteLine($"Tick: {context.CurrentTick}");
+        WriteLine($"Step: {context.CurrentStep}");
         WriteLine($"Error: {exception.Message}");
         WriteLine();
         WriteLine("Stack Trace:");
@@ -330,7 +330,7 @@ public sealed class DebugObserver : ISimulationObserver
                 Write($"[{tags}] ");
                 SetColor(ConsoleColor.DarkGray);
                 Write($"Willingness: {flow.Person.MovingWillingness.Value:F2}, ");
-                Write($"Prob: {flow.MigrationProbability:F3}");
+                Write($"Prob: {flow.MigrationProbability}");
                 WriteLine();
             }
 
@@ -370,13 +370,7 @@ public sealed class DebugObserver : ISimulationObserver
         ResetColor();
     }
 
-    private static void Write(string message)
-    {
-        Console.Write(message);
-    }
+    private static void Write(string message) => Console.Write(message);
 
-    private static void WriteLine(string message = "")
-    {
-        Console.WriteLine(message);
-    }
+    private static void WriteLine(string message = "") => Console.WriteLine(message);
 }

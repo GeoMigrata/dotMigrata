@@ -1,4 +1,4 @@
-﻿﻿# API Reference
+﻿# API Reference
 
 This document provides a comprehensive reference for the public API of dotMigrata.
 
@@ -332,11 +332,11 @@ Controls simulation execution.
 
 **Properties:**
 
-- `MaxTicks` (int) - Maximum simulation ticks (default: 1000)
+- `MaxSteps` (int) - Maximum simulation steps (default: 1000)
 - `CheckStability` (bool) - Whether to check for stability (default: true)
 - `StabilityThreshold` (int) - Population change threshold for stability (default: 10)
 - `StabilityCheckInterval` (int) - How often to check stability (default: 1)
-- `MinTicksBeforeStabilityCheck` (int) - Minimum ticks before checking (default: 10)
+- `MinStepsBeforeStabilityCheck` (int) - Minimum steps before checking (default: 10)
 
 **Static:**
 
@@ -431,9 +431,9 @@ Observer pattern for monitoring simulation.
 
 ```csharp
 void OnSimulationStart(SimulationContext context)
-void OnTickStart(SimulationContext context)
+void OnStepStart(SimulationContext context)
 void OnStageComplete(string stageName, SimulationContext context)
-void OnTickComplete(SimulationContext context)
+void OnStepComplete(SimulationContext context)
 void OnSimulationEnd(SimulationContext context, string reason)
 void OnError(SimulationContext context, Exception exception)
 ```
@@ -454,7 +454,7 @@ using dotMigrata.Simulation.Builders;
 // Create and configure simulation using the fluent builder API
 var engine = SimulationBuilder.Create()
     .WithConsoleOutput()
-    .ConfigureSimulation(s => s.MaxTicks(100))
+    .ConfigureSimulation(s => s.MaxSteps(100))
     .Build();
 
 // Run simulation
@@ -530,9 +530,9 @@ Runtime simulation state shared between stages.
 **Properties:**
 
 - `World` (World) - The world being simulated
-- `CurrentTick` (int) - Current tick number
+- `CurrentStep` (int) - Current step number
 - `IsStabilized` (bool) - Whether the simulation has stabilized
-- `TotalPopulationChange` (int) - Total population change in current tick
+- `TotalPopulationChange` (int) - Total population change in current step
 - `MaxCityPopulationChange` (int) - Maximum city population change
 - `CurrentMigrationFlows` (IEnumerable<MigrationFlow>) - Current migration flows
 
@@ -740,7 +740,7 @@ var world = SnapshotConverter.ToWorld(snapshot!);
 var result = await engine.RunAsync(world);
 
 // Export to snapshot
-var outputSnapshot = SnapshotConverter.ToSnapshot(result.World, SnapshotStatus.Completed, result.CurrentTick);
+var outputSnapshot = SnapshotConverter.ToSnapshot(result.World, SnapshotStatus.Completed, result.CurrentStep);
 XmlSnapshotSerializer.SerializeToFile(outputSnapshot, "output.xml");
 ```
 
@@ -873,7 +873,7 @@ var engine = SimulationBuilder.Create()
     .WithConsoleOutput(colored: true)
     .WithRandomSeed(42)
     .ConfigureSimulation(s => s
-        .MaxTicks(100)
+        .MaxSteps(100)
         .StabilityThreshold(50))
     .ConfigureModel(m => m
         .CapacitySteepness(3.0)
@@ -970,7 +970,7 @@ public class MyCustomStage : ISimulationStage, ISimulationStageLifecycle
     
     public Task ExecuteAsync(SimulationContext context)
     {
-        // Called each tick by SimulationEngine
+        // Called each step by SimulationEngine
         return Task.CompletedTask;
     }
 }
@@ -988,7 +988,7 @@ public class MyStabilityCriteria : IStabilityCriteria
     public bool ShouldCheckStability(SimulationContext context, SimulationConfig config)
     {
         // Determine when to check stability
-        return context.CurrentTick % 10 == 0;
+        return context.CurrentStep % 10 == 0;
     }
     
     public bool IsStable(SimulationContext context, SimulationConfig config)
@@ -1028,26 +1028,26 @@ Collects and aggregates simulation metrics over time for academic analysis.
 
 - `History` (IReadOnlyList<SimulationMetrics>) - Complete metrics history
 - `CurrentMetrics` (SimulationMetrics?) - Most recent metrics snapshot
-- `AverageMigrationRate` (double) - Average migration rate across all ticks
-- `TotalMigrations` (long) - Total migrations across all ticks
+- `AverageMigrationRate` (double) - Average migration rate across all steps
+- `TotalMigrations` (long) - Total migrations across all steps
 
 **Methods:**
 
 ```csharp
-SimulationMetrics Collect(World world, int tick, ...)
+SimulationMetrics Collect(World world, int step, ...)
 void Clear()
 string ExportToCsv()
 ```
 
 ### SimulationMetrics
 
-Snapshot of simulation metrics at a specific tick.
+Snapshot of simulation metrics at a specific step.
 
 **Properties:**
 
-- `Tick` (int) - Tick number
+- `Step` (int) - Step number
 - `TotalPopulation` (int) - Total population
-- `MigrationCount` (int) - Migrations this tick
+- `MigrationCount` (int) - Migrations this step
 - `MigrationRate` (double) - Migrations per person
 - `CityMetrics` (IReadOnlyList<CityMetrics>) - Per-city metrics
 - `TagPopulations` (IReadOnlyDictionary<string, int>) - Population by tag
@@ -1057,7 +1057,7 @@ Snapshot of simulation metrics at a specific tick.
 
 ### MetricsObserver
 
-Observer that automatically collects metrics at each tick.
+Observer that automatically collects metrics at each step.
 
 **Example:**
 

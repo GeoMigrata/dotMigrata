@@ -8,10 +8,10 @@ namespace dotMigrata.Snapshot.Models;
 public sealed class SimulationConfigXml
 {
     /// <summary>
-    /// Gets or sets the maximum number of ticks.
+    /// Gets or sets the maximum number of steps.
     /// </summary>
-    [XmlAttribute("MaxTicks")]
-    public int MaxTicks { get; set; } = 1000;
+    [XmlAttribute("MaxSteps")]
+    public int MaxSteps { get; set; } = 1000;
 
     /// <summary>
     /// Gets or sets whether to check for stability.
@@ -32,8 +32,8 @@ public sealed class SimulationConfigXml
     public int StabilityCheckInterval { get; set; } = 1;
 
     /// <summary>
-    /// Gets or sets the minimum ticks before stability check.
+    /// Gets or sets the minimum steps before stability check.
     /// </summary>
-    [XmlAttribute("MinTicksBeforeStabilityCheck")]
-    public int MinTicksBeforeStabilityCheck { get; set; } = 10;
+    [XmlAttribute("MinStepsBeforeStabilityCheck")]
+    public int MinStepsBeforeStabilityCheck { get; set; } = 10;
 }

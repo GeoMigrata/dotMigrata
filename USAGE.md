@@ -129,7 +129,7 @@ Set up the simulation using the fluent builder API (recommended approach).
 ```csharp
 var engine = SimulationBuilder.Create()
     .WithConsoleOutput()
-    .ConfigureSimulation(s => s.MaxTicks(100))
+    .ConfigureSimulation(s => s.MaxSteps(100))
     .Build();
 ```
 
@@ -156,7 +156,7 @@ Execute the simulation and view results.
 ```csharp
 var result = await engine.RunAsync(world);
 
-Console.WriteLine($"Simulation completed after {result.CurrentTick} ticks");
+Console.WriteLine($"Simulation completed after {result.CurrentStep} steps");
 Console.WriteLine($"Final population: {result.World.Population:N0} persons");
 
 // Dispose the engine to release resources
@@ -855,7 +855,7 @@ var world = SnapshotConverter.ToWorld(snapshot!);
 var engine = SimulationBuilder.Create()
     .WithConsoleOutput(colored: true)
     .WithRandomSeed(42)
-    .ConfigureSimulation(s => s.MaxTicks(100).StabilityThreshold(50))
+    .ConfigureSimulation(s => s.MaxSteps(100).StabilityThreshold(50))
     .ConfigureModel(m => m.CapacitySteepness(3.0))
     .Build();
 
@@ -872,7 +872,7 @@ Convert simulation results back to snapshot format:
 var outputSnapshot = SnapshotConverter.ToSnapshot(
     result.World,
     SnapshotStatus.Completed,
-    currentStep: result.CurrentTick);
+    currentStep: result.CurrentStep);
 
 XmlSnapshotSerializer.SerializeToFile(outputSnapshot, "simulation-result.xml");
 ```
@@ -913,23 +913,23 @@ Events consist of:
 ### Creating Events Programmatically
 
 ```csharp
-// One-time event at specific tick
+// One-time event at specific step
 var pollutionSpike = new SimulationEvent(
     displayName: "Pollution Spike",
-    trigger: new TickTrigger(tick: 50),
+    trigger: new StepTrigger(step: 50),
     effect: new FactorChangeEffect(
         targetFactor: pollutionFactor,
         changeValue: UnitValuePromise.Fixed(10.5),
         applicationType: EffectApplicationType.Temporary,
-        duration: EffectDuration.OverTicks(20)
+        duration: EffectDuration.OverSteps(20)
     ),
     description: "Industrial accident causes temporary pollution increase"
 );
 
-// Periodic event every N ticks
+// Periodic event every N steps
 var seasonalChange = new SimulationEvent(
     displayName: "Seasonal Economic Cycle",
-    trigger: new PeriodicTrigger(startTick: 0, interval: 90),
+    trigger: new PeriodicTrigger(startStep: 0, interval: 90),
     effect: new FactorChangeEffect(
         targetFactor: incomeFactor,
         changeValue: UnitValuePromise.InRange(0.9, 1.1),
@@ -941,7 +941,7 @@ var seasonalChange = new SimulationEvent(
 // Continuous event active during a time window
 var infrastructureUpgrade = new SimulationEvent(
     displayName: "Transport Infrastructure Upgrade",
-    trigger: new ContinuousTrigger(startTick: 100, endTick: 200),
+    trigger: new ContinuousTrigger(startStep: 100, endStep: 200),
     effect: new FactorChangeEffect(
         targetFactor: transportFactor,
         changeValue: UnitValuePromise.Fixed(9.5),
@@ -953,7 +953,7 @@ var infrastructureUpgrade = new SimulationEvent(
 // Composite effect modifying multiple factors
 var economicBoom = new SimulationEvent(
     displayName: "Economic Boom",
-    trigger: new TickTrigger(tick: 150),
+    trigger: new StepTrigger(step: 150),
     effect: new CompositeEffect([
         new FactorChangeEffect(
             targetFactor: incomeFactor,
@@ -995,8 +995,8 @@ EffectApplicationType.LogarithmicTransition  // Logarithmic curve
 // Instant change
 EffectDuration.Instant()
 
-// Change applied over N ticks
-EffectDuration.OverTicks(20)
+// Change applied over N steps
+EffectDuration.OverSteps(20)
 ```
 
 ### Adding Events to Simulation
@@ -1011,7 +1011,7 @@ world.Events.Add(infrastructureUpgrade);
 var engine = SimulationBuilder.Create()
     .WithConsoleOutput()
     .AddEventStage()  // Add event processing stage
-    .ConfigureSimulation(s => s.MaxTicks(500))
+    .ConfigureSimulation(s => s.MaxSteps(500))
     .Build();
 
 var result = await engine.RunAsync(world);
@@ -1026,7 +1026,7 @@ Events are fully supported in XML snapshots:
 <Events>
     <Event Id="pollution_spike" Name="Pollution Spike Event"
            Description="Temporary pollution increase" Completed="false">
-        <Trigger Type="TickTrigger" Tick="50"/>
+        <Trigger Type="StepTrigger" Step="50"/>
         <Effects>
             <Effect Type="FactorChangeEffect" FactorId="pollution"
                     ApplicationType="Temporary" Duration="20">
@@ -1036,7 +1036,7 @@ Events are fully supported in XML snapshots:
     </Event>
 
     <Event Id="economic_boom" Name="Economic Boom" Completed="false">
-        <Trigger Type="TickTrigger" Tick="150"/>
+        <Trigger Type="StepTrigger" Step="150"/>
         <Effects>
             <Effect Type="CompositeEffect">
                 <CompositeEffects>
@@ -1112,11 +1112,11 @@ StandardModelConfig modelConfig = new()
 // Configure simulation parameters
 SimulationConfig simConfig = new()
 {
-    MaxTicks = 500,
+    MaxSteps = 500,
     CheckStability = true,
     StabilityThreshold = 100,  // Consider stable if <100 persons migrate
     StabilityCheckInterval = 5,
-    MinTicksBeforeStabilityCheck = 20
+    MinStepsBeforeStabilityCheck = 20
 };
 
 // Create simulation engine with custom configuration using builder (recommended)
@@ -1131,11 +1131,11 @@ var engine = SimulationBuilder.Create()
     })
     .ConfigureSimulation(s => 
     {
-        s.MaxTicks = 500;
+        s.MaxSteps = 500;
         s.CheckStability = true;
         s.StabilityThreshold = 100;
         s.StabilityCheckInterval = 5;
-        s.MinTicksBeforeStabilityCheck = 20;
+        s.MinStepsBeforeStabilityCheck = 20;
     })
     .WithConsoleOutput()
     .Build();
@@ -1163,11 +1163,11 @@ var result = await engine.RunAsync(world);
 
 // Access comprehensive metrics
 var collector = metricsObserver.Collector;
-Console.WriteLine($"Total ticks: {collector.History.Count}");
+Console.WriteLine($"Total steps: {collector.History.Count}");
 Console.WriteLine($"Average migration rate: {collector.AverageMigrationRate:P2}");
 Console.WriteLine($"Total migrations: {collector.TotalMigrations:N0}");
 
-// Access per-tick statistics
+// Access per-step statistics
 var finalMetrics = collector.CurrentMetrics;
 if (finalMetrics != null)
 {
@@ -1182,7 +1182,7 @@ File.WriteAllText("simulation_metrics.csv", collector.ExportToCsv());
 
 ### Available Metrics
 
-**Per-tick metrics:**
+**Per-step metrics:**
 
 - Migration count and rate
 - Total population

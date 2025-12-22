@@ -61,9 +61,9 @@ public sealed class WorldSnapshotXml
     public DateTime LastModifiedAt { get; init; }
 
     /// <summary>
-    /// Gets the current simulation tick count.
+    /// Gets the current simulation step count.
     /// </summary>
-    [XmlAttribute("Tick")]
+    [XmlAttribute("Step")]
     public int CurrentStep { get; init; }
 
     /// <summary>

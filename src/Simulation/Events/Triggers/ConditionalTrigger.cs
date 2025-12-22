@@ -13,17 +13,17 @@ namespace dotMigrata.Simulation.Events.Triggers;
 /// </remarks>
 public sealed class ConditionalTrigger : IEventTrigger
 {
-    private int _lastExecutedTick = -1;
+    private int _lastExecutedStep = -1;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConditionalTrigger" /> class.
     /// </summary>
-    /// <param name="condition">The condition to evaluate each tick.</param>
-    /// <param name="cooldownTicks">Optional minimum ticks between executions.</param>
-    public ConditionalTrigger(Func<SimulationContext, bool> condition, int? cooldownTicks = null)
+    /// <param name="condition">The condition to evaluate each step.</param>
+    /// <param name="cooldownSteps">Optional minimum steps between executions.</param>
+    public ConditionalTrigger(Func<SimulationContext, bool> condition, int? cooldownSteps = null)
     {
         Condition = condition ?? throw new ArgumentNullException(nameof(condition));
-        CooldownTicks = cooldownTicks;
+        CooldownSteps = cooldownSteps;
     }
 
     /// <summary>
@@ -32,23 +32,21 @@ public sealed class ConditionalTrigger : IEventTrigger
     public Func<SimulationContext, bool> Condition { get; }
 
     /// <summary>
-    /// Gets the optional cooldown period in ticks between executions.
+    /// Gets the optional cooldown period in steps between executions.
     /// </summary>
-    public int? CooldownTicks { get; }
+    public int? CooldownSteps { get; }
 
     /// <inheritdoc />
     public bool ShouldExecute(SimulationContext context)
     {
-        if (CooldownTicks.HasValue &&
-            context.CurrentTick - Volatile.Read(ref _lastExecutedTick) < CooldownTicks.Value)
+        if (CooldownSteps.HasValue &&
+            context.CurrentStep - Volatile.Read(ref _lastExecutedStep) < CooldownSteps.Value)
             return false;
 
         return Condition(context);
     }
 
     /// <inheritdoc />
-    public void OnExecuted(SimulationContext context)
-    {
-        Interlocked.Exchange(ref _lastExecutedTick, context.CurrentTick);
-    }
+    public void OnExecuted(SimulationContext context) =>
+        Interlocked.Exchange(ref _lastExecutedStep, context.CurrentStep);
 }

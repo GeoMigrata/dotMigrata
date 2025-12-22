@@ -1,4 +1,4 @@
-﻿namespace dotMigrata.Simulation;
+﻿namespace dotMigrata.Simulation.Exceptions;
 
 /// <summary>
 /// Represents errors that occur due to invalid simulation configuration.

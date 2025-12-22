@@ -65,10 +65,10 @@ public sealed class ConsoleObserver : ISimulationObserver
     }
 
     /// <inheritdoc />
-    public void OnTickStart(SimulationContext context)
+    public void OnStepStart(SimulationContext context)
     {
         SetColor(ConsoleColor.DarkGray);
-        WriteLine($"--- Tick {context.CurrentTick} ---");
+        WriteLine($"--- Step {context.CurrentStep} ---");
         ResetColor();
     }
 
@@ -79,10 +79,10 @@ public sealed class ConsoleObserver : ISimulationObserver
     }
 
     /// <inheritdoc />
-    public void OnTickComplete(SimulationContext context)
+    public void OnStepComplete(SimulationContext context)
     {
         SetColor(ConsoleColor.Yellow);
-        Write($"Tick {context.CurrentTick}: ");
+        Write($"Step {context.CurrentStep}: ");
 
         var migrationCount = context.CurrentMigrationFlows.Count();
         if (migrationCount > 0)
@@ -116,9 +116,9 @@ public sealed class ConsoleObserver : ISimulationObserver
         WriteLine($"=== Simulation Completed: {reason} ===");
 
         SetColor(ConsoleColor.Yellow);
-        Write("Total Ticks: ");
+        Write("Total Steps: ");
         SetColor(ConsoleColor.White);
-        WriteLine($"{context.CurrentTick}");
+        WriteLine($"{context.CurrentStep}");
 
         SetColor(ConsoleColor.Yellow);
         Write("Final Population: ");
@@ -145,7 +145,7 @@ public sealed class ConsoleObserver : ISimulationObserver
     public void OnError(SimulationContext context, Exception exception)
     {
         SetColor(ConsoleColor.Red);
-        WriteLine($"!!! Error at Tick {context.CurrentTick}: {exception.Message}");
+        WriteLine($"!!! Error at Step {context.CurrentStep}: {exception.Message}");
         ResetColor();
     }
 
@@ -161,13 +161,7 @@ public sealed class ConsoleObserver : ISimulationObserver
             Console.ResetColor();
     }
 
-    private static void Write(string message)
-    {
-        Console.Write(message);
-    }
+    private static void Write(string message) => Console.Write(message);
 
-    private static void WriteLine(string message = "")
-    {
-        Console.WriteLine(message);
-    }
+    private static void WriteLine(string message = "") => Console.WriteLine(message);
 }

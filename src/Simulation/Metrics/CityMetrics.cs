@@ -1,7 +1,7 @@
 ﻿namespace dotMigrata.Simulation.Metrics;
 
 /// <summary>
-/// Metrics for a single city at a specific tick.
+/// Metrics for a single city at a specific step.
 /// </summary>
 public sealed record CityMetrics
 {
@@ -28,12 +28,12 @@ public sealed record CityMetrics
         : null;
 
     /// <summary>
-    /// Gets the number of incoming migrations this tick.
+    /// Gets the number of incoming migrations this step.
     /// </summary>
     public required int IncomingMigrations { get; init; }
 
     /// <summary>
-    /// Gets the number of outgoing migrations this tick.
+    /// Gets the number of outgoing migrations this step.
     /// </summary>
     public required int OutgoingMigrations { get; init; }
 
@@ -43,7 +43,7 @@ public sealed record CityMetrics
     public int NetMigration => IncomingMigrations - OutgoingMigrations;
 
     /// <summary>
-    /// Gets the population change from the previous tick.
+    /// Gets the population change from the previous step.
     /// </summary>
     public int PopulationChange { get; init; }
 }

@@ -12,7 +12,7 @@ namespace dotMigrata.Simulation.Engine;
 
 /// <summary>
 /// Main simulation engine that orchestrates the execution of simulation stages.
-/// Implements a tick-based simulation loop with observer support, lifecycle hooks, cancellation, and graceful shutdown.
+/// Implements a step-based simulation loop with observer support, lifecycle hooks, cancellation, and graceful shutdown.
 /// </summary>
 /// <remarks>
 ///     <para><b>Thread Safety:</b> This class is not thread-safe. Each instance should be used by a single thread.</para>
@@ -37,7 +37,7 @@ public sealed class SimulationEngine : IAsyncDisposable
     /// <summary>
     /// Initializes a new instance of the SimulationEngine with custom stability criteria and optional logging.
     /// </summary>
-    /// <param name="stages">The ordered list of stages to execute in each tick.</param>
+    /// <param name="stages">The ordered list of stages to execute in each step.</param>
     /// <param name="config">Configuration for simulation behavior. If null, uses default configuration.</param>
     /// <param name="stabilityCriteria">
     /// Custom stability detection strategy. If null, uses <see cref="Stability.DefaultStabilityCriteria" />.
@@ -158,10 +158,7 @@ public sealed class SimulationEngine : IAsyncDisposable
     /// Removes an observer from the simulation.
     /// </summary>
     /// <param name="observer">The observer to remove.</param>
-    public void RemoveObserver(ISimulationObserver observer)
-    {
-        _observers.Remove(observer);
-    }
+    public void RemoveObserver(ISimulationObserver observer) => _observers.Remove(observer);
 
 
     /// <summary>
@@ -184,8 +181,8 @@ public sealed class SimulationEngine : IAsyncDisposable
 
         _logger?.LogInformation(
             SimulationEvents.SimulationStarted,
-            "Simulation started. Population: {Population}, Cities: {CityCount}, Max Ticks: {MaxTicks}",
-            world.Population, world.Cities.Count, _config.MaxTicks);
+            "Simulation started. Population: {Population}, Cities: {CityCount}, Max Steps: {MaxSteps}",
+            world.Population, world.Cities.Count, _config.MaxSteps);
 
         // Notify lifecycle stages - simulation start
         NotifyLifecycleStages(stage => stage.OnSimulationStart(context));
@@ -195,18 +192,18 @@ public sealed class SimulationEngine : IAsyncDisposable
 
         try
         {
-            for (var tick = 0; tick < _config.MaxTicks; tick++)
+            for (var step = 0; step < _config.MaxSteps; step++)
             {
                 // Check for cancellation
                 cancellationToken.ThrowIfCancellationRequested();
 
-                context.CurrentTick = tick;
-                context.Performance.StartTick();
+                context.CurrentStep = step;
+                context.Performance.StartStep();
 
-                _logger?.LogDebug(SimulationEvents.TickStarted, "Tick {Tick} started", tick);
+                _logger?.LogDebug(SimulationEvents.StepStarted, "Step {Step} started", step);
 
-                // Notify observers of tick start
-                NotifyObservers(o => o.OnTickStart(context));
+                // Notify observers of step start
+                NotifyObservers(o => o.OnStepStart(context));
 
                 // Execute all stages
                 foreach (var stage in _stages.Where(stage => stage.ShouldExecute(context)))
@@ -216,55 +213,55 @@ public sealed class SimulationEngine : IAsyncDisposable
                         NotifyObservers(o => o.OnStageComplete(stage.Name, context));
 
                         _logger?.LogTrace(SimulationEvents.StageExecuted,
-                            "Stage '{StageName}' executed successfully at tick {Tick}", stage.Name, tick);
+                            "Stage '{StageName}' executed successfully at step {Step}", stage.Name, step);
                     }
                     catch (Exception ex) when (ex is not SimulationException)
                     {
                         _logger?.LogError(SimulationEvents.StageError, ex,
-                            "Error executing stage '{StageName}' at tick {Tick}", stage.Name, tick);
+                            "Error executing stage '{StageName}' at step {Step}", stage.Name, step);
 
                         throw new SimulationRuntimeException(
                             $"Error executing stage '{stage.Name}': {ex.Message}", ex)
                         {
-                            TickNumber = tick,
+                            StepNumber = step,
                             StageName = stage.Name,
                             TotalPopulation = world.Population
                         };
                     }
 
-                // Notify observers of tick complete
-                NotifyObservers(o => o.OnTickComplete(context));
+                // Notify observers of step complete
+                NotifyObservers(o => o.OnStepComplete(context));
 
-                context.Performance.CompleteTick();
+                context.Performance.CompleteStep();
 
-                _logger?.LogDebug(SimulationEvents.TickCompleted,
-                    "Tick {Tick} completed in {Duration:F2}ms. Population: {Population}, Change: {PopChange}",
-                    tick, context.Performance.CurrentTickElapsed.TotalMilliseconds,
+                _logger?.LogDebug(SimulationEvents.StepCompleted,
+                    "Step {Step} completed in {Duration:F2}ms. Population: {Population}, Change: {PopChange}",
+                    step, context.Performance.CurrentStepElapsed.TotalMilliseconds,
                     world.Population, context.TotalPopulationChange);
 
                 // Log performance metrics periodically
-                if (_logger != null && tick > 0 && tick % 10 == 0)
+                if (_logger != null && step > 0 && step % 10 == 0)
                     _logger.LogInformation(SimulationEvents.PerformanceMetrics,
-                        "Performance: Tick {Tick}, Avg: {AvgMs:F2}ms/tick, Rate: {Rate:F2} ticks/sec, Memory: {MemMB:F2} MB",
-                        tick,
-                        context.Performance.AverageTickDuration.TotalMilliseconds,
-                        context.Performance.TicksPerSecond,
+                        "Performance: Step {Step}, Avg: {AvgMs:F2}ms/step, Rate: {Rate:F2} steps/sec, Memory: {MemMB:F2} MB",
+                        step,
+                        context.Performance.AverageStepDuration.TotalMilliseconds,
+                        context.Performance.StepsPerSecond,
                         PerformanceMetrics.CurrentMemoryBytes / 1024.0 / 1024.0);
 
                 // Check for stability using strategy pattern
                 if (!_stabilityCriteria.ShouldCheckStability(context, _config)) continue;
                 {
                     _logger?.LogDebug(SimulationEvents.StabilityChecked,
-                        "Checking stability at tick {Tick}. Population change: {PopChange}",
-                        tick, context.TotalPopulationChange);
+                        "Checking stability at step {Step}. Population change: {PopChange}",
+                        step, context.TotalPopulationChange);
 
                     if (!_stabilityCriteria.IsStable(context, _config)) continue;
                     context.IsStabilized = true;
                     context.Performance.StopSimulation();
 
                     _logger?.LogInformation(SimulationEvents.StabilityAchieved,
-                        "Simulation stabilized at tick {Tick}. {PerfSummary}",
-                        tick, context.Performance.GetSummary());
+                        "Simulation stabilized at step {Step}. {PerfSummary}",
+                        step, context.Performance.GetSummary());
 
                     NotifyLifecycleStages(stage => stage.OnSimulationEnd(context));
                     NotifyObservers(o => o.OnSimulationEnd(context, "Stabilized"));
@@ -272,15 +269,15 @@ public sealed class SimulationEngine : IAsyncDisposable
                 }
             }
 
-            // Max ticks reached
+            // Max steps reached
             context.Performance.StopSimulation();
 
             _logger?.LogInformation(SimulationEvents.SimulationCompleted,
-                "Simulation completed at max ticks ({MaxTicks}). {PerfSummary}",
-                _config.MaxTicks, context.Performance.GetSummary());
+                "Simulation completed at max steps ({MaxSteps}). {PerfSummary}",
+                _config.MaxSteps, context.Performance.GetSummary());
 
             NotifyLifecycleStages(stage => stage.OnSimulationEnd(context));
-            NotifyObservers(o => o.OnSimulationEnd(context, "MaxTicksReached"));
+            NotifyObservers(o => o.OnSimulationEnd(context, "MaxStepsReached"));
             return context;
         }
         catch (OperationCanceledException)
@@ -288,8 +285,8 @@ public sealed class SimulationEngine : IAsyncDisposable
             context.Performance.StopSimulation();
 
             _logger?.LogWarning(SimulationEvents.SimulationCancelled,
-                "Simulation cancelled at tick {Tick}. {PerfSummary}",
-                context.CurrentTick, context.Performance.GetSummary());
+                "Simulation cancelled at step {Step}. {PerfSummary}",
+                context.CurrentStep, context.Performance.GetSummary());
 
             NotifyLifecycleStages(stage => stage.OnSimulationEnd(context));
             NotifyObservers(o => o.OnSimulationEnd(context, "Cancelled"));
@@ -300,7 +297,7 @@ public sealed class SimulationEngine : IAsyncDisposable
             context.Performance.StopSimulation();
 
             _logger?.LogError(SimulationEvents.SimulationError, ex,
-                "Simulation error at tick {Tick}", context.CurrentTick);
+                "Simulation error at step {Step}", context.CurrentStep);
 
             NotifyLifecycleStages(stage => stage.OnSimulationEnd(context));
             NotifyObservers(o => o.OnError(context, ex));
@@ -311,12 +308,12 @@ public sealed class SimulationEngine : IAsyncDisposable
             context.Performance.StopSimulation();
 
             _logger?.LogCritical(SimulationEvents.SimulationError, ex,
-                "Unexpected error at tick {Tick}", context.CurrentTick);
+                "Unexpected error at step {Step}", context.CurrentStep);
 
             var wrapped = new SimulationRuntimeException(
                 "An unexpected error occurred during simulation execution.", ex)
             {
-                TickNumber = context.CurrentTick,
+                StepNumber = context.CurrentStep,
                 TotalPopulation = world.Population
             };
             NotifyLifecycleStages(stage => stage.OnSimulationEnd(context));
@@ -369,7 +366,7 @@ public sealed class SimulationEngine : IAsyncDisposable
     /// </returns>
     /// <remarks>
     /// Checkpoints can be used to save and later resume simulation execution.
-    /// The checkpoint includes the world state, configuration, performance metrics, and current tick.
+    /// The checkpoint includes the world state, configuration, performance metrics, and current step.
     /// </remarks>
     public SimulationCheckpoint? SaveCheckpoint()
     {
@@ -377,7 +374,7 @@ public sealed class SimulationEngine : IAsyncDisposable
             return null;
 
         var checkpoint = SimulationCheckpoint.FromContext(_currentContext, _config);
-        _logger?.LogInformation("Checkpoint created at tick {Tick}", checkpoint.TickNumber);
+        _logger?.LogInformation("Checkpoint created at step {Step}", checkpoint.StepNumber);
         return checkpoint;
     }
 }

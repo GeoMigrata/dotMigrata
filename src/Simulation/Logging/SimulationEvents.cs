@@ -23,12 +23,12 @@ public static class SimulationEvents
     /// <summary>Event ID for simulation errors.</summary>
     public static readonly EventId SimulationError = new(1003, nameof(SimulationError));
 
-    // Tick Events (2000-2999)
-    /// <summary>Event ID for tick start.</summary>
-    public static readonly EventId TickStarted = new(2000, nameof(TickStarted));
+    // Step Events (2000-2999)
+    /// <summary>Event ID for step start.</summary>
+    public static readonly EventId StepStarted = new(2000, nameof(StepStarted));
 
-    /// <summary>Event ID for tick completion.</summary>
-    public static readonly EventId TickCompleted = new(2001, nameof(TickCompleted));
+    /// <summary>Event ID for step completion.</summary>
+    public static readonly EventId StepCompleted = new(2001, nameof(StepCompleted));
 
     // Stage Events (3000-3999)
     /// <summary>Event ID for stage execution.</summary>

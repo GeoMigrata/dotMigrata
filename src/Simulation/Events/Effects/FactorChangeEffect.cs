@@ -82,8 +82,8 @@ public sealed class FactorChangeEffect : IEventEffect
                 continue;
 
             var currentValue = (double)currentIntensity.Value;
-            var state = GetOrCreateState(city, currentValue, context.CurrentTick);
-            var newValue = CalculateNewValue(state, currentValue, context.CurrentTick);
+            var state = GetOrCreateState(city, currentValue, context.CurrentStep);
+            var newValue = CalculateNewValue(state, currentValue, context.CurrentStep);
 
             newValue = Math.Clamp(newValue, 0.0, 1.0);
             var updatedIntensity = new FactorIntensity { Definition = Factor, Value = UnitValue.FromRatio(newValue) };
@@ -91,7 +91,7 @@ public sealed class FactorChangeEffect : IEventEffect
         }
     }
 
-    private FactorChangeState GetOrCreateState(City city, double currentValue, int tick)
+    private FactorChangeState GetOrCreateState(City city, double currentValue, int step)
     {
         if (_cityStates.TryGetValue(city, out var state))
             return state;
@@ -99,7 +99,7 @@ public sealed class FactorChangeEffect : IEventEffect
         state = new FactorChangeState
         {
             InitialValue = currentValue,
-            StartTick = tick,
+            StartStep = step,
             TargetValue = GenerateTargetValue()
         };
         _cityStates[city] = state;
@@ -107,44 +107,39 @@ public sealed class FactorChangeEffect : IEventEffect
         return state;
     }
 
-    private double GenerateTargetValue()
-    {
-        return UnitValuePromise.Evaluate(_random);
-        // UnitValuePromise.Evaluate handles all the logic internally
-    }
+    private double GenerateTargetValue() =>
+        UnitValuePromise.Evaluate(_random); // UnitValuePromise.Evaluate handles all the logic internally
 
-    private double CalculateNewValue(FactorChangeState state, double currentValue, int currentTick)
-    {
-        return ApplicationType switch
+    private double CalculateNewValue(FactorChangeState state, double currentValue, int currentStep) =>
+        ApplicationType switch
         {
             EffectApplicationType.Absolute => state.TargetValue,
             EffectApplicationType.Delta => currentValue + state.TargetValue,
             EffectApplicationType.Multiply => currentValue * state.TargetValue,
-            EffectApplicationType.LinearTransition => CalculateLinearTransition(state, currentTick),
-            EffectApplicationType.LogarithmicTransition => CalculateLogarithmicTransition(state, currentTick),
+            EffectApplicationType.LinearTransition => CalculateLinearTransition(state, currentStep),
+            EffectApplicationType.LogarithmicTransition => CalculateLogarithmicTransition(state, currentStep),
             _ => currentValue
         };
-    }
 
 
-    private double CalculateLinearTransition(FactorChangeState state, int currentTick)
+    private double CalculateLinearTransition(FactorChangeState state, int currentStep)
     {
-        if (!Duration.Ticks.HasValue)
+        if (!Duration.Steps.HasValue)
             return state.TargetValue;
 
-        var elapsed = currentTick - state.StartTick;
-        var progress = Math.Min(1.0, elapsed / (double)Duration.Ticks.Value);
+        var elapsed = currentStep - state.StartStep;
+        var progress = Math.Min(1.0, elapsed / (double)Duration.Steps.Value);
 
         return state.InitialValue + (state.TargetValue - state.InitialValue) * progress;
     }
 
-    private double CalculateLogarithmicTransition(FactorChangeState state, int currentTick)
+    private double CalculateLogarithmicTransition(FactorChangeState state, int currentStep)
     {
-        if (!Duration.Ticks.HasValue)
+        if (!Duration.Steps.HasValue)
             return state.TargetValue;
 
-        var elapsed = currentTick - state.StartTick;
-        var totalDuration = Duration.Ticks.Value;
+        var elapsed = currentStep - state.StartStep;
+        var totalDuration = Duration.Steps.Value;
 
         // Logarithmic curve: fast change initially, then slower
         var progress = Math.Log(elapsed + 1) / Math.Log(totalDuration + 1);
@@ -157,6 +152,6 @@ public sealed class FactorChangeEffect : IEventEffect
     {
         public required double InitialValue { get; init; }
         public required double TargetValue { get; init; }
-        public required int StartTick { get; init; }
+        public required int StartStep { get; init; }
     }
 }
