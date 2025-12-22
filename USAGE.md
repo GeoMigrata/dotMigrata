@@ -34,23 +34,22 @@ Here's a step-by-step guide to get you started with dotMigrata:
 Factors represent characteristics of cities (like income or pollution) that influence migration decisions. Define them
 as `FactorDefinition` objects that will be referenced throughout your simulation.
 
+**Note:** Since v0.7.4, factor intensities are stored as normalized `UnitValue` (0-1 range), so `FactorDefinition` no
+longer needs `MinValue` and `MaxValue`.
+
 ```csharp
 var incomeFactor = new FactorDefinition
 {
     DisplayName = "Income",
     Type = FactorType.Positive,
-    MinValue = 20000,
-    MaxValue = 100000,
-    TransformFunction = null  // Linear normalization
+    TransformFunction = null  // Optional transformation
 };
 
 var pollutionFactor = new FactorDefinition
 {
     DisplayName = "Pollution",
     Type = FactorType.Negative,
-    MinValue = 0,
-    MaxValue = 100,
-    TransformFunction = null  // Linear normalization
+    TransformFunction = null
 };
 
 var allFactors = new[] { incomeFactor, pollutionFactor };
@@ -65,7 +64,7 @@ directly, not strings.
 var collection = new PersonCollection();
 collection.Add(new StandardPersonGenerator
 {
-    Count = 100000,
+    Count = 10_0000,
     // Use FactorDefinition references for type safety
     FactorSensitivities = new Dictionary<FactorDefinition, UnitValuePromise>
     {
@@ -81,20 +80,30 @@ collection.Add(new StandardPersonGenerator
 
 ### Step 3: Create Cities
 
-Create cities with factor values and assign the generated population. Again, use `FactorDefinition` object references.
+Create cities with factor values and assign the generated population.
+
+**Note:** Factor values must be normalized to 0-1 range (UnitValue). If you have raw values, normalize them first:
+
+```csharp
+// Example: Convert raw income 60_000 (range 20_000-100_000) to normalized value
+double rawIncome = 60_000;
+double minIncome = 20_000;
+double maxIncome = 100_000;
+double normalizedIncome = (rawIncome - minIncome) / (maxIncome - minIncome);  // = 0.5
+```
 
 ```csharp
 var cityA = new City(
     factorValues: [
-        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.5) },   // Use UnitValue (0-1 normalized)
-        new FactorIntensity { Definition = pollutionFactor, Value = UnitValue.FromRatio(0.3) } // Use UnitValue
+        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.5) },    // Normalized 0-1
+        new FactorIntensity { Definition = pollutionFactor, Value = UnitValue.FromRatio(0.3) }  // Normalized 0-1
     ],
     persons: collection.GenerateAllPersons(allFactors))
 {
     DisplayName = "City A",
     Location = new Coordinate { Latitude = 26.0, Longitude = 119.3 },
     Area = 100.0,
-    Capacity = 1000000
+    Capacity = 1_000_000
 };
 
 var cityB = new City(
@@ -107,7 +116,7 @@ var cityB = new City(
     DisplayName = "City B",
     Location = new Coordinate { Latitude = 24.5, Longitude = 118.1 },
     Area = 80.0,
-    Capacity = 800000
+    Capacity = 800_000
 };
 ```
 
@@ -215,8 +224,6 @@ var incomeFactor = new FactorDefinition
 {
     DisplayName = "Income",
     Type = FactorType.Positive,
-    MinValue = 30000,
-    MaxValue = 150000,
     TransformFunction = null
 };
 
@@ -224,8 +231,6 @@ var pollutionFactor = new FactorDefinition
 {
     DisplayName = "Pollution",
     Type = FactorType.Negative,
-    MinValue = 0,
-    MaxValue = 100,
     TransformFunction = null
 };
 
@@ -233,8 +238,6 @@ var housingFactor = new FactorDefinition
 {
     DisplayName = "Housing Cost",
     Type = FactorType.Negative,
-    MinValue = 500,
-    MaxValue = 3000,
     TransformFunction = null
 };
 
@@ -398,7 +401,7 @@ public class DemographicAttractionCalculator : IAttractionCalculator
             adjustment *= 1.2;
 
         // High-income individuals less sensitive to economic factors
-        if (demoPerson.Income > 100000)
+        if (demoPerson.Income > 10_0000)
             adjustment *= 0.9;
 
         // Educated individuals prefer certain cities
@@ -509,8 +512,6 @@ var incomeFactor = new FactorDefinition
 {
     DisplayName = "Income",
     Type = FactorType.Positive,
-    MinValue = 20000,
-    MaxValue = 100000,
     TransformFunction = null
 };
 
@@ -519,7 +520,7 @@ FactorDefinition[] allFactors = [incomeFactor];
 var collection = new PersonCollection();
 collection.Add(new DemographicPersonGenerator(seed: 42)
 {
-    Count = 10000,
+    Count = 10_000,
     FactorSensitivities = new Dictionary<FactorDefinition, UnitValuePromise>
     {
         [incomeFactor] = UnitValuePromise.InRange(0.3, 0.8)
@@ -745,7 +746,7 @@ WorldSnapshotXml snapshot = new()
                 DisplayName = "Income",
                 Type = "Positive",
                 Min = 20000,
-                Max = 100000,
+                Max = 10_0000,
                 CustomTransformName = "Linear"
             },
             new FactorDefXml
@@ -769,7 +770,7 @@ WorldSnapshotXml snapshot = new()
                 [
                     new GeneratorXml
                     {
-                        Count = 100000,
+                        Count = 10_0000,
                         Seed = 42,
                         FactorSensitivities =
                         [
@@ -808,7 +809,7 @@ WorldSnapshotXml snapshot = new()
                 Latitude = 26.0,
                 Longitude = 119.3,
                 Area = 100.0,
-                Capacity = 1000000,
+                Capacity = 10_00000,
                 FactorValues =
                 [
                     new FactorIntensityXml { Id = "income", Value = 50000 },
