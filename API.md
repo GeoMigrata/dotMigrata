@@ -169,11 +169,23 @@ Defines a city characteristic that influences migration.
 
 **Properties:**
 
-- `DisplayName` (string) - Factor name
-- `Type` (FactorType) - Positive or Negative
-- `MinValue` (double) - Minimum value for normalization
-- `MaxValue` (double) - Maximum value for normalization
-- `TransformFunction` (ITransformFunction?) - Optional normalization transform function
+- `DisplayName` (string, required) - Human-readable name
+- `Type` (FactorType, required) - Direction (Positive or Negative)
+- `TransformFunction` (UnitValuePromise.TransformFunc?, optional) - Optional transformation function
+
+**Note:** Since v0.7.4, factor intensities are stored as normalized `UnitValue` (0-1 range), so `MinValue` and
+`MaxValue` are no longer needed. Factor values must be pre-normalized before creating `FactorIntensity`.
+
+**Example:**
+
+```csharp
+var incomeFactor = new FactorDefinition
+{
+    DisplayName = "Average Income",
+    Type = FactorType.Positive,
+    TransformFunction = null  // Optional transformation
+};
+```
 
 ### FactorIntensity
 
@@ -181,13 +193,18 @@ Represents the intensity value for a specific factor in a city.
 
 **Properties:**
 
-- `Definition` (FactorDefinition) - The factor definition - Required
-- `Intensity` (ValueSpec) - The intensity value specification - Required
+- `Definition` (FactorDefinition, required) - The factor definition
+- `Value` (UnitValue, required) - The normalized intensity value (0-1 range)
 
-**Methods:**
+**Example:**
 
-- `ComputeIntensity(double? normalizedInput = null, bool useCache = false, Random? random = null)` - Computes the
-  concrete intensity value
+```csharp
+var intensity = new FactorIntensity
+{
+    Definition = incomeFactor,
+    Value = UnitValue.FromRatio(0.6)  // Normalized 0-1 value
+};
+```
 
 ### Coordinate
 

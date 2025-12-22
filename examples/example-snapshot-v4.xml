@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!-- 
   dotMigrata Snapshot Example - v4
-  Demonstrates all snapshot features for framework v0.7.x
+  Demonstrates all snapshot features for framework v0.7.4+
   Schema: ../schemas/snapshot-v4.xsd
 -->
 <Snapshot Version="v4" Id="c8836553-be0c-42c5-be58-abbae82c6918" Status="Seed"
@@ -16,16 +16,16 @@
                  MigrationProbabilitySteepness="10.0" MigrationProbabilityThreshold="0.0"
                  FactorSmoothingAlpha="0.2" UseParallelProcessing="true"/>
 
-    <World Name="Example Migration Simulation - v0.7.x">
+    <World Name="Example Migration Simulation - v0.7.4+">
 
-        <!-- Factor definitions with all transform types -->
+        <!-- Factor definitions (no Min/Max since v0.7.4 - values are normalized 0-1) -->
         <Factors>
-            <Factor Id="pollution" Name="Pollution" Type="Negative" Min="0" Max="12" Transform="Linear"/>
-            <Factor Id="transport" Name="Transport" Type="Positive" Min="0" Max="10" Transform="Logarithmic"/>
-            <Factor Id="income" Name="Avg. Income" Type="Positive" Min="0" Max="1000" Transform="Logarithmic"/>
-            <Factor Id="security" Name="Security" Type="Positive" Min="0" Max="10" Transform="Sigmoid"/>
-            <Factor Id="housing_cost" Name="Housing Cost" Type="Negative" Min="0" Max="5000" Transform="Exponential"/>
-            <Factor Id="education" Name="Education Quality" Type="Positive" Min="0" Max="100" Transform="SquareRoot"/>
+            <Factor Id="pollution" Name="Pollution" Type="Negative" Transform="Linear"/>
+            <Factor Id="transport" Name="Transport" Type="Positive" Transform="Logarithmic"/>
+            <Factor Id="income" Name="Avg. Income" Type="Positive" Transform="Logarithmic"/>
+            <Factor Id="security" Name="Security" Type="Positive" Transform="Sigmoid"/>
+            <Factor Id="housing_cost" Name="Housing Cost" Type="Negative" Transform="Exponential"/>
+            <Factor Id="education" Name="Education Quality" Type="Positive" Transform="SquareRoot"/>
         </Factors>
 
         <!-- Population groups with templates and generators -->
@@ -51,7 +51,7 @@
                 </Person>
 
                 <!-- Generator: Range-based randomization with seed -->
-                <Person Count="100000" Seed="42" Type="StandardPerson">
+                <Person Count="100_000" Seed="42" Type="StandardPerson">
                     <Willingness Min="0.5" Max="1.0"/>
                     <Retention V="0.1"/>
                     <Threshold Min="0.0" Max="0.5"/>
@@ -69,7 +69,7 @@
                 </Person>
 
                 <!-- Generator: Normal distribution with Approximately -->
-                <Person Count="50000" Seed="132" Type="StandardPerson">
+                <Person Count="50_000" Seed="132" Type="StandardPerson">
                     <Willingness Approximately="0.6" StdDev="0.15"/>
                     <Retention Approximately="0.3" StdDev="0.1"/>
                     <Threshold Approximately="0.25" StdDev="0.1"/>
@@ -90,7 +90,7 @@
 
             <Group Id="professionals">
                 <!-- Professional group with different sensitivity profile -->
-                <Person Count="75000" Seed="999" Type="StandardPerson">
+                <Person Count="75_000" Seed="999" Type="StandardPerson">
                     <Willingness Min="0.3" Max="0.7"/>
                     <Retention Approximately="0.5" StdDev="0.2"/>
                     <Threshold V="0.4"/>

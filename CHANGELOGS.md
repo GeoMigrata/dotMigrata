@@ -1,6 +1,51 @@
 ﻿# GeoMigrata Framework Changelog
 
-## Version 0.7.4-beta ()
+## Version 0.7.4-beta (Framework Unity and Step Terminology)
+
+This release unifies the framework's core concepts, standardizes terminology, and simplifies the type system for better
+consistency and maintainability.
+
+#### 1. Step Terminology Unification
+
+The basic unit of simulation time is now consistently called "**Step**" throughout the entire framework (previously "
+Tick").
+
+#### 2. FactorDefinition Simplification
+
+`FactorDefinition` has been simplified to align with the UnitValue architecture. Since all factor intensities are stored
+as normalized `UnitValue` (0-1 range), raw value normalization is no longer needed.
+
+**Removed Properties:**
+
+- `MinValue` - No longer needed
+- `MaxValue` - No longer needed
+
+**Removed Methods:**
+
+- `Normalize()` - Intensities are already normalized
+
+### Other Changes
+
+- Updated all observers (`DebugObserver`, `ConsoleObserver`, `MetricsObserver`) for Step terminology
+- Updated `SimulationEvents` logging event IDs
+- Updated `PerformanceMetrics` property names and calculations
+- Improved XML documentation comments throughout
+- Fixed typo: Renamed `DefautStabilityCriteria` to `DefaultStabilityCriteria`
+
+### Migration Notes
+
+1. **Update all code references:** Search for "Tick" and replace with "Step"
+2. **Update snapshots:** Rename all Tick-related XML attributes to Step equivalents
+3. **Normalize factor values:** Convert all raw factor values to 0-1 range before use
+4. **Remove Min/Max from FactorDefinition:** Delete these properties from factor creation code
+5. **Update event triggers:** Use `StepTrigger` instead of `StepTrigger`
+6. **Re-export snapshots:** Generate new snapshots with the updated schema
+
+### Compatibility
+
+- **Snapshot compatibility:** BROKEN - v0.7.3 snapshots cannot be loaded without manual conversion
+- **API compatibility:** BROKEN - All Tick references must be updated to Step
+- **Factor values:** MUST be normalized to 0-1 range
 
 ## Version 0.7.3-beta (Snapshot Version Validation and Schema Updates)
 
