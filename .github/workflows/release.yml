@@ -1,16 +1,10 @@
 ﻿name: Publish to NuGet
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Version tag (format: v*)"
-        required: true
-        type: string
-      description:
-        description: "Short release description (e.g., 'Beta 0.6.0')"
-        required: true
-        type: string
 
 permissions:
   contents: write
@@ -46,33 +40,15 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Create and Push Tag
-        env:
-          VERSION_INPUT: ${{ github.event.inputs.version }}
-          DESCRIPTION_INPUT: ${{ github.event.inputs.description }}
-        run: |
-          # Ensure we're on the default branch's latest commit
-          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          echo "Current branch: $CURRENT_BRANCH"
-
-          # Create annotated tag on the latest commit
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-
-          # If tag exists, exit early to avoid duplicate push
-          if git rev-parse "$VERSION_INPUT" >/dev/null 2>&1; then
-            echo "Tag $VERSION_INPUT already exists. Skipping creation and push."
-          else
-            git tag -a "$VERSION_INPUT" -m "$DESCRIPTION_INPUT"
-            git push origin "$VERSION_INPUT"
-          fi
-
-      - name: Derive Version from Input
+      - name: Derive Version from Tag
         id: version
         env:
-          VERSION_INPUT: ${{ github.event.inputs.version }}
+          GIT_REF: ${{ github.ref }}
         run: |
-          VERSION_NO_V=${VERSION_INPUT#v}
+          # Expected ref format: refs/tags/vX.Y.Z
+          echo "Git ref: $GIT_REF"
+          TAG_NAME=${GIT_REF#refs/tags/}
+          VERSION_NO_V=${TAG_NAME#v}
           echo "version=$VERSION_NO_V" >> "$GITHUB_OUTPUT"
 
       - name: Build (Release)
