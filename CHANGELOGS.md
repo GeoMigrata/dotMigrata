@@ -1,82 +1,107 @@
-﻿# GeoMigrata Framework Changelog
+﻿# dotMigrata Changelog
+
+## Version 0.7.5-beta (Checkpoint System)
+
+### Overview
+
+This release introduces a checkpoint system for simulation reproducibility and state management, removes
+complex history tracking in favor of seed-based reproducibility, and unifies documentation structure and style across
+all files.
+
+### Breaking Changes
+
+- Snapshot format updated with new fields: `LastUsedSeed` and `Checkpoints`
+- Checkpoint system: checkpoints are labels for steps
+- Resuming from a checkpoint with a different seed clears all subsequent steps and checkpoints
+- No timeline branching or complex history management
+
+### New Features
+
+- **Checkpoint System**: Named labels for simulation steps to make resumption easier
+- **LastUsedSeed Field**: Stores the random seed used in simulation for exact reproducibility
+- **Seed-Based Reproducibility**: Single seed propagates through all random operations ensuring deterministic results
+
+### Improvements
+
+- **Unified Documentation**: Standardized language, style, and structure across CHANGELOGS, USAGE, API, and README
+- **Removed Version References**: Eliminated version-specific references from XML documentation
+- **Clearer Checkpoint Semantics**: Checkpoints are simple step labels, not complex state storage
+
+### Migration Guide
+
+1. **Update snapshot loading code**: Pass `lastUsedSeed` parameter when creating snapshots
+2. **Add checkpoint management**: Use the new `Checkpoints` collection to label important steps
+3. **Ensure seed consistency**: Verify your code uses a single seed for all random operations
+4. **Re-export snapshots**: Generate new snapshots to adopt the updated schema format
+
+### Technical Details
+
+- CheckpointXml model: Contains `Step` (int), `Label` (string), and `CreatedAt` (DateTime)
+- WorldSnapshotXml now includes `LastUsedSeed?: int` for reproducibility
+- SnapshotConverter.ToSnapshot signature updated with new optional parameters
+
+---
 
 ## Version 0.7.4-beta (Framework Unity and Step Terminology)
+
+### Overview
 
 This release unifies the framework's core concepts, standardizes terminology, and simplifies the type system for better
 consistency and maintainability.
 
-#### 1. Step Terminology Unification
+### Breaking Changes
 
-The basic unit of simulation time is now consistently called "**Step**" throughout the entire framework (previously "
-Tick").
+- **Snapshot compatibility**: Previous snapshots cannot be loaded without manual conversion
+- **API compatibility**: All Tick references must be updated to Step
+- **Factor values**: Must be normalized to 0-1 range
 
-#### 2. FactorDefinition Simplification
+### New Features
 
-`FactorDefinition` has been simplified to align with the UnitValue architecture. Since all factor intensities are stored
-as normalized `UnitValue` (0-1 range), raw value normalization is no longer needed.
+- **Step Terminology**: Consistent use of "Step" throughout the framework
+- **Simplified FactorDefinition**: Removed unnecessary MinValue/MaxValue properties
 
-**Removed Properties:**
+### Improvements
 
-- `MinValue` - No longer needed
-- `MaxValue` - No longer needed
-
-**Removed Methods:**
-
-- `Normalize()` - Intensities are already normalized
-
-### Other Changes
-
-- Updated all observers (`DebugObserver`, `ConsoleObserver`, `MetricsObserver`) for Step terminology
-- Updated `SimulationEvents` logging event IDs
-- Updated `PerformanceMetrics` property names and calculations
+- Updated all observers for Step terminology
 - Improved XML documentation comments throughout
 - Fixed typo: Renamed `DefautStabilityCriteria` to `DefaultStabilityCriteria`
 
-### Migration Notes
+### Migration Guide
 
-1. **Update all code references:** Search for "Tick" and replace with "Step"
-2. **Update snapshots:** Rename all Tick-related XML attributes to Step equivalents
-3. **Normalize factor values:** Convert all raw factor values to 0-1 range before use
-4. **Remove Min/Max from FactorDefinition:** Delete these properties from factor creation code
-5. **Update event triggers:** Use `StepTrigger` instead of `StepTrigger`
-6. **Re-export snapshots:** Generate new snapshots with the updated schema
+1. **Update all code references**: Search for "Tick" and replace with "Step"
+2. **Update snapshots**: Rename all Tick-related XML attributes to Step equivalents
+3. **Normalize factor values**: Convert all raw factor values to 0-1 range before use
+4. **Remove Min/Max from FactorDefinition**: Delete these properties from factor creation code
+5. **Update event triggers**: Use `StepTrigger` consistently
+6. **Re-export snapshots**: Generate new snapshots with the updated schema
 
-### Compatibility
-
-- **Snapshot compatibility:** BROKEN - v0.7.3 snapshots cannot be loaded without manual conversion
-- **API compatibility:** BROKEN - All Tick references must be updated to Step
-- **Factor values:** MUST be normalized to 0-1 range
+---
 
 ## Version 0.7.3-beta (Snapshot Version Validation and Schema Updates)
+
+### Overview
 
 This release focuses on strengthening snapshot compatibility, adding stricter version validation, and aligning the
 snapshot XML structure with the latest codebase.
 
-### Highlights
+### New Features
 
-- Strict snapshot version validation with clearer errors and upgrade guidance
-- Snapshot XML structure adjusted to better reflect current runtime models
-- Backward-compatible loading for older snapshots with warnings when applicable
-- Minor documentation fixes and example corrections
+- Strict snapshot version validation with clearer error messages and upgrade guidance
+- Snapshot XML structure adjusted to reflect current runtime models
+- Backward-compatible loading for older snapshots with warnings
 
-### Snapshot Version Validation
+### Improvements
 
-- Introduced explicit version checks when deserializing snapshots
-- Clear error messages for unsupported or mismatched versions (e.g., "Snapshot version vX is not supported by runtime
-  vY")
-- Added compatibility mapping to support loading known prior versions when safe
-- Validation covers: Version field presence, supported range, and schema compliance
-
-### Snapshot Structure Changes
-
+- Version field presence validation
+- Clear error messages for unsupported or mismatched versions
+- Compatibility mapping to support loading known prior versions when safe
 - World and PersonCollection sections aligned to current generator APIs
 - Factor definitions and factor values normalized for consistency
-- Person entries clarified: templates/generators preferred over inline enumerations for scale
 - Custom person type serialization contracts refined for determinism
 
-### Migration Notes
+### Migration Guide
 
-- If your snapshot lacks a Version field, the loader will attempt to infer and may warn; add Version to avoid ambiguity
+- If your snapshot lacks a Version field, the loader will attempt to infer and may warn
 - Ensure PersonCollections prefer generator specifications over explicit persons for large populations
 - Verify type names for custom person serializers match registration keys
 - Re-export snapshots using the new serializer to adopt updated structure
@@ -90,39 +115,55 @@ snapshot XML structure with the latest codebase.
 
 ## Version 0.7.2-beta (Complete Type Safety & Code Cleanup)
 
-**Version 0.7.2-beta** achieves complete type safety throughout the codebase, eliminates code duplication, and improves
-API consistency. All 0-1 range values now use `UnitValue` for compile-time guarantees.
+### Overview
 
-### ** BREAKING CHANGES - Type Safety Improvements**
+This release achieves complete type safety throughout the codebase, eliminates code duplication, and improves API
+consistency. All 0-1 range values now use `UnitValue` for compile-time guarantees.
 
-This release continues the breaking changes from v0.7.1-beta with no backward compatibility.
+### Breaking Changes
 
-#### Type Safety: All 0-1 Values Now `UnitValue`
+- All 0-1 range values now use `UnitValue` instead of `double`
+- `Guard.ThrowIfNull()` removed - use `ArgumentNullException.ThrowIfNull()` directly
+- `FactorIntensity.Normalize()` signature simplified (parameter removed)
+- `AttractionResult.AdjustedAttraction` now computed property instead of stored
 
-All properties/methods that return or accept 0-1 range values now use `UnitValue`.
+### New Features
 
-| Component                               | Old Type                | New Type                   |
-|-----------------------------------------|-------------------------|----------------------------|
-| `AttractionResult.BaseAttraction`       | `double`                | `UnitValue`                |
-| `AttractionResult.AdjustedAttraction`   | `double`                | `UnitValue` (computed)     |
-| `AttractionResult.CapacityResistance`   | `double`                | `UnitValue`                |
-| `AttractionResult.DistanceResistance`   | `double`                | `UnitValue`                |
-| `MigrationFlow.MigrationProbability`    | `double`                | `UnitValue`                |
-| `MathUtils.Sigmoid()` return            | `double`                | `UnitValue`                |
-| `MathUtils.DistanceDecay()` return      | `double`                | `UnitValue`                |
-| `MathUtils.CapacityResistance()` return | `UnitValue`             | `UnitValue`                |
-| `MathUtils.LinearNormalize()` return    | `double`                | `UnitValue`                |
-| `MathUtils.Softmax()` return            | `IReadOnlyList<double>` | `IReadOnlyList<UnitValue>` |
+**Type Safety Improvements**: All properties/methods that return or accept 0-1 range values now use `UnitValue`.
 
-**Migration Example**:
+| Component                             | Previous Type           | New Type                   |
+|---------------------------------------|-------------------------|----------------------------|
+| `AttractionResult.BaseAttraction`     | `double`                | `UnitValue`                |
+| `AttractionResult.AdjustedAttraction` | `double`                | `UnitValue` (computed)     |
+| `AttractionResult.CapacityResistance` | `double`                | `UnitValue`                |
+| `AttractionResult.DistanceResistance` | `double`                | `UnitValue`                |
+| `MigrationFlow.MigrationProbability`  | `double`                | `UnitValue`                |
+| `MathUtils.Sigmoid()` return          | `double`                | `UnitValue`                |
+| `MathUtils.DistanceDecay()` return    | `double`                | `UnitValue`                |
+| `MathUtils.LinearNormalize()` return  | `double`                | `UnitValue`                |
+| `MathUtils.Softmax()` return          | `IReadOnlyList<double>` | `IReadOnlyList<UnitValue>` |
+
+**New API Features**:
+
+- `City.GetPopulationRatio()` - Helper method for consistent population ratio calculations
+- Implicit conversion from `UnitValue` to `double` for backward compatibility
+
+### Improvements
+
+- Eliminated code duplication in population ratio calculations
+- Improved type safety with compile-time guarantees for 0-1 range values
+- Reduced memory usage with computed properties
+- Cleaner API surface with fewer redundant parameters
+
+### Migration Guide
+
+1. **Update property/variable types**: Change `double` to `UnitValue` for all 0-1 range values
+2. **Update method calls**: Replace `Guard.ThrowIfNull()` with `ArgumentNullException.ThrowIfNull()`
+3. **Remove redundant parameters**: `Normalize()` no longer needs parameter
+4. **Use implicit conversion**: `UnitValue` converts to `double` implicitly when needed
 
 ```csharp
-// OLD (v0.7.1)
-double baseAttraction = result.BaseAttraction;
-double probability = flow.MigrationProbability;
-double resistance = MathUtils.DistanceDecay(distance, lambda);
-
-// NEW (v0.7.2)
+// Updated type usage
 UnitValue baseAttraction = result.BaseAttraction;
 UnitValue probability = flow.MigrationProbability;
 UnitValue resistance = MathUtils.DistanceDecay(distance, lambda);
@@ -131,63 +172,15 @@ UnitValue resistance = MathUtils.DistanceDecay(distance, lambda);
 double baseDouble = baseAttraction;  // Automatic conversion
 ```
 
-#### API Improvements
+---
 
-**1. `Guard.ThrowIfNull()` Removed**
+## Version 0.7.1-beta (Unified Value System)
 
-- **Removed**: Redundant wrapper around framework method
-- **Use instead**: `ArgumentNullException.ThrowIfNull()` directly
-- **Kept**: Domain-specific methods (`ThrowIfNullOrWhiteSpace`, `ThrowIfNotInRange`, etc.)
+### Overview
 
-```csharp
-// OLD (v0.7.1)
-Guard.ThrowIfNull(parameter);
+This release introduces a complete redesign of the value system with type-safe `UnitValue`, separation of immediate vs
+lazy evaluation, and dramatic simplification of the codebase.
 
-// NEW (v0.7.2)
-ArgumentNullException.ThrowIfNull(parameter);
-```
-
-**2. `FactorIntensity.Normalize()` Simplified**
-
-- **Old signature**: `Normalize(FactorDefinition factorDefinition)`
-- **New signature**: `Normalize()` (parameter removed)
-- **Reason**: Method already has `Definition` property, parameter was redundant
-
-```csharp
-// OLD (v0.7.1)
-var normalized = factorIntensity.Normalize(factor);
-
-// NEW (v0.7.2)
-var normalized = factorIntensity.Normalize();
-```
-
-**3. `City.GetPopulationRatio()` Added**
-
-- New helper method for consistent population ratio calculations
-- Eliminates duplication across feedback strategies
-- Returns 1.0 when capacity is null/zero (no constraint)
-
-```csharp
-// Replaces manual calculations
-double ratio = city.GetPopulationRatio();
-```
-
-**4. `AttractionResult.AdjustedAttraction` Now Computed**
-
-- Changed from stored property to computed property
-- Calculated as: `BaseAttraction × (1 - CapacityResistance) × DistanceResistance`
-- Ensures consistency, reduces storage
-
-### Code Quality Improvements
-
-**Eliminated Duplication**:
-
-- Population ratio calculated 3 different ways → Single `City.GetPopulationRatio()` helper
-- Redundant `Guard.ThrowIfNull()` → Use framework method directly
-
-**Improved Consistency**:
-
-- All 0-1 range values use `UnitValue` (complete type safety)
 - Feedback strategies use consistent `GetPopulationRatio()` helper
 - Cleaner API surface with fewer redundant parameters
 

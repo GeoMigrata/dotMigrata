@@ -15,7 +15,7 @@ public readonly record struct SnapshotVersion(int Major, int? Minor = null) : IC
     /// <summary>
     /// Gets the framework version string corresponding to the current snapshot version.
     /// </summary>
-    public static string FrameworkVersion { get; } = "v0.7.x";
+    public static string FrameworkVersion { get; } = "beta";
 
     /// <summary>
     /// Parses a version string into a SnapshotVersion.
@@ -52,7 +52,7 @@ public readonly record struct SnapshotVersion(int Major, int? Minor = null) : IC
         // Split by '.' to get major and optional minor
         var parts = versionString.Split('.');
 
-        if (parts.Length == 0 || parts.Length > 2)
+        if (parts.Length is 0 or > 2)
             return false;
 
         // Parse major version

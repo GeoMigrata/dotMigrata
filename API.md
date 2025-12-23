@@ -66,7 +66,7 @@ types must implement.
 - `MovingWillingness` (NormalizedValue) - Willingness to migrate (0-1 range, required)
 - `RetentionRate` (NormalizedValue) - Tendency to stay in current location (0-1 range, required)
 - `FactorSensitivities` (IReadOnlyDictionary<FactorDefinition, double>) - Factor sensitivities
-- `Tags` (IReadOnlyList<string>) - Tags for categorization and statistical analysis (v0.5.1-beta+)
+- `Tags` (IReadOnlyList<string>) - Tags for categorization and statistical analysis
 
 **Constructor:**
 
@@ -173,7 +173,7 @@ Defines a city characteristic that influences migration.
 - `Type` (FactorType, required) - Direction (Positive or Negative)
 - `TransformFunction` (UnitValuePromise.TransformFunc?, optional) - Optional transformation function
 
-**Note:** Since v0.7.4, factor intensities are stored as normalized `UnitValue` (0-1 range), so `MinValue` and
+**Note:** Factor intensities are stored as normalized `UnitValue` (0-1 range), so `MinValue` and
 `MaxValue` are no longer needed. Factor values must be pre-normalized before creating `FactorIntensity`.
 
 **Example:**
@@ -761,7 +761,7 @@ var outputSnapshot = SnapshotConverter.ToSnapshot(result.World, SnapshotStatus.C
 XmlSnapshotSerializer.SerializeToFile(outputSnapshot, "output.xml");
 ```
 
-### Custom Person Types in Snapshots (v0.6.4+)
+### Custom Person Types in Snapshots
 
 The snapshot system supports custom person types through a type discriminator pattern.
 

@@ -67,6 +67,8 @@ public static class SnapshotConverter
     /// <param name="world">The world to convert.</param>
     /// <param name="status">The snapshot status. Default is <see cref="SnapshotStatus.Seed" />.</param>
     /// <param name="currentStep">The current simulation step. Default is 0.</param>
+    /// <param name="lastUsedSeed">The last used random seed for reproducibility. Default is null.</param>
+    /// <param name="checkpoints">Optional collection of checkpoints. Default is null.</param>
     /// <returns>A <see cref="WorldSnapshotXml" /> representing the world state.</returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="world" /> is <see langword="null" />.
@@ -77,7 +79,9 @@ public static class SnapshotConverter
     public static WorldSnapshotXml ToSnapshot(
         World world,
         SnapshotStatus status = SnapshotStatus.Seed,
-        int currentStep = 0)
+        int currentStep = 0,
+        int? lastUsedSeed = null,
+        List<CheckpointXml>? checkpoints = null)
     {
         ArgumentNullException.ThrowIfNull(world);
 
@@ -89,6 +93,8 @@ public static class SnapshotConverter
             CreatedAt = DateTime.UtcNow,
             LastModifiedAt = DateTime.UtcNow,
             CurrentStep = currentStep,
+            LastUsedSeed = lastUsedSeed,
+            Checkpoints = checkpoints,
             World = ConvertWorldState(world),
             Steps = []
         };

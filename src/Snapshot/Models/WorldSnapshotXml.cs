@@ -8,7 +8,7 @@ namespace dotMigrata.Snapshot.Models;
 /// Root snapshot model with XML serialization support.
 /// </summary>
 /// <remarks>
-///     Snapshot format for framework v0.7.x with support for:
+///     Snapshot format with support for:
 ///     <list type="bullet">
 ///         <item>
 ///             <description>No namespace (simplified structure)</description>
@@ -24,6 +24,9 @@ namespace dotMigrata.Snapshot.Models;
 ///         </item>
 ///         <item>
 ///             <description>Complete transform function support</description>
+///         </item>
+///         <item>
+///             <description>Checkpoint system for simulation resumption</description>
 ///         </item>
 ///     </list>
 /// </remarks>
@@ -65,6 +68,22 @@ public sealed class WorldSnapshotXml
     /// </summary>
     [XmlAttribute("Step")]
     public int CurrentStep { get; init; }
+
+    /// <summary>
+    /// Gets the last used random seed for reproducible simulations.
+    /// When not null, this seed can be used to reproduce the exact simulation state when resuming from a checkpoint.
+    /// Set to null for non-reproducible simulations or when seed information is not tracked.
+    /// </summary>
+    [XmlAttribute("LastUsedSeed")]
+    public int? LastUsedSeed { get; init; }
+
+    /// <summary>
+    /// Gets the checkpoints collection mapping step numbers to user-defined labels.
+    /// Checkpoints are named steps that help users identify and resume from specific simulation states.
+    /// </summary>
+    [XmlArray("Checkpoints")]
+    [XmlArrayItem("Checkpoint")]
+    public List<CheckpointXml>? Checkpoints { get; init; }
 
     /// <summary>
     /// Gets the simulation configuration.
