@@ -27,15 +27,11 @@ public static class SnapshotConverter
     /// <exception cref="InvalidOperationException">
     /// Thrown when snapshot data is invalid or incomplete.
     /// </exception>
-    /// <exception cref="SnapshotException">
-    /// Thrown when snapshot version is incompatible with current framework.
-    /// </exception>
     public static World ToWorld(WorldSnapshotXml snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
-        // Validate version compatibility
-        ValidateSnapshotVersion(snapshot.Version);
+        // Note: Version validation removed - version field is kept for informational purposes only
 
         if (snapshot.World == null)
             throw new InvalidOperationException("Snapshot does not contain a World definition.");
@@ -62,16 +58,16 @@ public static class SnapshotConverter
     }
 
     /// <summary>
-    /// Converts a <see cref="World" /> domain object to a <see cref="WorldSnapshotXml" />.
+    /// Converts a <see cref="World"/> to a <see cref="WorldSnapshotXml"/> for serialization.
     /// </summary>
-    /// <param name="world">The world to convert.</param>
-    /// <param name="status">The snapshot status. Default is <see cref="SnapshotStatus.Seed" />.</param>
-    /// <param name="currentStep">The current simulation step. Default is 0.</param>
-    /// <param name="lastUsedSeed">The last used random seed for reproducibility. Default is null.</param>
-    /// <param name="checkpoints">Optional collection of checkpoints. Default is null.</param>
-    /// <returns>A <see cref="WorldSnapshotXml" /> representing the world state.</returns>
+    /// <param name="world">The world to snapshot.</param>
+    /// <param name="status">The snapshot status (default: Seed).</param>
+    /// <param name="currentStep">The current simulation step (default: 0).</param>
+    /// <param name="lastUsedSeed">The last used random seed for reproducibility (optional).</param>
+    /// <param name="checkpoints">The list of checkpoints (optional).</param>
+    /// <returns>A <see cref="WorldSnapshotXml"/> ready for XML serialization.</returns>
     /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="world" /> is <see langword="null" />.
+    /// Thrown when <paramref name="world"/> is <see langword="null"/>.
     /// </exception>
     /// <remarks>
     /// Person instances are not persisted individually; use Population groups for reproducibility.
@@ -87,7 +83,7 @@ public static class SnapshotConverter
 
         return new WorldSnapshotXml
         {
-            Version = SnapshotVersion.Current.ToString(),
+            Version = "beta",
             Id = Guid.NewGuid().ToString(),
             Status = status,
             CreatedAt = DateTime.UtcNow,
@@ -101,27 +97,6 @@ public static class SnapshotConverter
     }
 
     #region ToWorld Conversion Helpers
-
-    /// <summary>
-    /// Validates that the snapshot version is compatible with the current framework.
-    /// </summary>
-    /// <param name="versionString">The snapshot version string to validate.</param>
-    /// <exception cref="SnapshotException">
-    /// Thrown when snapshot version is incompatible with current framework.
-    /// </exception>
-    private static void ValidateSnapshotVersion(string? versionString)
-    {
-        if (string.IsNullOrWhiteSpace(versionString))
-            throw new SnapshotException("Snapshot version is required.");
-
-        if (!SnapshotVersion.TryParse(versionString, out var version))
-            throw new SnapshotException($"Invalid snapshot version format: '{versionString}'.");
-
-        if (!version.IsCompatible())
-            throw new SnapshotException(
-                $"Incompatible snapshot version '{versionString}'. " +
-                $"This framework ({SnapshotVersion.FrameworkVersion}) supports version {SnapshotVersion.Current}.");
-    }
 
     private static List<FactorDefinition> ConvertFactorDefinitions(List<FactorDefXml>? definitions)
     {

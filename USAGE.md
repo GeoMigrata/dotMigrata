@@ -728,7 +728,7 @@ Snapshots are typically created as XML files. Here's how to create one programma
 // Create snapshot structure
 WorldSnapshotXml snapshot = new()
 {
-    Version = "v4",
+    Version = "beta",
     Status = SnapshotStatus.Seed,
     CreatedAt = DateTime.UtcNow,
     LastModifiedAt = DateTime.UtcNow,
@@ -1220,8 +1220,8 @@ for (int step = 0; step < 100; step++)
 This eliminates ValueSpec evaluation overhead during simulation while preserving the safety and convenience of ValueSpec
 during setup.
 
-## Note on version validation:
+## Note on Snapshots
 
-- Snapshots include a Version field that is checked during deserialization.
-- Unsupported or missing versions will produce clear errors with suggested remediation.
-- Older known-compatible versions may load with warnings; re-export with the current runtime to adopt the latest format.
+- Snapshots include a Version field set to "beta" for informational purposes
+- During beta development, version validation is temporarily disabled
+- Snapshots are forward and backward compatible within the beta period

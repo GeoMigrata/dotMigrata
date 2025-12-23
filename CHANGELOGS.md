@@ -54,6 +54,8 @@ codebase.
   - Improved parameter and return value documentation
   - Added comprehensive remarks with cross-references
   - Consistent use of `<see langword="..."/>` for keywords
+- **Temporarily removed version checker in beta stage**: Version field is kept in snapshots for informational purposes
+  but no validation is performed
 
 ### Migration Guide
 

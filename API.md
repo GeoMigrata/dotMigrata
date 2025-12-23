@@ -595,7 +595,7 @@ static WorldSnapshotXml? DeserializeFromFile(string filePath)
 
 <Snapshot xmlns="https://geomigrata.pages.dev/snapshot"
           xmlns:c="https://geomigrata.pages.dev/code"
-          Version="v4" Id="..." Status="Seed" CreatedAt="..." CurrentStep="0">
+          Version="beta" Id="..." Status="Seed" CreatedAt="..." CurrentStep="0">
     <World DisplayName="Example World">
         <!-- FactorDefinitions is a snapshot container (default namespace) -->
         <FactorDefinitions>
@@ -962,11 +962,11 @@ var engine = SimulationBuilder.Create()
 var result = await engine.RunAsync(world);
 ```
 
-## Version 3.0+ Features
+---
 
-### Value Specifications
+## Value Specifications
 
-Version 3.0+ uses direct `ValueSpec` static methods for type-safe value creation:
+The framework provides static methods for type-safe value creation:
 
 **ValueSpec Methods:**
 
@@ -1002,7 +1002,7 @@ var config = new StandardModelConfig
 
 ### Enhanced Exception System
 
-Version 3.0 provides a comprehensive exception hierarchy:
+The framework provides a comprehensive exception hierarchy:
 
 - `DotMigrataException` - Base exception for all framework exceptions
 - `ConfigurationException` - Invalid configuration values
@@ -1083,7 +1083,7 @@ implementation.
 
 ### Snapshot Validation
 
-Version 3.0 adds methods for snapshot validation:
+The framework provides methods for snapshot validation:
 
 ```csharp
 // Non-throwing deserialization
