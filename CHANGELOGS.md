@@ -1,44 +1,86 @@
 ﻿# dotMigrata Changelog
 
-## Version 0.7.5-beta (Checkpoint System)
+## Version 0.7.5-beta (Checkpoint System & DI-Based Custom Person Support)
 
 ### Overview
 
-This release introduces a checkpoint system for simulation reproducibility and state management, removes
-complex history tracking in favor of seed-based reproducibility, and unifies documentation structure and style across
-all files.
+This release introduces a checkpoint system for simulation reproducibility, removes complex history tracking
+in favor of seed-based reproducibility, unifies documentation structure and style, and replaces the PersonTypeRegistry
+with a cleaner Dependency Injection-based approach for custom person types.
 
 ### Breaking Changes
 
 - Snapshot format updated with new fields: `LastUsedSeed` and `Checkpoints`
 - Checkpoint system: checkpoints are labels for steps
 - Resuming from a checkpoint with a different seed clears all subsequent steps and checkpoints
-- No timeline branching or complex history management
+- **PersonTypeRegistry, ICustomPersonSerializer, and ICustomGeneratorSerializer removed**
+- **PersonSpecXml removed** - Use StandardPersonModel with IPersonModel interface instead
+- PersonCollectionXml now uses only `PersonModels` (list of StandardPersonModel)
+- All legacy/backward compatibility code removed
 
 ### New Features
 
-- **Checkpoint System**: Named labels for simulation steps to make resumption easier
-- **LastUsedSeed Field**: Stores the random seed used in simulation for exact reproducibility
-- **Seed-Based Reproducibility**: Single seed propagates through all random operations ensuring deterministic results
+**Checkpoint System**:
+
+- Named labels for simulation steps to make resumption easier
+- `LastUsedSeed` field stores the random seed used in simulation for exact reproducibility
+- Seed-based reproducibility: single seed propagates through all random operations
+
+**DI-Based Custom Person Support**:
+
+- **IPersonModel interface**: Defines required properties all person models must have
+- **StandardPersonModel**: Concrete implementation using XML attributes for serialization
+- **IPersonModelConverter<TModel, TPerson, TGenerator>**: Generic converter interface for type-safe conversion
+- **StandardPersonModelConverter**: Reference implementation for StandardPerson
+
+**Simplified Custom Person Workflow**:
+
+1. Define your custom person class (inherit from `PersonBase`)
+2. Define your custom person generator (implement `IPersonGenerator<TPerson>`)
+3. Define your custom person model class (implement `IPersonModel` and use XML attributes)
+4. Implement `IPersonModelConverter` for your types
 
 ### Improvements
 
 - **Unified Documentation**: Standardized language, style, and structure across CHANGELOGS, USAGE, API, and README
 - **Removed Version References**: Eliminated version-specific references from XML documentation
 - **Clearer Checkpoint Semantics**: Checkpoints are simple step labels, not complex state storage
+- **Simpler Custom Person API**: Replaced registry pattern with DI pattern for better type safety
 
 ### Migration Guide
+
+**Checkpoint System**:
 
 1. **Update snapshot loading code**: Pass `lastUsedSeed` parameter when creating snapshots
 2. **Add checkpoint management**: Use the new `Checkpoints` collection to label important steps
 3. **Ensure seed consistency**: Verify your code uses a single seed for all random operations
 4. **Re-export snapshots**: Generate new snapshots to adopt the updated schema format
 
+**Custom Person Types**:
+
+1. **Define your person model class**: Implement `IPersonModel` and use XML attributes
+   ```csharp
+   [XmlRoot("Person")]
+   public class MyPersonModel : IPersonModel
+   {
+       [XmlAttribute("Count")] public int Count { get; set; }
+       [XmlAttribute("Seed")] public int Seed { get; set; }
+       [XmlIgnore] public bool SeedSpecified { get; set; }
+       // Add your custom properties with XML attributes
+       [XmlElement("Age")] public int Age { get; set; }
+   }
+   ```
+2. **Implement the converter**: Create `IPersonModelConverter<MyPersonModel, MyPerson, MyGenerator>`
+3. **Use the converter**: Pass it to SnapshotConverter methods (or use DI container)
+
 ### Technical Details
 
 - CheckpointXml model: Contains `Step` (int), `Label` (string), and `CreatedAt` (DateTime)
 - WorldSnapshotXml now includes `LastUsedSeed?: int` for reproducibility
 - SnapshotConverter.ToSnapshot signature updated with new optional parameters
+- PersonCollectionXml uses `PersonModels` (StandardPersonModel) for all person specifications
+- StandardPersonModel uses XML attributes for declarative serialization
+- IPersonModelConverter provides type-safe bidirectional conversion
 
 ---
 

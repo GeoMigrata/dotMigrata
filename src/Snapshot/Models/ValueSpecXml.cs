@@ -103,4 +103,64 @@ public class ValueSpecXml
         (!ValueSpecified || Value is >= 0 and <= 1) &&
         (!MinSpecified || Min is >= 0 and <= 1) &&
         (!MaxSpecified || Max is >= 0 and <= 1);
+
+    /// <summary>
+    /// Creates a ValueSpecXml from a fixed value.
+    /// </summary>
+    public static ValueSpecXml FromValue(double value) =>
+        new()
+        {
+            Value = Math.Clamp(value, 0, 1),
+            ValueSpecified = true
+        };
+
+    /// <summary>
+    /// Creates a ValueSpecXml from a factor sensitivity.
+    /// </summary>
+    public static ValueSpecXml FromFactorSensitivity(string factorId, double value) =>
+        new()
+        {
+            Id = factorId,
+            Value = Math.Clamp(value, 0, 1),
+            ValueSpecified = true
+        };
+
+    /// <summary>
+    /// Creates a ValueSpecXml from a UnitValuePromise.
+    /// </summary>
+    /// <remarks>
+    /// Note: This is a simplified conversion that creates a fixed value.
+    /// UnitValuePromise internal state (range, approximate, transform) is not preserved.
+    /// For full fidelity, store the promise configuration separately.
+    /// </remarks>
+    public static ValueSpecXml FromUnitValuePromise(Core.Values.UnitValuePromise promise)
+    {
+        // Evaluate the promise with a default random to get a representative value
+        // This loses the promise's configuration but provides a usable default
+        var evaluatedValue = promise.Evaluate(Random.Shared);
+        return new ValueSpecXml
+        {
+            Value = evaluatedValue.Value,
+            ValueSpecified = true
+        };
+    }
+
+    /// <summary>
+    /// Creates a ValueSpecXml from a UnitValuePromise with factor ID.
+    /// </summary>
+    /// <remarks>
+    /// Note: This is a simplified conversion that creates a fixed value.
+    /// UnitValuePromise internal state (range, approximate, transform) is not preserved.
+    /// For full fidelity, store the promise configuration separately.
+    /// </remarks>
+    public static ValueSpecXml FromUnitValuePromise(string factorId, Core.Values.UnitValuePromise promise)
+    {
+        var evaluatedValue = promise.Evaluate(Random.Shared);
+        return new ValueSpecXml
+        {
+            Id = factorId,
+            Value = evaluatedValue.Value,
+            ValueSpecified = true
+        };
+    }
 }

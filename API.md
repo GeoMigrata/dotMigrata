@@ -763,97 +763,159 @@ XmlSnapshotSerializer.SerializeToFile(outputSnapshot, "output.xml");
 
 ### Custom Person Types in Snapshots
 
-The snapshot system supports custom person types through a type discriminator pattern.
+The snapshot system supports custom person types through a DI-based model converter pattern.
 
-#### PersonTypeRegistry
+#### IPersonModel
 
-Static registry for custom person type serializers.
+Interface that all person models must implement.
 
-**Methods:**
+**Required Properties:**
 
 ```csharp
-static void RegisterPersonType<TPerson>(string typeName, ICustomPersonSerializer<TPerson> serializer)
-static void RegisterGeneratorType<TPerson, TGenerator>(string typeName, ICustomGeneratorSerializer<TPerson, TGenerator> serializer)
+int Count { get; set; }
+int Seed { get; set; }
+bool SeedSpecified { get; set; }
+string Type { get; set; }
+string? Tags { get; set; }
+bool IsGenerator { get; }
 ```
+
+#### StandardPersonModel
+
+Default implementation of IPersonModel using XML attributes.
 
 **Example:**
 
 ```csharp
-using dotMigrata.Snapshot.Conversion;
-
-// Register at application startup
-PersonTypeRegistry.RegisterPersonType("DemographicPerson", new DemographicPersonSerializer());
-PersonTypeRegistry.RegisterGeneratorType<DemographicPerson, DemographicPersonGenerator>(
-    "DemographicPerson", new DemographicGeneratorSerializer());
+[XmlRoot("Person")]
+public class StandardPersonModel : IPersonModel
+{
+    [XmlAttribute("Count")] public int Count { get; set; } = 1;
+    [XmlAttribute("Seed")] public int Seed { get; set; }
+    [XmlIgnore] public bool SeedSpecified { get; set; }
+    [XmlAttribute("Type")] public string Type { get; set; } = "StandardPerson";
+    [XmlElement("Tags")] public string? Tags { get; set; }
+    
+    [XmlArray("Sensitivities")]
+    [XmlArrayItem("S")]
+    public List<ValueSpecXml>? Sensitivities { get; set; }
+    
+    [XmlElement("Willingness")] public ValueSpecXml? Willingness { get; set; }
+    [XmlElement("Retention")] public ValueSpecXml? Retention { get; set; }
+    // ... other properties
+}
 ```
 
-#### ICustomPersonSerializer<TPerson>
+#### IPersonModelConverter<TModel, TPerson, TGenerator>
 
-Defines serialization for custom person types.
+Generic converter interface for type-safe conversion between models and runtime instances.
 
 **Methods:**
 
 ```csharp
-TPerson CreateFromTemplate(PersonTemplateXml template, Dictionary<FactorDefinition, double> sensitivities, List<string> tags)
-XmlElement? SerializeCustomProperties(TPerson person, XmlDocument doc)
+TPerson CreatePerson(TModel model, Dictionary<string, FactorDefinition> factorLookup, List<FactorDefinition> allFactors)
+TGenerator CreateGenerator(TModel model, Dictionary<string, FactorDefinition> factorLookup, List<FactorDefinition> allFactors)
+TModel ToModel(TPerson person)
+TModel ToModel(TGenerator generator)
 ```
 
-**Implementation Example:**
+**Implementation Example for Custom Person Type:**
 
 ```csharp
-public class DemographicPersonSerializer : ICustomPersonSerializer<DemographicPerson>
+[XmlRoot("Person")]
+public class DemographicPersonModel : IPersonModel
 {
-    public DemographicPerson CreateFromTemplate(
-        PersonTemplateXml template,
-        Dictionary<FactorDefinition, double> sensitivities,
-        List<string> tags)
-    {
-        // Extract custom properties from template.CustomProperties
-        int age = 30;
-        if (template.CustomProperties != null)
-        {
-            var ageNode = template.CustomProperties.SelectSingleNode("Age");
-            if (ageNode != null) age = int.Parse(ageNode.InnerText);
-        }
+    // Required IPersonModel properties
+    [XmlAttribute("Count")] public int Count { get; set; } = 1;
+    [XmlAttribute("Seed")] public int Seed { get; set; }
+    [XmlIgnore] public bool SeedSpecified { get; set; }
+    [XmlAttribute("Type")] public string Type { get; set; } = "DemographicPerson";
+    [XmlElement("Tags")] public string? Tags { get; set; }
+    [XmlIgnore] public bool IsGenerator => SeedSpecified;
+    
+    // Standard person properties
+    [XmlArray("Sensitivities")] public List<ValueSpecXml>? Sensitivities { get; set; }
+    [XmlElement("Willingness")] public ValueSpecXml? Willingness { get; set; }
+    [XmlElement("Retention")] public ValueSpecXml? Retention { get; set; }
+    
+    // Custom properties
+    [XmlElement("Age")] public int Age { get; set; }
+    [XmlElement("Income")] public double Income { get; set; }
+}
 
+public class DemographicPersonConverter 
+    : IPersonModelConverter<DemographicPersonModel, DemographicPerson, DemographicPersonGenerator>
+{
+    public DemographicPerson CreatePerson(
+        DemographicPersonModel model,
+        Dictionary<string, FactorDefinition> factorLookup,
+        List<FactorDefinition> allFactors)
+    {
+        var sensitivities = ConvertSensitivities(model.Sensitivities, factorLookup);
+        var tags = ParseTags(model.Tags);
+        
         return new DemographicPerson(sensitivities)
         {
-            MovingWillingness = NormalizedValue.FromRatio(template.MovingWillingness),
-            RetentionRate = NormalizedValue.FromRatio(template.RetentionRate),
-            Age = age,
+            MovingWillingness = ConvertToUnitValue(model.Willingness, 0.5),
+            RetentionRate = ConvertToUnitValue(model.Retention, 0.3),
+            Age = model.Age,
+            Income = model.Income,
             Tags = tags
         };
     }
-
-    public XmlElement? SerializeCustomProperties(DemographicPerson person, XmlDocument doc)
+    
+    public DemographicPersonGenerator CreateGenerator(
+        DemographicPersonModel model,
+        Dictionary<string, FactorDefinition> factorLookup,
+        List<FactorDefinition> allFactors)
     {
-        var customProps = doc.CreateElement("CustomProperties");
-        var ageElem = doc.CreateElement("Age");
-        ageElem.InnerText = person.Age.ToString();
-        customProps.AppendChild(ageElem);
-        return customProps;
+        var factorSpecs = ConvertToUnitValuePromise(model.Sensitivities, factorLookup);
+        var seed = model.SeedSpecified ? model.Seed : Random.Shared.Next();
+        
+        return new DemographicPersonGenerator(seed)
+        {
+            Count = model.Count,
+            FactorSensitivities = factorSpecs,
+            MovingWillingness = ConvertToPromise(model.Willingness, 0.5),
+            RetentionRate = ConvertToPromise(model.Retention, 0.3),
+            AgeRange = (20, 70), // Custom generator config
+            IncomeRange = (20000, 100000)
+        };
+    }
+    
+    public DemographicPersonModel ToModel(DemographicPerson person)
+    {
+        return new DemographicPersonModel
+        {
+            Count = 1,
+            Type = "DemographicPerson",
+            Age = person.Age,
+            Income = person.Income,
+            // ... map other properties
+        };
+    }
+    
+    public DemographicPersonModel ToModel(DemographicPersonGenerator generator)
+    {
+        return new DemographicPersonModel
+        {
+            Count = generator.Count,
+            SeedSpecified = true,
+            Type = "DemographicPerson",
+            // ... map other properties
+        };
     }
 }
 ```
 
-#### ICustomGeneratorSerializer<TPerson, TGenerator>
-
-Defines serialization for custom person generators.
-
-**Methods:**
-
-```csharp
-TGenerator CreateFromXml(GeneratorXml generatorXml, Dictionary<FactorDefinition, ValueSpec> factorSpecs, List<string> tags)
-XmlElement? SerializeCustomProperties(TGenerator generator, XmlDocument doc)
-```
-
 **Key Points:**
 
-- **StandardPerson**: Registered by default, no explicit registration needed
-- **Type discriminator**: `PersonType` XML attribute specifies the concrete type
-- **Custom properties**: `CustomProperties` XML element contains type-specific data
-- **Backward compatible**: Snapshots without `PersonType` default to "StandardPerson"
-- **Thread safety**: Register types during initialization before snapshot operations
+- Models use XML attributes for declarative serialization
+- Converters handle bidirectional conversion between models and runtime instances
+- Type-safe with compile-time checking
+- No manual XML element creation required
+- Single responsibility: models handle serialization, converters handle conversion
+- Use dependency injection to provide converters to snapshot operations
 
 ## Simulation Builders
 

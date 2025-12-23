@@ -1,4 +1,5 @@
 ﻿using System.Xml.Serialization;
+using dotMigrata.Snapshot.Interfaces;
 
 namespace dotMigrata.Snapshot.Models;
 
@@ -6,8 +7,8 @@ namespace dotMigrata.Snapshot.Models;
 /// Defines a collection of person specifications (both templates and generators).
 /// </summary>
 /// <remarks>
-/// Person specifications can be either templates (fixed values) or generators (randomized values).
-/// The presence of a Seed attribute determines the mode.
+/// Person specifications use the DI-based model system with XML attributes.
+/// Supports custom person models implementing <see cref="IPersonModel" />.
 /// </remarks>
 public class PersonCollectionXml
 {
@@ -18,12 +19,12 @@ public class PersonCollectionXml
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the person specifications (both templates and generators).
+    /// Gets or sets the person specifications using StandardPersonModel.
     /// </summary>
     /// <remarks>
-    /// Specifications without a Seed attribute act as templates (fixed values).
-    /// Specifications with a Seed attribute act as generators (randomized values).
+    /// Models without SeedSpecified=true act as templates (fixed values).
+    /// Models with SeedSpecified=true act as generators (randomized values).
     /// </remarks>
     [XmlElement("Person")]
-    public List<PersonSpecXml>? PersonSpecs { get; set; }
+    public List<StandardPersonModel>? PersonModels { get; set; }
 }

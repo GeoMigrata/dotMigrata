@@ -187,14 +187,16 @@ public static class SnapshotConverter
         if (collections == null)
             return result;
 
+        var converter = new StandardPersonModelConverter();
+
         foreach (var collection in collections)
         {
             var persons = new List<PersonBase>();
 
-            // Process all person specs (both templates and generators unified)
-            if (collection.PersonSpecs != null)
-                foreach (var spec in collection.PersonSpecs)
-                    persons.AddRange(ConvertPersonSpec(spec, factorLookup, allFactors));
+            // Process person models using the DI-based converter
+            if (collection.PersonModels != null)
+                foreach (var model in collection.PersonModels)
+                    persons.AddRange(ConvertPersonModel(model, converter, factorLookup, allFactors));
 
             result[collection.Id] = persons;
         }
@@ -202,48 +204,26 @@ public static class SnapshotConverter
         return result;
     }
 
-    private static IEnumerable<PersonBase> ConvertPersonSpec(
-        PersonSpecXml spec,
+    private static IEnumerable<PersonBase> ConvertPersonModel(
+        StandardPersonModel model,
+        StandardPersonModelConverter converter,
         Dictionary<string, FactorDefinition> factorLookup,
         List<FactorDefinition> allFactors)
     {
-        var tags = ParseTags(spec.Tags);
-
-        if (spec.IsGenerator)
+        if (model.IsGenerator)
         {
-            // Generator mode: convert to UnitValuePromise for randomization
-            var factorSpecs = new Dictionary<FactorDefinition, UnitValuePromise>();
-            if (spec.Sensitivities != null)
-                foreach (var sensitivity in spec.Sensitivities)
-                    if (!string.IsNullOrEmpty(sensitivity.Id) &&
-                        factorLookup.TryGetValue(sensitivity.Id, out var factor))
-                        factorSpecs[factor] = ConvertSpec(sensitivity);
-
-            // Use registry to create generator of appropriate type
-            var personGenerator = PersonTypeRegistry.CreateGenerator(spec, factorSpecs, tags);
-
-            // Yield all generated persons
-            foreach (var person in personGenerator.Generate(allFactors))
+            // Generator mode: create generator and generate persons
+            var generator = converter.CreateGenerator(model, factorLookup, allFactors);
+            foreach (var person in generator.Generate(allFactors))
                 yield return person;
         }
         else
         {
-            // Template mode: convert to fixed UnitValue
-            var sensitivities = new Dictionary<FactorDefinition, UnitValue>();
-            if (spec.Sensitivities != null)
-                foreach (var sensitivity in spec.Sensitivities)
-                    if (!string.IsNullOrEmpty(sensitivity.Id) &&
-                        factorLookup.TryGetValue(sensitivity.Id, out var factor))
-                        sensitivities[factor] = ConvertValueSpecToValue(sensitivity);
-
-            // Create multiple identical persons
-            for (var i = 0; i < spec.Count; i++)
+            // Template mode: create multiple identical persons
+            for (var i = 0; i < model.Count; i++)
             {
-                // Create a copy of sensitivities for each person to ensure independence
-                var personSensitivities = new Dictionary<FactorDefinition, UnitValue>(sensitivities);
-
-                // Use registry to create person of appropriate type
-                yield return PersonTypeRegistry.CreatePerson(spec, personSensitivities, tags);
+                var person = converter.CreatePerson(model, factorLookup, allFactors);
+                yield return person;
             }
         }
     }
