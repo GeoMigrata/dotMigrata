@@ -7,19 +7,19 @@ namespace dotMigrata.Core.Entities;
 /// Defines core migration-essential properties and behaviors.
 /// </summary>
 /// <remarks>
-///     <para>
-///     Custom person types can inherit from this class to add domain-specific properties.
-///     The framework ensures all person types have the essential properties needed for migration logic.
-///     the essential properties needed for migration logic.
-///     </para>
-///     <para>
-///     Thread Safety: Person instances are designed for single-threaded access within a city context.
-///     The <see cref="CurrentCity" /> property is mutable to support migration operations.
-///     </para>
-///     <para>
-///     All sensitivity values use <see cref="UnitValue" /> for type safety.
-///     Factor direction (positive/negative) is determined by <see cref="FactorDefinition.Type" />.
-///     </para>
+/// <para>
+/// Defines core migration-essential properties and behaviors.
+/// Custom person types can inherit from this class to add domain-specific properties.
+/// The framework ensures all person types have the essential properties needed for migration logic.
+/// </para>
+/// <para>
+/// Thread Safety: Person instances are designed for single-threaded access within a city context.
+/// The <see cref="CurrentCity"/> property is mutable to support migration operations.
+/// </para>
+/// <para>
+/// All sensitivity values use <see cref="UnitValue"/> for type safety.
+/// Factor direction (positive/negative) is determined by <see cref="FactorDefinition.Type"/>.
+/// </para>
 /// </remarks>
 public abstract class PersonBase
 {
@@ -51,17 +51,17 @@ public abstract class PersonBase
     public City? CurrentCity { get; set; }
 
     /// <summary>
-    /// Gets the willingness to migrate.
+    /// Gets or sets the willingness to migrate.
     /// </summary>
     /// <remarks>
     /// Higher values indicate greater willingness to consider migration.
-    /// Type-safe <see cref="UnitValue" /> ensures values are always in valid range.
+    /// Type-safe <see cref="UnitValue"/> ensures values are always in valid range.
     /// This is a core property used by migration decision logic.
     /// </remarks>
     public required UnitValue MovingWillingness { get; init; }
 
     /// <summary>
-    /// Gets the retention rate.
+    /// Gets or sets the retention rate.
     /// </summary>
     /// <remarks>
     /// Higher values indicate greater tendency to stay in current location.
@@ -74,8 +74,9 @@ public abstract class PersonBase
     /// Gets the read-only dictionary of factor sensitivities.
     /// </summary>
     /// <remarks>
+    /// Maps each <see cref="FactorDefinition"/> to a sensitivity <see cref="UnitValue"/>.
     /// Factor direction (positive/negative attraction) is determined by
-    /// <see cref="FactorDefinition.Type" />, not the sensitivity value.
+    /// <see cref="FactorDefinition.Type"/>, not the sensitivity value.
     /// </remarks>
     public IReadOnlyDictionary<FactorDefinition, UnitValue> FactorSensitivities => _factorSensitivities;
 

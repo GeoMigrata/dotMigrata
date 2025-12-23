@@ -9,17 +9,17 @@ namespace dotMigrata.Snapshot.Models;
 /// Supports three modes:
 /// <list type="bullet">
 ///     <item>
-///         <description>Fixed: Single value via <see cref="Value" /> attribute</description>
+///         <description>Fixed: Single value via <see cref="Value"/> attribute</description>
 ///     </item>
 ///     <item>
-///         <description>Range: Random in range via <see cref="Min" />/<see cref="Max" /> attributes</description>
+///         <description>Range: Random in range via <see cref="Min"/>/<see cref="Max"/> attributes</description>
 ///     </item>
 ///     <item>
 ///         <description>Default: If no value specified, defaults to random [0,1]</description>
 ///     </item>
 /// </list>
 /// <para>
-/// All values must be in [0, 1] range for UnitValue compatibility.
+/// All values must be in [0, 1] range for <see cref="Core.Values.UnitValue"/> compatibility.
 /// </para>
 /// </remarks>
 public class ValueSpecXml
@@ -105,8 +105,10 @@ public class ValueSpecXml
         (!MaxSpecified || Max is >= 0 and <= 1);
 
     /// <summary>
-    /// Creates a ValueSpecXml from a fixed value.
+    /// Creates a <see cref="ValueSpecXml"/> from a fixed value.
     /// </summary>
+    /// <param name="value">The value to use, will be clamped to [0, 1] range.</param>
+    /// <returns>A new <see cref="ValueSpecXml"/> instance with a fixed value.</returns>
     public static ValueSpecXml FromValue(double value) =>
         new()
         {
@@ -115,8 +117,11 @@ public class ValueSpecXml
         };
 
     /// <summary>
-    /// Creates a ValueSpecXml from a factor sensitivity.
+    /// Creates a <see cref="ValueSpecXml"/> from a factor sensitivity.
     /// </summary>
+    /// <param name="factorId">The factor identifier.</param>
+    /// <param name="value">The sensitivity value, will be clamped to [0, 1] range.</param>
+    /// <returns>A new <see cref="ValueSpecXml"/> instance with factor ID and fixed value.</returns>
     public static ValueSpecXml FromFactorSensitivity(string factorId, double value) =>
         new()
         {
@@ -126,12 +131,16 @@ public class ValueSpecXml
         };
 
     /// <summary>
-    /// Creates a ValueSpecXml from a UnitValuePromise.
+    /// Creates a <see cref="ValueSpecXml"/> from a <see cref="Core.Values.UnitValuePromise"/>.
     /// </summary>
+    /// <param name="promise">The promise to convert.</param>
+    /// <returns>A new <see cref="ValueSpecXml"/> instance.</returns>
     /// <remarks>
-    /// Note: This is a simplified conversion that creates a fixed value.
-    /// UnitValuePromise internal state (range, approximate, transform) is not preserved.
+    /// <para>
+    /// This is a simplified conversion that creates a fixed value by evaluating the promise.
+    /// <see cref="Core.Values.UnitValuePromise"/> internal state (range, approximate, transform) is not preserved.
     /// For full fidelity, store the promise configuration separately.
+    /// </para>
     /// </remarks>
     public static ValueSpecXml FromUnitValuePromise(Core.Values.UnitValuePromise promise)
     {
@@ -146,12 +155,17 @@ public class ValueSpecXml
     }
 
     /// <summary>
-    /// Creates a ValueSpecXml from a UnitValuePromise with factor ID.
+    /// Creates a <see cref="ValueSpecXml"/> from a <see cref="Core.Values.UnitValuePromise"/> with factor ID.
     /// </summary>
+    /// <param name="factorId">The factor identifier.</param>
+    /// <param name="promise">The promise to convert.</param>
+    /// <returns>A new <see cref="ValueSpecXml"/> instance with factor ID.</returns>
     /// <remarks>
-    /// Note: This is a simplified conversion that creates a fixed value.
-    /// UnitValuePromise internal state (range, approximate, transform) is not preserved.
+    /// <para>
+    /// This is a simplified conversion that creates a fixed value by evaluating the promise.
+    /// <see cref="Core.Values.UnitValuePromise"/> internal state (range, approximate, transform) is not preserved.
     /// For full fidelity, store the promise configuration separately.
+    /// </para>
     /// </remarks>
     public static ValueSpecXml FromUnitValuePromise(string factorId, Core.Values.UnitValuePromise promise)
     {

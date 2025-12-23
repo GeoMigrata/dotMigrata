@@ -5,8 +5,17 @@ namespace dotMigrata.Snapshot.Models;
 
 /// <summary>
 /// Standard person model for snapshot serialization using XML attributes.
-/// This is the default person model and works with <see cref="Core.Entities.StandardPerson" />.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This is the default person model and works with <see cref="Core.Entities.StandardPerson"/>.
+/// Implements <see cref="IPersonModel"/> and uses XML attributes for declarative serialization.
+/// </para>
+/// <para>
+/// Use <see cref="Conversion.StandardPersonModelConverter"/> for conversion between this model
+/// and runtime <see cref="Core.Entities.StandardPerson"/> instances.
+/// </para>
+/// </remarks>
 [XmlRoot("Person")]
 public sealed class StandardPersonModel : IPersonModel
 {

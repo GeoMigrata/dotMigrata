@@ -3,10 +3,10 @@
 namespace dotMigrata.Snapshot.Models;
 
 /// <summary>
-/// World state within snapshot.
+/// Represents the complete state of a <see cref="Core.Entities.World"/> in XML format.
 /// </summary>
 /// <remarks>
-/// Contains all simulation data: factor definitions, population templates, cities, and events.
+/// Contains all cities, factors, and person collections needed to reconstruct the world state.
 /// </remarks>
 public class WorldStateXml
 {

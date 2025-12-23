@@ -1,12 +1,13 @@
 ﻿# dotMigrata Changelog
 
-## Version 0.7.5-beta (Checkpoint System & DI-Based Custom Person Support)
+## Version 0.7.5-beta (Checkpoint & DI-Based Custom Person Support)
 
 ### Overview
 
 This release introduces a checkpoint system for simulation reproducibility, removes complex history tracking
-in favor of seed-based reproducibility, unifies documentation structure and style, and replaces the PersonTypeRegistry
-with a cleaner Dependency Injection-based approach for custom person types.
+in favor of seed-based reproducibility, unifies documentation structure and style, implements a clean Dependency
+Injection-based approach for custom person types. Significantly improves XML documentation quality across the entire
+codebase.
 
 ### Breaking Changes
 
@@ -40,12 +41,19 @@ with a cleaner Dependency Injection-based approach for custom person types.
 3. Define your custom person model class (implement `IPersonModel` and use XML attributes)
 4. Implement `IPersonModelConverter` for your types
 
+- Single responsibility: converters handle conversion, models handle serialization
+
 ### Improvements
 
 - **Unified Documentation**: Standardized language, style, and structure across CHANGELOGS, USAGE, API, and README
 - **Removed Version References**: Eliminated version-specific references from XML documentation
 - **Clearer Checkpoint Semantics**: Checkpoints are simple step labels, not complex state storage
 - **Simpler Custom Person API**: Replaced registry pattern with DI pattern for better type safety
+- **Enhanced XML Documentation**:
+  - Added `<see cref="..."/>` references for all type mentions throughout the codebase
+  - Improved parameter and return value documentation
+  - Added comprehensive remarks with cross-references
+  - Consistent use of `<see langword="..."/>` for keywords
 
 ### Migration Guide
 

@@ -3,7 +3,7 @@
 namespace dotMigrata.Snapshot.Models;
 
 /// <summary>
-/// City definition with geographic and simulation attributes.
+/// Represents a <see cref="Core.Entities.City"/> in XML format with geographic and simulation attributes.
 /// </summary>
 public class CityXml
 {
