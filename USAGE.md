@@ -29,13 +29,22 @@ dotnet add package GeoMigrata.Framework
 
 Here's a step-by-step guide to get you started with dotMigrata:
 
+**Required Namespaces:**
+
+```csharp
+using dotMigrata.Core.Entities;
+using dotMigrata.Core.Enums;
+using dotMigrata.Core.Values;
+using dotMigrata.Generator;
+using dotMigrata.Simulation.Builders;
+```
+
 ### Step 1: Define Factors
 
 Factors represent characteristics of cities (like income or pollution) that influence migration decisions. Define them
 as `FactorDefinition` objects that will be referenced throughout your simulation.
 
-**Note:** Since v0.7.4, factor intensities are stored as normalized `UnitValue` (0-1 range), so `FactorDefinition` no
-longer needs `MinValue` and `MaxValue`.
+**Note:** Factor intensities are stored as normalized `UnitValue` (0-1 range).
 
 ```csharp
 var incomeFactor = new FactorDefinition
@@ -57,8 +66,7 @@ var allFactors = new[] { incomeFactor, pollutionFactor };
 
 ### Step 2: Generate Population
 
-Use `PersonCollection` to define how persons are generated. Notice how we reference the `FactorDefinition` objects
-directly, not strings.
+Use `PersonCollection` to define how persons are generated.
 
 ```csharp
 var collection = new PersonCollection();
@@ -82,21 +90,11 @@ collection.Add(new StandardPersonGenerator
 
 Create cities with factor values and assign the generated population.
 
-**Note:** Factor values must be normalized to 0-1 range (UnitValue). If you have raw values, normalize them first:
-
-```csharp
-// Example: Convert raw income 60_000 (range 20_000-100_000) to normalized value
-double rawIncome = 60_000;
-double minIncome = 20_000;
-double maxIncome = 100_000;
-double normalizedIncome = (rawIncome - minIncome) / (maxIncome - minIncome);  // = 0.5
-```
-
 ```csharp
 var cityA = new City(
-    factorValues: [
-        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.5) },    // Normalized 0-1
-        new FactorIntensity { Definition = pollutionFactor, Value = UnitValue.FromRatio(0.3) }  // Normalized 0-1
+    factorIntensities: [
+        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.5) },
+        new FactorIntensity { Definition = pollutionFactor, Value = UnitValue.FromRatio(0.3) }
     ],
     persons: collection.GenerateAllPersons(allFactors))
 {
@@ -107,7 +105,7 @@ var cityA = new City(
 };
 
 var cityB = new City(
-    factorValues: [
+    factorIntensities: [
         new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.4) },
         new FactorIntensity { Definition = pollutionFactor, Value = UnitValue.FromRatio(0.2) }
     ],
@@ -179,7 +177,7 @@ The framework provides `UnitValuePromise` for specifying values in generators wi
 ### Fixed Values
 
 ```csharp
-UnitValuePromise.Fixed(0.75)  // All persons get exactly 0.75 (clamped 0-1)
+UnitValuePromise.Fixed(0.75)  // All persons get exactly 0.75
 ```
 
 ### Range Values (Uniform Distribution)
@@ -215,8 +213,7 @@ var cityFactor = new FactorIntensity
 ## PersonCollection System
 
 The **PersonCollection** system gives you fine-grained control over population generation. Add individual persons,
-duplicates, or use generators with specifications. Always use `FactorDefinition` object references, not
-strings.
+duplicates, or use generators with specifications.
 
 ```csharp
 // First, define your factor objects
@@ -291,7 +288,7 @@ collection.Add(new StandardPersonGenerator(seed: 42)
 IEnumerable<PersonBase> persons = collection.GenerateAllPersons(allFactors);
 
 var city = new City(
-    factorValues: [
+    factorIntensities: [
         new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.8) },
         new FactorIntensity { Definition = pollutionFactor, Value = UnitValue.FromRatio(0.3) },
         new FactorIntensity { Definition = housingFactor, Value = UnitValue.FromRatio(0.25) }
@@ -381,10 +378,8 @@ public class DemographicAttractionCalculator : IAttractionCalculator
 {
     private readonly StandardAttractionCalculator _baseCalculator;
 
-    public DemographicAttractionCalculator(StandardModelConfig? config = null)
-    {
+    public DemographicAttractionCalculator(StandardModelConfig? config = null) =>
         _baseCalculator = new StandardAttractionCalculator(config);
-    }
 
     public AttractionResult CalculateAttraction(City city, PersonBase person, City? originCity = null)
     {
@@ -415,12 +410,10 @@ public class DemographicAttractionCalculator : IAttractionCalculator
     public IDictionary<City, AttractionResult> CalculateAttractionForAllCities(
         IEnumerable<City> cities, 
         PersonBase person, 
-        City? originCity = null)
-    {
-        return cities.ToDictionary(
+        City? originCity = null) => 
+            cities.ToDictionary(
             city => city,
             city => CalculateAttraction(city, person, originCity));
-    }
 }
 ```
 
@@ -436,8 +429,7 @@ public class DemographicAttractionCalculator : IAttractionCalculator
 ### Generating Custom Person Types
 
 The framework provides a type-safe way to generate custom person types by implementing the
-`IPersonGenerator<TPerson>` interface. This approach is cleaner and more flexible than the deprecated PersonFactory
-pattern.
+`IPersonGenerator<TPerson>` interface.
 
 ```csharp
 // Define your custom person type
@@ -459,10 +451,8 @@ public sealed class DemographicPersonGenerator : IPersonGenerator<DemographicPer
 {
     private readonly Random _random;
 
-    public DemographicPersonGenerator(int seed = 0)
-    {
+    public DemographicPersonGenerator(int seed = 0) =>
         _random = seed == 0 ? new Random() : new Random(seed);
-    }
 
     public required int Count { get; init; }
     public required UnitValuePromise MovingWillingness { get; init; }
@@ -489,9 +479,13 @@ public sealed class DemographicPersonGenerator : IPersonGenerator<DemographicPer
 
             var age = (int)Age.Generate(_random).Value;
             var income = Income.Generate(_random).Value;
-            var educationLevel = age < 25 ? "HighSchool" : 
-                               age < 30 ? "Bachelor" :
-                               age < 40 ? "Master" : "PhD";
+            var educationLevel = age switch
+            {
+                < 25 => "HighSchool",
+                < 30 => "Bachelor",
+                < 40 => "Master",
+                _ => "PhD"
+            };
 
             yield return new DemographicPerson(sensitivities)
             {
@@ -548,11 +542,11 @@ Console.WriteLine($"Average age: {demographicPersons.Average(p => p.Age):F1}");
 
 ### Custom Person Types and Snapshots
 
-The snapshot system fully supports custom person types through the type discriminator pattern.
+The snapshot system supports custom person types through a converter-based approach.
 
 #### Default Behavior
 
-Without registration, snapshots default to `StandardPerson`:
+Snapshots default to `StandardPerson`:
 
 ```csharp
 // Converting a world to snapshot
@@ -564,139 +558,79 @@ var loadedSnapshot = XmlSnapshotSerializer.DeserializeFromFile("world-snapshot.x
 var loadedWorld = SnapshotConverter.ToWorld(loadedSnapshot);
 ```
 
-#### Registering Custom Person Types
+#### Custom Person Types
 
-To support custom person types in snapshots, implement the serializer interfaces and register:
+To support custom person types in snapshots:
+
+1. Define your custom person model class (implement `IPersonModel`)
+2. Implement `IPersonModelConverter<TModel, TPerson, TGenerator>` for type-safe conversion
+3. Pass the converter to snapshot operations
 
 ```csharp
-// 1. Create a custom person serializer
-public class DemographicPersonSerializer : ICustomPersonSerializer<DemographicPerson>
+// 1. Define your person model
+[XmlRoot("Person")]
+public class DemographicPersonModel : IPersonModel
 {
-    public DemographicPerson CreateFromTemplate(
-        PersonTemplateXml template,
-        Dictionary<FactorDefinition, UnitValue> sensitivities,
-        List<string> tags)
+    [XmlAttribute("Count")] public int Count { get; set; } = 1;
+    [XmlAttribute("Seed")] public int Seed { get; set; }
+    [XmlIgnore] public bool SeedSpecified { get; set; }
+    [XmlAttribute("Type")] public string Type { get; set; } = "DemographicPerson";
+    [XmlElement("Tags")] public string? Tags { get; set; }
+    [XmlIgnore] public bool IsGenerator => SeedSpecified;
+    
+    // Custom properties
+    [XmlElement("Age")] public int Age { get; set; }
+    [XmlElement("Income")] public double Income { get; set; }
+}
+
+// 2. Implement the converter
+public class DemographicPersonConverter 
+    : IPersonModelConverter<DemographicPersonModel, DemographicPerson, DemographicPersonGenerator>
+{
+    public DemographicPerson CreatePerson(
+        DemographicPersonModel model,
+        Dictionary<string, FactorDefinition> factorLookup,
+        List<FactorDefinition> allFactors)
     {
-        // Extract custom properties from XML
-        int age = 30; // default
-        double income = 50000; // default
-        string education = "Bachelor";
-
-        if (template.CustomProperties != null)
-        {
-            var ageNode = template.CustomProperties.SelectSingleNode("Age");
-            if (ageNode != null) age = int.Parse(ageNode.InnerText);
-
-            var incomeNode = template.CustomProperties.SelectSingleNode("Income");
-            if (incomeNode != null) income = double.Parse(incomeNode.InnerText);
-
-            var eduNode = template.CustomProperties.SelectSingleNode("Education");
-            if (eduNode != null) education = eduNode.InnerText;
-        }
-
+        var sensitivities = ConvertSensitivities(model.Sensitivities, factorLookup);
+        var tags = ParseTags(model.Tags);
+        
         return new DemographicPerson(sensitivities)
         {
-            MovingWillingness = UnitValue.FromRatio(template.MovingWillingness),
-            RetentionRate = UnitValue.FromRatio(template.RetentionRate),
-            Age = age,
-            Income = income,
-            EducationLevel = education,
+            MovingWillingness = ConvertToUnitValue(model.Willingness, 0.5),
+            RetentionRate = ConvertToUnitValue(model.Retention, 0.3),
+            Age = model.Age,
+            Income = model.Income,
             Tags = tags
         };
     }
-
-    public XmlElement? SerializeCustomProperties(DemographicPerson person, XmlDocument doc)
+    
+    public DemographicPersonGenerator CreateGenerator(
+        DemographicPersonModel model,
+        Dictionary<string, FactorDefinition> factorLookup,
+        List<FactorDefinition> allFactors)
     {
-        var customProps = doc.CreateElement("CustomProperties");
-
-        var ageElem = doc.CreateElement("Age");
-        ageElem.InnerText = person.Age.ToString();
-        customProps.AppendChild(ageElem);
-
-        var incomeElem = doc.CreateElement("Income");
-        incomeElem.InnerText = person.Income.ToString();
-        customProps.AppendChild(incomeElem);
-
-        var eduElem = doc.CreateElement("Education");
-        eduElem.InnerText = person.EducationLevel;
-        customProps.AppendChild(eduElem);
-
-        return customProps;
-    }
-}
-
-// 2. Register the custom person type at application startup
-PersonTypeRegistry.RegisterPersonType("DemographicPerson", new DemographicPersonSerializer());
-
-// 3. Now snapshots will correctly serialize/deserialize DemographicPerson
-var snapshot = SnapshotConverter.ToSnapshot(world);
-XmlSnapshotSerializer.SerializeToFile(snapshot, "demographic-world.xml");
-
-var loadedSnapshot = XmlSnapshotSerializer.DeserializeFromFile("demographic-world.xml");
-var loadedWorld = SnapshotConverter.ToWorld(loadedSnapshot); // Returns DemographicPerson instances!
-```
-
-#### Custom Person Type in XML
-
-The XML snapshot will include the `PersonType` attribute and custom properties:
-
-```xml
-
-<Person Count="1000" PersonType="DemographicPerson" Willingness="0.7" Retention="0.4">
-    <Sensitivities>
-        <S Id="income" Value="8.5"/>
-        <S Id="pollution" Value="-6.0"/>
-    </Sensitivities>
-    <CustomProperties>
-        <Age>28</Age>
-        <Income>75000</Income>
-        <Education>Master</Education>
-    </CustomProperties>
-</Person>
-```
-
-#### Using Custom Generators with Snapshots
-
-For generator-based populations, implement `ICustomGeneratorSerializer`:
-
-```csharp
-public class DemographicGeneratorSerializer : 
-    ICustomGeneratorSerializer<DemographicPerson, DemographicPersonGenerator>
-{
-    public DemographicPersonGenerator CreateFromXml(
-        GeneratorXml generatorXml,
-        Dictionary<FactorDefinition, UnitValuePromise> factorSpecs,
-        List<string> tags)
-    {
-        return new DemographicPersonGenerator(generatorXml.Seed)
+        var factorSpecs = ConvertToUnitValuePromise(model.Sensitivities, factorLookup);
+        var seed = model.SeedSpecified ? model.Seed : Random.Shared.Next();
+        
+        return new DemographicPersonGenerator(seed)
         {
-            Count = generatorXml.Count,
-            // Convert specifications as needed
-            Tags = tags
+            Count = model.Count,
+            FactorSensitivities = factorSpecs,
+            MovingWillingness = ConvertToPromise(model.Willingness, 0.5),
+            RetentionRate = ConvertToPromise(model.Retention, 0.3)
         };
     }
-
-    public XmlElement? SerializeCustomProperties(
-        DemographicPersonGenerator generator, 
-        XmlDocument doc)
-    {
-        // Serialize custom generator specs if any
-        return null; // or return custom XML element
-    }
+    
+    public DemographicPersonModel ToModel(DemographicPerson person) { /* ... */ }
+    public DemographicPersonModel ToModel(DemographicPersonGenerator generator) { /* ... */ }
 }
 
-// Register generator serializer
-PersonTypeRegistry.RegisterGeneratorType<DemographicPerson, DemographicPersonGenerator>(
-    "DemographicPerson", 
-    new DemographicGeneratorSerializer());
+// 3. Use the converter with snapshot operations
+var converter = new DemographicPersonConverter();
+var snapshot = SnapshotConverter.ToSnapshot(world, converter);
+var loadedWorld = SnapshotConverter.ToWorld(snapshot, converter);
 ```
-
-**Key Points:**
-
-- **Register once**: Register custom types at application startup before loading/saving snapshots
-- **Type names**: Use consistent type names (e.g., "DemographicPerson") across registration and XML
-- **Backward compatible**: Existing snapshots without `PersonType` attribute default to "StandardPerson"
-- **Clean separation**: CustomProperties keeps core schema simple while allowing extensibility
 
 ## Working with Snapshots
 
@@ -920,7 +854,7 @@ var pollutionSpike = new SimulationEvent(
     trigger: new StepTrigger(step: 50),
     effect: new FactorChangeEffect(
         targetFactor: pollutionFactor,
-        changeValue: UnitValuePromise.Fixed(10.5),
+        changeValue: UnitValuePromise.Fixed(0.8),  // Set to 0.8 (high pollution)
         applicationType: EffectApplicationType.Temporary,
         duration: EffectDuration.OverSteps(20)
     ),
@@ -933,7 +867,7 @@ var seasonalChange = new SimulationEvent(
     trigger: new PeriodicTrigger(startStep: 0, interval: 90),
     effect: new FactorChangeEffect(
         targetFactor: incomeFactor,
-        changeValue: UnitValuePromise.InRange(0.9, 1.1),
+        changeValue: UnitValuePromise.InRange(0.9, 1.0),
         applicationType: EffectApplicationType.Multiply,
         duration: EffectDuration.Instant()
     )
@@ -945,7 +879,7 @@ var infrastructureUpgrade = new SimulationEvent(
     trigger: new ContinuousTrigger(startStep: 100, endStep: 200),
     effect: new FactorChangeEffect(
         targetFactor: transportFactor,
-        changeValue: UnitValuePromise.Fixed(9.5),
+        changeValue: UnitValuePromise.Fixed(0.95),  // High transport quality
         applicationType: EffectApplicationType.Permanent
     ),
     description: "Gradual transport quality improvement"
@@ -958,12 +892,12 @@ var economicBoom = new SimulationEvent(
     effect: new CompositeEffect([
         new FactorChangeEffect(
             targetFactor: incomeFactor,
-            changeValue: UnitValuePromise.Fixed(1050),
+            changeValue: UnitValuePromise.Fixed(0.85),  // High income
             applicationType: EffectApplicationType.Permanent
         ),
         new FactorChangeEffect(
             targetFactor: housingCostFactor,
-            changeValue: UnitValuePromise.Fixed(4000),
+            changeValue: UnitValuePromise.Fixed(0.75),  // High housing cost
             applicationType: EffectApplicationType.Permanent
         )
     ])
@@ -1066,10 +1000,7 @@ public class PopulationThresholdTrigger : IEventTrigger
     private readonly int _threshold;
     private bool _triggered;
 
-    public PopulationThresholdTrigger(int threshold)
-    {
-        _threshold = threshold;
-    }
+    public PopulationThresholdTrigger(int threshold) => _threshold = threshold;
 
     public bool ShouldTrigger(SimulationContext context)
     {
@@ -1203,22 +1134,22 @@ File.WriteAllText("simulation_metrics.csv", collector.ExportToCsv());
 
 ## Performance Optimization
 
-For optimal performance in simulations, materialize factor intensities before the simulation loop:
+For optimal performance in simulations, factor intensities are stored as UnitValue (0-1 range):
 
 ```csharp
-// After setting up your world
-world.InitializeForSimulation();
+// After setting up your world with UnitValue factor intensities
+var city = new City(
+    factorIntensities: [
+        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.5) }
+    ],
+    persons: collection.GenerateAllPersons(allFactors));
 
-// Now run your simulation - factor intensities are pre-computed
+// Run your simulation
 for (int step = 0; step < 100; step++)
 {
     // Simulation logic here
-    // Factor intensity access is now optimized (pure double lookup)
 }
 ```
-
-This eliminates ValueSpec evaluation overhead during simulation while preserving the safety and convenience of ValueSpec
-during setup.
 
 ## Note on Snapshots
 

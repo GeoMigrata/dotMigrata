@@ -50,7 +50,7 @@ Represents a city with geographic location, factors, and individual persons.
 
 **Methods:**
 
-- `UpdateFactorIntensity(FactorDefinition, ValueSpec)` - Updates a factor's intensity
+- `UpdateFactorIntensity(FactorIntensity)` - Updates a factor's intensity
 - `TryGetFactorIntensity(FactorDefinition, out FactorIntensity?)` - Gets a factor intensity
 - `AddPerson(PersonBase)` - Adds a person to this city (thread-safe)
 - `RemovePerson(PersonBase)` - Removes a person from this city (thread-safe, returns bool)
@@ -63,21 +63,21 @@ types must implement.
 **Properties:**
 
 - `CurrentCity` (City?) - Current city where the person resides (mutable for migration)
-- `MovingWillingness` (NormalizedValue) - Willingness to migrate (0-1 range, required)
-- `RetentionRate` (NormalizedValue) - Tendency to stay in current location (0-1 range, required)
-- `FactorSensitivities` (IReadOnlyDictionary<FactorDefinition, double>) - Factor sensitivities
+- `MovingWillingness` (UnitValue) - Willingness to migrate (0-1 range, required)
+- `RetentionRate` (UnitValue) - Tendency to stay in current location (0-1 range, required)
+- `FactorSensitivities` (IReadOnlyDictionary<FactorDefinition, UnitValue>) - Factor sensitivities
 - `Tags` (IReadOnlyList<string>) - Tags for categorization and statistical analysis
 
 **Constructor:**
 
 ```csharp
-protected PersonBase(IDictionary<FactorDefinition, double> factorSensitivities)
+protected PersonBase(IDictionary<FactorDefinition, UnitValue> factorSensitivities)
 ```
 
 **Methods:**
 
-- `GetSensitivity(FactorDefinition)` - Gets sensitivity value for a factor (returns SensitivityValue)
-- `UpdateSensitivity(FactorDefinition, SensitivityValue)` - Updates sensitivity for a factor
+- `GetSensitivity(FactorDefinition)` - Gets sensitivity value for a factor (returns UnitValue)
+- `UpdateSensitivity(FactorDefinition, UnitValue)` - Updates sensitivity for a factor
 
 **Remarks:**
 
@@ -96,27 +96,27 @@ replaces the old `Person` class.
 
 - Inherits all properties from `PersonBase` (`CurrentCity`, `MovingWillingness`, `RetentionRate`, `FactorSensitivities`,
   `Tags`)
-- `SensitivityScaling` (double, init) - Attraction scaling coefficient (default: 1.0)
-- `AttractionThreshold` (double, init) - Minimum attraction difference for migration (default: 0.0)
-- `MinimumAcceptableAttraction` (double, init) - Minimum destination attraction (default: 0.0)
+- `SensitivityScaling` (UnitValue, init) - Attraction scaling coefficient (default: 1.0)
+- `AttractionThreshold` (UnitValue, init) - Minimum attraction difference for migration (default: 0.0)
+- `MinimumAcceptableAttraction` (UnitValue, init) - Minimum destination attraction (default: 0.0)
 
 **Constructor:**
 
 ```csharp
-new StandardPerson(IDictionary<FactorDefinition, double> factorSensitivities)
+new StandardPerson(IDictionary<FactorDefinition, UnitValue> factorSensitivities)
 {
-    MovingWillingness = NormalizedValue.FromRatio(0.5),
-    RetentionRate = NormalizedValue.FromRatio(0.3),
-    SensitivityScaling = 1.0,
-    AttractionThreshold = 0.0,
-    MinimumAcceptableAttraction = 0.0,
+    MovingWillingness = UnitValue.FromRatio(0.5),
+    RetentionRate = UnitValue.FromRatio(0.3),
+    SensitivityScaling = UnitValue.One,
+    AttractionThreshold = UnitValue.Zero,
+    MinimumAcceptableAttraction = UnitValue.Zero,
     Tags = ["example_tag"]
 }
 ```
 
 **Methods:**
 
-- Inherits `GetSensitivity(FactorDefinition)` and `UpdateSensitivity(FactorDefinition, SensitivityValue)` from
+- Inherits `GetSensitivity(FactorDefinition)` and `UpdateSensitivity(FactorDefinition, UnitValue)` from
   `PersonBase`
 
 **Remarks:**
@@ -271,15 +271,13 @@ new StandardPersonGenerator(int seed) // Specific seed for reproducibility
 **Properties:**
 
 - `Count` (int) - Number of persons to generate - Required
-- `FactorSensitivities` (Dictionary<FactorDefinition, ValueSpec>) - Factor sensitivity specifications
-- `MovingWillingness` (ValueSpec) - Willingness specification - Required
-- `RetentionRate` (ValueSpec) - Retention specification - Required
-- `SensitivityScaling` (ValueSpec?) - Scaling specification - Optional (default: 1.0)
-- `AttractionThreshold` (ValueSpec?) - Threshold specification - Optional (default: 0.0)
-- `MinimumAcceptableAttraction` (ValueSpec?) - Min attraction specification - Optional (default: 0.0)
+- `FactorSensitivities` (Dictionary<FactorDefinition, UnitValuePromise>) - Factor sensitivity specifications
+- `MovingWillingness` (UnitValuePromise) - Willingness specification - Required
+- `RetentionRate` (UnitValuePromise) - Retention specification - Required
+- `SensitivityScaling` (UnitValuePromise?) - Scaling specification - Optional (default: 1.0)
+- `AttractionThreshold` (UnitValuePromise?) - Threshold specification - Optional (default: 0.0)
+- `MinimumAcceptableAttraction` (UnitValuePromise?) - Min attraction specification - Optional (default: 0.0)
 - `Tags` (IReadOnlyList<string>) - Tags to assign to all generated persons - Optional
-- `DefaultSensitivityRange` (ValueRange) - Default range for unspecified factors - Default: (-10.0, 10.0)
-- `SensitivityStdDev` (double) - Standard deviation for sensitivity normal distribution - Default: 3.0
 
 **Methods:**
 
@@ -287,25 +285,71 @@ new StandardPersonGenerator(int seed) // Specific seed for reproducibility
 IEnumerable<StandardPerson> Generate(IEnumerable<FactorDefinition> factorDefinitions)
 ```
 
-### ValueSpec
+### UnitValue
 
-Represents a value specification for attributes. Can be a fixed value, a random range, or an approximate value using
-normal distribution.
+Type-safe value type representing normalized values in the 0-1 range. All factor intensities, sensitivities, and person
+attributes use UnitValue for compile-time guarantees.
 
 **Static Factory Methods:**
 
 ```csharp
-static ValueSpec Fixed(double value)
-static ValueSpec InRange(double min, double max)
-static ValueSpec Approximately(double mean, double standardDeviation)
-static ValueSpec Random()
-static ValueSpec RandomWithScale(double scale)
+static UnitValue FromRatio(double value)      // Create from 0-1 ratio (clamped)
+static UnitValue FromPercentage(int percent)  // Create from 0-100 percentage
+static UnitValue Zero { get; }                 // Constant: 0.0
+static UnitValue Half { get; }                 // Constant: 0.5
+static UnitValue One { get; }                  // Constant: 1.0
+```
+
+**Properties:**
+
+- `Value` (double) - The underlying 0-1 value
+
+**Operators:**
+
+- Supports arithmetic: `+`, `-`, `*`, `/` (all results clamped to 0-1)
+- Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`
+- Implicit conversion to `double`
+
+**Examples:**
+
+```csharp
+// Create UnitValue
+var intensity = UnitValue.FromRatio(0.75);
+var percent = UnitValue.FromPercentage(75);
+
+// Use in calculations (automatically clamped)
+var sum = UnitValue.FromRatio(0.8) + UnitValue.FromRatio(0.3);  // = 1.0 (clamped)
+var product = intensity * 2.0;  // = 1.0 (clamped)
+
+// Extension methods
+var value = 0.75.AsNormalized();      // From double
+var fromPct = 75.AsPercentage();      // From int percentage
+
+// Implicit conversion to double
+double rawValue = intensity;  // = 0.75
+```
+
+### UnitValuePromise
+
+Represents a value promise for attributes in generators. Can be a fixed value, a random range, or an approximate value
+using
+normal distribution. Used for lazy evaluation in person generators.
+
+**Static Factory Methods:**
+
+```csharp
+static UnitValuePromise Fixed(double value)
+static UnitValuePromise InRange(double min, double max)
+static UnitValuePromise Approximately(double mean, double standardDeviation)
+static UnitValuePromise Random()
+static UnitValuePromise RandomWithScale(double scale)
 ```
 
 **Methods:**
 
 ```csharp
-ValueSpec WithScale(double scale)
+UnitValuePromise WithScale(double scale)
+UnitValue Generate(Random random)
 ```
 
 **Properties:**
@@ -322,23 +366,23 @@ ValueSpec WithScale(double scale)
 **Examples:**
 
 ```csharp
-// Fixed value - all persons get 5.0
-ValueSpec.Fixed(5.0)
+// Fixed value - all persons get 0.5
+UnitValuePromise.Fixed(0.5)
 
 // Random in range 0.3 to 0.8 (uniform distribution)
-ValueSpec.InRange(0.3, 0.8)
+UnitValuePromise.InRange(0.3, 0.8)
 
 // Approximate value using normal distribution
-ValueSpec.Approximately(mean: 0.5, standardDeviation: 0.1)
+UnitValuePromise.Approximately(mean: 0.5, standardDeviation: 0.1)
 
 // Random with default range
-ValueSpec.Random()
+UnitValuePromise.Random()
 
 // Random with default range, scaled by 1.5 (bias higher)
-ValueSpec.Random().WithScale(1.5)
+UnitValuePromise.Random().WithScale(1.5)
 
 // Random in range, scaled by 0.5 (bias lower)
-ValueSpec.InRange(0.2, 0.8).WithScale(0.5)
+UnitValuePromise.InRange(0.2, 0.8).WithScale(0.5)
 ```
 
 ## Configuration
@@ -968,17 +1012,17 @@ var result = await engine.RunAsync(world);
 
 The framework provides static methods for type-safe value creation:
 
-**ValueSpec Methods:**
+**UnitValuePromise Methods:**
 
 ```csharp
-// Use ValueSpec static methods directly (no using static needed)
-ValueSpec.Fixed(0.75)                      // Fixed value
-ValueSpec.InRange(0.4, 0.8)                // Uniform distribution  
-ValueSpec.Approximately(0.6, 0.15)         // Normal distribution
-ValueSpec.RandomWithScale(1.5)             // Random with scale
+// Use UnitValuePromise static methods directly (no using static needed)
+UnitValuePromise.Fixed(0.75)                      // Fixed value
+UnitValuePromise.InRange(0.4, 0.8)                // Uniform distribution  
+UnitValuePromise.Approximately(0.6, 0.15)         // Normal distribution
+UnitValuePromise.RandomWithScale(1.5)             // Random with scale
 
-// Generic method for custom attributes
-Attribute("CustomAttribute").InRange(0, 100)
+// For custom attributes in generators
+UnitValuePromise.InRange(0, 100)
 ```
 
 ### Configuration Validation

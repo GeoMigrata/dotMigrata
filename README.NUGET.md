@@ -53,25 +53,22 @@ dotnet add package GeoMigrata.Framework
 
 ```csharp
 using dotMigrata.Core.Entities;
+using dotMigrata.Core.Enums;
 using dotMigrata.Core.Values;
 using dotMigrata.Generator;
 using dotMigrata.Simulation.Builders;
 
-// Define city factors
+// Define city factors (values are normalized 0-1)
 var incomeFactor = new FactorDefinition
 {
     DisplayName = "Income",
-    Type = FactorType.Positive,
-    MinValue = 20000,
-    MaxValue = 100000
+    Type = FactorType.Positive
 };
 
 var pollutionFactor = new FactorDefinition
 {
     DisplayName = "Pollution",
-    Type = FactorType.Negative,
-    MinValue = 0,
-    MaxValue = 100
+    Type = FactorType.Negative
 };
 
 // Generate population
@@ -79,20 +76,20 @@ var collection = new PersonCollection();
 collection.Add(new StandardPersonGenerator
 {
     Count = 100000,
-    FactorSensitivities = new Dictionary<FactorDefinition, ValueSpecification>
+    FactorSensitivities = new Dictionary<FactorDefinition, UnitValuePromise>
     {
-        [incomeFactor] = ValueSpecification.InRange(3, 8),
-        [pollutionFactor] = ValueSpecification.InRange(-7, -3)
+        [incomeFactor] = UnitValuePromise.InRange(0.3, 0.8),      // Sensitivity to income (0-1)
+        [pollutionFactor] = UnitValuePromise.InRange(0.2, 0.6)    // Sensitivity to pollution (0-1)
     },
-    MovingWillingness = ValueSpecification.InRange(0.4, 0.7),
-    RetentionRate = ValueSpecification.InRange(0.3, 0.6)
+    MovingWillingness = UnitValuePromise.InRange(0.4, 0.7),
+    RetentionRate = UnitValuePromise.InRange(0.3, 0.6)
 });
 
 // Create cities
 var cityA = new City(
-    factorValues: [
-        new FactorIntensity { Definition = incomeFactor, Intensity = ValueSpec.Fixed(50000) },
-        new FactorIntensity { Definition = pollutionFactor, Intensity = ValueSpec.Fixed(30) }
+    factorIntensities: [
+        new FactorIntensity { Definition = incomeFactor, Value = UnitValue.FromRatio(0.5) },
+        new FactorIntensity { Definition = pollutionFactor, Value = UnitValue.FromRatio(0.3) }
     ],
     persons: collection.GenerateAllPersons([incomeFactor, pollutionFactor]))
 {

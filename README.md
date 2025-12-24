@@ -34,9 +34,8 @@ factors in an ongoing iterative process.
   the concrete implementation with additional behavioral properties. Each person makes independent migration decisions
   based on their own preferences.
 - **FactorDefinition & FactorIntensity:** Define metadata for each factor, including direction (pull or push),
-  normalization, and value range. Factor intensities are stored as ValueSpec and evaluated lazily for calculations. Each
-  city has a FactorIntensity
-  for every FactorDefinition in the world.
+  normalization, and value range. Factor intensities are stored as UnitValue (0-1 range) for type safety and optimal
+  runtime performance. Each city has a FactorIntensity for every FactorDefinition in the world.
 - **PersonGenerator:** Module for generating large populations (10,000 to 1,000,000+) with randomized attributes using
   configurable distributions (normal distribution for sensitivities).
 - **Events:** Fundamental simulation mechanism that modifies city factor values during runtime. Events support various

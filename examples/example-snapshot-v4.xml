@@ -113,12 +113,12 @@
         <Cities>
             <City Id="shanghai_cn" Name="Shanghai" Lat="31.2304" Lon="121.4737" Area="6340.5" Capacity="30000000">
                 <Factors>
-                    <F Id="pollution" V="8"/>
-                    <F Id="transport" V="7"/>
-                    <F Id="income" V="900"/>
-                    <F Id="security" V="4"/>
-                    <F Id="housing_cost" V="3500"/>
-                    <F Id="education" V="75"/>
+                    <F Id="pollution" V="0.8"/>
+                    <F Id="transport" V="0.7"/>
+                    <F Id="income" V="0.70"/>
+                    <F Id="security" V="0.4"/>
+                    <F Id="housing_cost" V="0.65"/>
+                    <F Id="education" V="0.75"/>
                 </Factors>
                 <Population>
                     <Ref Id="young_people"/>
@@ -128,12 +128,12 @@
 
             <City Id="sydney_au" Name="Sydney" Lat="-33.8688" Lon="151.2093" Area="12367.7" Capacity="6000000">
                 <Factors>
-                    <F Id="pollution" V="3"/>
-                    <F Id="transport" V="8"/>
-                    <F Id="income" V="850"/>
-                    <F Id="security" V="9"/>
-                    <F Id="housing_cost" V="4200"/>
-                    <F Id="education" V="85"/>
+                    <F Id="pollution" V="0.3"/>
+                    <F Id="transport" V="0.8"/>
+                    <F Id="income" V="0.65"/>
+                    <F Id="security" V="0.9"/>
+                    <F Id="housing_cost" V="0.75"/>
+                    <F Id="education" V="0.85"/>
                 </Factors>
                 <Population>
                     <Ref Id="young_people"/>
@@ -143,12 +143,12 @@
 
             <City Id="tokyo_jp" Name="Tokyo" Lat="35.6762" Lon="139.6503" Area="2191.0" Capacity="14000000">
                 <Factors>
-                    <F Id="pollution" V="5"/>
-                    <F Id="transport" V="10"/>
-                    <F Id="income" V="950"/>
-                    <F Id="security" V="9.5"/>
-                    <F Id="housing_cost" V="3800"/>
-                    <F Id="education" V="90"/>
+                    <F Id="pollution" V="0.5"/>
+                    <F Id="transport" V="1.0"/>
+                    <F Id="income" V="0.75"/>
+                    <F Id="security" V="0.95"/>
+                    <F Id="housing_cost" V="0.70"/>
+                    <F Id="education" V="0.90"/>
                 </Factors>
                 <Population>
                     <Ref Id="young_people"/>
@@ -165,7 +165,7 @@
                 <Trigger Type="StepTrigger" Step="50"/>
                 <Effects>
                     <Effect Type="FactorChangeEffect" FactorId="pollution" ApplicationType="Temporary" Duration="20">
-                        <ValueSpec V="10.5"/>
+                        <ValueSpec V="0.8"/>
                     </Effect>
                 </Effects>
             </Event>
@@ -176,7 +176,7 @@
                 <Trigger Type="ContinuousTrigger" StartStep="100" EndStep="200"/>
                 <Effects>
                     <Effect Type="FactorChangeEffect" FactorId="transport" ApplicationType="Permanent">
-                        <ValueSpec V="9.5"/>
+                        <ValueSpec V="0.95"/>
                     </Effect>
                 </Effects>
             </Event>
@@ -189,10 +189,10 @@
                     <Effect Type="CompositeEffect">
                         <CompositeEffects>
                             <Effect Type="FactorChangeEffect" FactorId="income" ApplicationType="Permanent">
-                                <ValueSpec V="1050"/>
+                                <ValueSpec V="0.85"/>
                             </Effect>
                             <Effect Type="FactorChangeEffect" FactorId="housing_cost" ApplicationType="Permanent">
-                                <ValueSpec V="4000"/>
+                                <ValueSpec V="0.75"/>
                             </Effect>
                         </CompositeEffects>
                     </Effect>
