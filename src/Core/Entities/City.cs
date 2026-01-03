@@ -115,10 +115,7 @@ public sealed class City : IDisposable
     /// <summary>
     /// Releases the resources used by this <see cref="City" />.
     /// </summary>
-    public void Dispose()
-    {
-        Dispose(true);
-    }
+    public void Dispose() => Dispose(true);
 
     /// <summary>
     /// Updates the intensity of an existing factor in this city.

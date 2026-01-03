@@ -57,10 +57,12 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
 
     /// <summary>
     /// Calculates the base attraction score from the factor system for an individual person.
-    /// Formula: A_p = Σ(S_pk * I_ck * D_k) where:
+    /// Formula: A_p = Σ(S_pk * I_ck_adj) where:
     /// - S_pk: sensitivity of person p to factor k
-    /// - I_ck: normalized intensity of factor k in city c
-    /// - D_k: direction of factor k (+1 for positive, -1 for negative)
+    /// - I_ck_adj: adjusted intensity of factor k in city c
+    ///     - For Positive factors: I_ck_adj = I_ck
+    ///     - For Negative factors: I_ck_adj = (1 - I_ck)
+    /// This ensures lower intensity of negative factors increases attraction.
     /// </summary>
     private static UnitValue CalculateBaseAttraction(City city, PersonBase person)
     {
@@ -74,11 +76,13 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
             // Intensity values are already normalized UnitValues (0-1 range)
             var normalizedIntensity = factorIntensity.Value;
 
-            // Determine the factor direction
-            var direction = factor.Type == FactorType.Positive ? 1.0 : -1.0;
+            // Adjust intensity based on factor direction
+            var adjustedIntensity = factor.Type == FactorType.Positive
+                ? normalizedIntensity
+                : (UnitValue.One - normalizedIntensity);
 
-            // Calculate contribution: sensitivity * normalized_intensity * direction
-            totalScore += (double)sensitivity * (double)normalizedIntensity * direction;
+            // Calculate contribution: sensitivity * adjusted_intensity
+            totalScore += (double)sensitivity * (double)adjustedIntensity;
         }
 
         // Apply person's sensitivity scaling if it's a StandardPerson

@@ -24,10 +24,7 @@ public sealed class SoftCapacityStrategy : ICityCapacityStrategy
     /// Initializes a new instance with custom resistance steepness.
     /// </summary>
     /// <param name="resistanceSteepness">Controls how sharply resistance increases near capacity. Default is 5.0.</param>
-    public SoftCapacityStrategy(double resistanceSteepness = 5.0)
-    {
-        _resistanceSteepness = resistanceSteepness;
-    }
+    public SoftCapacityStrategy(double resistanceSteepness = 5.0) => _resistanceSteepness = resistanceSteepness;
 
     /// <summary>
     /// Gets the default instance with standard resistance curve.
@@ -38,19 +35,14 @@ public sealed class SoftCapacityStrategy : ICityCapacityStrategy
     public string StrategyName => "SoftCap";
 
     /// <inheritdoc />
-    public bool CanAccommodate(City city, int additionalPopulation)
-    {
-        // Soft cap always allows migration, but with increasing resistance
-        return true;
-    }
+    public bool CanAccommodate(City city, int additionalPopulation) =>
+        true; // Soft cap always allows migration, but with increasing resistance
 
     /// <inheritdoc />
-    public double CalculateCapacityResistance(City city)
-    {
-        return city.Capacity is null or <= 0
+    public double CalculateCapacityResistance(City city) =>
+        city.Capacity is null or <= 0
             ? 0.0
             : MathUtils.CapacityResistance(city.Population, city.Capacity.Value, _resistanceSteepness);
-    }
 
     /// <inheritdoc />
     public double GetCapacityUtilization(City city)
