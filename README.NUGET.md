@@ -105,7 +105,7 @@ var world = new World([cityA, cityB], [incomeFactor, pollutionFactor])
 };
 
 var engine = SimulationBuilder.Create()
-    .WithConsoleOutput()
+    .WithDisplay(DisplayPresets.Console)
     .ConfigureSimulation(s => s.MaxSteps(100))
     .Build();
 

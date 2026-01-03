@@ -1,5 +1,95 @@
 ﻿# dotMigrata Changelog
 
+## Version 0.8.0-beta (Unified Simulation Reporter)
+
+### Overview
+
+This release introduces a unified, flexible simulation reporting system that replaces the separate `ConsoleObserver`
+and `DebugObserver` classes. The new `SimulationReporter` uses composable display options via flags enums, allowing
+users to precisely configure what information is displayed before, during, and after simulation execution. This
+provides better flexibility and user control while simplifying the codebase.
+
+### Breaking Changes
+
+- **`ConsoleObserver` removed** - Use `SimulationReporter` with `DisplayPresets.Console` instead
+- **`DebugObserver` removed** - Use `SimulationReporter` with `DisplayPresets.Debug` instead
+- **`SimulationBuilder.WithConsoleOutput()` removed** - Use `.WithDisplay(DisplayPresets.Console)` instead
+- **`SimulationBuilder.WithDebugOutput()` removed** - Use `.WithDisplay(DisplayPresets.Debug)` instead
+
+### New Features
+
+**Unified Simulation Reporter**:
+
+- **`SimulationReporter`**: Single, configurable observer replacing `ConsoleObserver` and `DebugObserver`
+- **`DisplayOption` enum**: Flags enum for composable display options (15 distinct options)
+- **`DisplayPresets` class**: Pre-configured presets for common use cases:
+  - `Console` - Standard console output (world info, step summaries, top cities, completion)
+  - `Debug` - Comprehensive debug output (all options enabled)
+  - `Minimal` - Minimal output (completion info only)
+  - `Verbose` - Detailed output without individual person samples
+  - `Silent` - No output
+
+**Display Options**:
+
+- Simulation Start: `WorldInfo`, `FactorDefinitions`, `CityDetails`, `PopulationByTags`
+- Step Progress: `StepHeader`, `StageProgress`, `MigrationFlows`, `PersonSamples`
+- Step Complete: `StepSummary`, `PopulationChanges`, `TopCities`
+- Simulation End: `CompletionInfo`, `FinalDistribution`, `MigrationStats`, `PerformanceMetrics`
+
+**Flexible Configuration**:
+
+- Combine options using bitwise OR: `DisplayOption.WorldInfo | DisplayOption.StepSummary`
+- Configure display limits: max person samples, max cities to show, max migration routes
+- Optional colored output with UTF-8 support
+
+### Migration Guide
+
+**Replace `WithConsoleOutput()`**:
+
+```csharp
+// Old (v0.7.x)
+.WithConsoleOutput(colored: true)
+
+// New (v0.8.0)
+.WithDisplay(DisplayPresets.Console, colored: true)
+```
+
+**Replace `WithDebugOutput()`**:
+
+```csharp
+// Old (v0.7.x)
+.WithDebugOutput(colored: true, showPersonDetails: true, maxPersonsToShow: 10)
+
+// New (v0.8.0)
+.WithDisplay(DisplayPresets.Debug, colored: true, maxPersonSamples: 10)
+```
+
+**Custom display configuration**:
+
+```csharp
+// Show only world info and final distribution
+.WithDisplay(DisplayOption.WorldInfo | DisplayOption.FinalDistribution)
+
+// Show everything except person samples
+.WithDisplay(DisplayPresets.Verbose)
+
+// Fine-tuned configuration
+.WithDisplay(
+    DisplayOption.WorldInfo | DisplayOption.StepSummary | DisplayOption.CompletionInfo,
+    colored: true,
+    maxCitiesToShow: 10,
+    maxMigrationRoutes: 10)
+```
+
+### Technical Details
+
+- `DisplayOption` uses `long` type to support up to 64 distinct options
+- `SimulationReporter` implements `ISimulationObserver` for backward compatibility
+- All display options are evaluated using bitwise AND operations for performance
+- UTF-8 console encoding is configured by default (can be disabled)
+
+---
+
 ## Version 0.7.5-beta (Checkpoint & DI-Based Custom Person Support)
 
 ### Overview

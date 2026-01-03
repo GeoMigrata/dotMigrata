@@ -233,7 +233,7 @@ var world = SnapshotConverter.ToWorld(snapshot!);
 
 // Create and run simulation using fluent builder
 var engine = SimulationBuilder.Create()
-    .WithConsoleOutput()
+    .WithDisplay(DisplayPresets.Console)
     .WithRandomSeed(42)
     .ConfigureSimulation(s => s.MaxSteps(100))
     .Build();
@@ -288,7 +288,7 @@ using dotMigrata.Simulation.Builders;
 // Create simulation with metrics collection
 var metricsObserver = new MetricsObserver();
 var engine = SimulationBuilder.Create()
-    .WithConsoleOutput()
+    .WithDisplay(DisplayPresets.Console)
     .AddObserver(metricsObserver)
     .Build();
 

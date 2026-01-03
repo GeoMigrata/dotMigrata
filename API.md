@@ -514,7 +514,7 @@ using dotMigrata.Simulation.Builders;
 
 // Create and configure simulation using the fluent builder API
 var engine = SimulationBuilder.Create()
-    .WithConsoleOutput()
+    .WithDisplay(DisplayPresets.Console)
     .ConfigureSimulation(s => s.MaxSteps(100))
     .Build();
 
@@ -974,7 +974,7 @@ static SimulationBuilder Create()
 SimulationBuilder UseDefaultMigrationStages()
 SimulationBuilder AddStage(ISimulationStage stage)
 SimulationBuilder AddObserver(ISimulationObserver observer)
-SimulationBuilder WithConsoleOutput(bool colored = true)
+SimulationBuilder WithDisplay(DisplayOption options, bool colored = true, int maxPersonSamples = 10, int maxCitiesToShow = 5, int maxMigrationRoutes = 5)
 SimulationBuilder WithSimulationConfig(SimulationConfig config)
 SimulationBuilder ConfigureSimulation(Action<SimulationConfigBuilder> configure)
 SimulationBuilder WithModelConfig(StandardModelConfig config)
@@ -989,11 +989,11 @@ SimulationEngine Build()
 
 ```csharp
 using dotMigrata.Simulation.Builders;
-using dotMigrata.Simulation.Metrics;
+using dotMigrata.Simulation.Display;
 
 // Create simulation engine with fluent API
 var engine = SimulationBuilder.Create()
-    .WithConsoleOutput(colored: true)
+    .WithDisplay(DisplayPresets.Console, colored: true)
     .WithRandomSeed(42)
     .ConfigureSimulation(s => s
         .MaxSteps(100)

@@ -12,6 +12,7 @@ This guide provides detailed examples and usage instructions for dotMigrata.
 - [Working with Snapshots](#working-with-snapshots)
 - [Event System](#event-system)
 - [Configuring Simulation Parameters](#configuring-simulation-parameters)
+- [Display Options and Reporting](#display-options-and-reporting)
 - [Simulation Metrics](#simulation-metrics)
 - [Performance Optimization](#performance-optimization)
 
@@ -135,7 +136,7 @@ Set up the simulation using the fluent builder API (recommended approach).
 
 ```csharp
 var engine = SimulationBuilder.Create()
-    .WithConsoleOutput()
+    .WithDisplay(DisplayPresets.Console)
     .ConfigureSimulation(s => s.MaxSteps(100))
     .Build();
 ```
@@ -788,7 +789,7 @@ var world = SnapshotConverter.ToWorld(snapshot!);
 
 // Create simulation with fluent builder
 var engine = SimulationBuilder.Create()
-    .WithConsoleOutput(colored: true)
+    .WithDisplay(DisplayPresets.Console, colored: true)
     .WithRandomSeed(42)
     .ConfigureSimulation(s => s.MaxSteps(100).StabilityThreshold(50))
     .ConfigureModel(m => m.CapacitySteepness(3.0))
@@ -944,7 +945,7 @@ world.Events.Add(infrastructureUpgrade);
 
 // Or configure in SimulationBuilder
 var engine = SimulationBuilder.Create()
-    .WithConsoleOutput()
+    .WithDisplay(DisplayPresets.Console)
     .AddEventStage()  // Add event processing stage
     .ConfigureSimulation(s => s.MaxSteps(500))
     .Build();
@@ -1069,11 +1070,115 @@ var engine = SimulationBuilder.Create()
         s.StabilityCheckInterval = 5;
         s.MinStepsBeforeStabilityCheck = 20;
     })
-    .WithConsoleOutput()
+    .WithDisplay(DisplayPresets.Console)
     .Build();
 
 // Run simulation
 var result = await engine.RunAsync(world);
+```
+
+## Display Options and Reporting
+
+The framework provides a flexible, composable display system for simulation output through the `SimulationReporter`
+class.
+
+### Using Display Presets
+
+The simplest way to configure output is using built-in presets:
+
+```csharp
+// Standard console output (recommended for most use cases)
+.WithDisplay(DisplayPresets.Console)
+
+// Comprehensive debug output
+.WithDisplay(DisplayPresets.Debug)
+
+// Minimal output (only completion info)
+.WithDisplay(DisplayPresets.Minimal)
+
+// Verbose output (detailed without person samples)
+.WithDisplay(DisplayPresets.Verbose)
+
+// Silent mode (no output)
+.WithDisplay(DisplayPresets.Silent)
+```
+
+### Custom Display Configuration
+
+Combine display options using bitwise OR to create custom configurations:
+
+```csharp
+// Show only world info and final distribution
+.WithDisplay(DisplayOption.WorldInfo | DisplayOption.FinalDistribution)
+
+// Show simulation start and end info, but skip step-by-step details
+.WithDisplay(
+    DisplayOption.WorldInfo | 
+    DisplayOption.FactorDefinitions | 
+    DisplayOption.CompletionInfo | 
+    DisplayOption.FinalDistribution)
+
+// Show everything except individual person samples
+.WithDisplay(DisplayPresets.Verbose)
+```
+
+### Available Display Options
+
+**Simulation Start**:
+
+- `WorldInfo` - Basic world information (name, city count, population)
+- `FactorDefinitions` - List of factor definitions with types
+- `CityDetails` - Detailed city information (location, population, capacity, factors)
+- `PopulationByTags` - Initial population distribution grouped by tags
+
+**Step Progress**:
+
+- `StepHeader` - Step number header/banner
+- `StageProgress` - Stage completion notifications
+- `MigrationFlows` - Migration flow details (routes and counts)
+- `PersonSamples` - Individual person migration samples with details
+
+**Step Complete**:
+
+- `StepSummary` - Step summary (migration counts)
+- `PopulationChanges` - Population changes per city with deltas
+- `TopCities` - Top N cities by population
+
+**Simulation End**:
+
+- `CompletionInfo` - Completion information (steps, reason, final population)
+- `FinalDistribution` - Final population distribution across all cities
+- `MigrationStats` - Total migration statistics and analysis
+- `PerformanceMetrics` - Performance metrics (timing, memory, throughput)
+
+### Fine-Tuning Display Limits
+
+Configure how much detail to show:
+
+```csharp
+.WithDisplay(
+    DisplayPresets.Debug,
+    colored: true,              // Enable colored output
+    maxPersonSamples: 20,       // Show up to 20 person samples per route
+    maxCitiesToShow: 10,        // Show up to 10 cities in top cities list
+    maxMigrationRoutes: 10)     // Show up to 10 migration routes
+```
+
+### Complete Example
+
+```csharp
+var engine = SimulationBuilder.Create()
+    .WithDisplay(
+        DisplayOption.WorldInfo | 
+        DisplayOption.StepSummary | 
+        DisplayOption.PopulationChanges | 
+        DisplayOption.CompletionInfo | 
+        DisplayOption.FinalDistribution |
+        DisplayOption.PerformanceMetrics,
+        colored: true,
+        maxCitiesToShow: 15)
+    .ConfigureSimulation(s => s.MaxSteps(200))
+    .Build();
 ```
 
 ## Simulation Metrics
@@ -1086,7 +1191,7 @@ var metricsObserver = new MetricsObserver();
 
 // Build simulation with metrics tracking
 var engine = SimulationBuilder.Create()
-    .WithConsoleOutput()
+    .WithDisplay(DisplayPresets.Console)
     .AddObserver(metricsObserver)
     .WithRandomSeed(42)
     .Build();

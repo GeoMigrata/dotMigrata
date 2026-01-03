@@ -3,6 +3,7 @@ using dotMigrata.Core.Values;
 using dotMigrata.Logic.Calculators;
 using dotMigrata.Logic.Interfaces;
 using dotMigrata.Logic.Models;
+using dotMigrata.Simulation.Display;
 using dotMigrata.Simulation.Engine;
 using dotMigrata.Simulation.Events;
 using dotMigrata.Simulation.Events.Effects;
@@ -89,34 +90,39 @@ public sealed class SimulationBuilder
     }
 
     /// <summary>
-    /// Adds a console observer for basic simulation output.
+    /// Adds a simulation reporter with configurable display options.
     /// </summary>
+    /// <param name="options">Display options specifying what information to show.</param>
     /// <param name="colored">
-    /// <see langword="true" /> to use colored output; otherwise, <see langword="false" />.
+    /// <see langword="true" /> to use colored output; otherwise, <see langword="false" />. Default is <see langword="true" />.
     /// </param>
+    /// <param name="maxPersonSamples">Maximum number of person samples to display. Default is 10.</param>
+    /// <param name="maxCitiesToShow">Maximum number of cities to display in lists. Default is 5.</param>
+    /// <param name="maxMigrationRoutes">Maximum number of migration routes to display. Default is 5.</param>
     /// <returns>This builder for method chaining.</returns>
-    public SimulationBuilder WithConsoleOutput(bool colored = true)
+    /// <remarks>
+    /// Use <see cref="Display.DisplayPresets"/> for common configurations:
+    /// <list type="bullet">
+    /// <item><see cref="Display.DisplayPresets.Console"/> - Standard console output</item>
+    /// <item><see cref="Display.DisplayPresets.Debug"/> - Comprehensive debug output</item>
+    /// <item><see cref="Display.DisplayPresets.Minimal"/> - Minimal output</item>
+    /// <item><see cref="Display.DisplayPresets.Verbose"/> - Detailed output without person samples</item>
+    /// </list>
+    /// </remarks>
+    public SimulationBuilder WithDisplay(
+        DisplayOption options,
+        bool colored = true,
+        int maxPersonSamples = 10,
+        int maxCitiesToShow = 5,
+        int maxMigrationRoutes = 5)
     {
-        _observers.Add(new ConsoleObserver(colored));
-        return this;
-    }
+        _observers.Add(new SimulationReporter(
+            options,
+            colored,
+            maxPersonSamples,
+            maxCitiesToShow,
+            maxMigrationRoutes));
 
-    /// <summary>
-    /// Adds a debug observer for comprehensive simulation debugging output.
-    /// Shows detailed information about migration decisions, attraction scores, and population dynamics.
-    /// </summary>
-    /// <param name="colored">
-    /// <see langword="true" /> to use colored output; otherwise, <see langword="false" />.
-    /// </param>
-    /// <param name="showPersonDetails">
-    /// <see langword="true" /> to show individual person details during migration; otherwise, <see langword="false" />.
-    /// </param>
-    /// <param name="maxPersonsToShow">Maximum number of persons to show details for per step. Default is 10.</param>
-    /// <returns>This builder for method chaining.</returns>
-    public SimulationBuilder WithDebugOutput(bool colored = true, bool showPersonDetails = true,
-        int maxPersonsToShow = 10)
-    {
-        _observers.Add(new DebugObserver(colored, showPersonDetails, maxPersonsToShow));
         return this;
     }
 
