@@ -67,30 +67,34 @@ public sealed class StandardAttractionCalculator : IAttractionCalculator
     private static UnitValue CalculateBaseAttraction(City city, PersonBase person)
     {
         var totalScore = 0.0;
+        var factorCount = 0;
 
         foreach (var (factor, sensitivity) in person.FactorSensitivities)
         {
             if (!city.TryGetFactorIntensity(factor, out var factorIntensity))
                 continue;
 
-            // Intensity values are already normalized UnitValues (0-1 range)
-            var normalizedIntensity = factorIntensity.Value;
-
             // Adjust intensity based on factor direction
             var adjustedIntensity = factor.Type == FactorType.Positive
-                ? normalizedIntensity
-                : (UnitValue.One - normalizedIntensity);
+                ? factorIntensity.Value
+                : (UnitValue.One - factorIntensity.Value);
 
             // Calculate contribution: sensitivity * adjusted_intensity
-            totalScore += (double)sensitivity * (double)adjustedIntensity;
+            // Both are UnitValues, result is implicitly converted to double
+            totalScore += sensitivity * adjustedIntensity;
+            factorCount++;
         }
+
+        // Normalize by number of factors to get average
+        if (factorCount > 0)
+            totalScore /= factorCount;
 
         // Apply person's sensitivity scaling if it's a StandardPerson
         if (person is StandardPerson stdPerson)
             totalScore *= stdPerson.SensitivityScaling;
 
-        // Normalize to [0, 1] range using sigmoid
-        return MathUtils.Sigmoid(totalScore, 1.0);
+        // Return as UnitValue (automatically clamped to [0, 1])
+        return UnitValue.FromRatio(totalScore);
     }
 
     /// <summary>

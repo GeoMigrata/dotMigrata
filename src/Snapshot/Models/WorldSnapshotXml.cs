@@ -74,8 +74,22 @@ public sealed class WorldSnapshotXml
     /// When not null, this seed can be used to reproduce the exact simulation state when resuming from a checkpoint.
     /// Set to null for non-reproducible simulations or when seed information is not tracked.
     /// </summary>
-    [XmlAttribute("LastUsedSeed")]
+    [XmlIgnore]
     public int? LastUsedSeed { get; init; }
+
+    /// <summary>
+    /// Gets or sets the serializable version of LastUsedSeed.
+    /// Used internally by XML serializer - use LastUsedSeed property instead.
+    /// </summary>
+    [XmlAttribute("LastUsedSeed")]
+    public int LastUsedSeedValue { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether LastUsedSeed should be serialized.
+    /// Used internally by XML serializer.
+    /// </summary>
+    [XmlIgnore]
+    public bool LastUsedSeedValueSpecified => LastUsedSeed.HasValue;
 
     /// <summary>
     /// Gets the checkpoints collection mapping step numbers to user-defined labels.

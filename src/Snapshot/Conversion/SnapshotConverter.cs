@@ -90,6 +90,7 @@ public static class SnapshotConverter
             LastModifiedAt = DateTime.UtcNow,
             CurrentStep = currentStep,
             LastUsedSeed = lastUsedSeed,
+            LastUsedSeedValue = lastUsedSeed ?? 0,
             Checkpoints = checkpoints,
             World = ConvertWorldState(world),
             Steps = []
