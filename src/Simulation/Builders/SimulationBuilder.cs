@@ -13,6 +13,8 @@ using dotMigrata.Simulation.Exceptions;
 using dotMigrata.Simulation.Interfaces;
 using dotMigrata.Simulation.Models;
 using dotMigrata.Simulation.Pipeline;
+using dotMigrata.Snapshot.Conversion;
+using dotMigrata.Snapshot.Models;
 using Microsoft.Extensions.Logging;
 
 namespace dotMigrata.Simulation.Builders;
@@ -23,6 +25,7 @@ namespace dotMigrata.Simulation.Builders;
 /// <remarks>
 /// Provides a streamlined API for setting up simulations with sensible defaults.
 /// </remarks>
+/// Use <see cref="FromSnapshot"/> to load simulations from snapshots with auto-applied configurations.
 public sealed class SimulationBuilder
 {
     private readonly List<ISimulationEvent> _events = [];
@@ -44,6 +47,81 @@ public sealed class SimulationBuilder
     /// </summary>
     /// <returns>A new <see cref="SimulationBuilder" />.</returns>
     public static SimulationBuilder Create() => new();
+
+    /// <summary>
+    /// Creates a new <see cref="SimulationBuilder" /> from a snapshot with auto-applied configurations.
+    /// </summary>
+    /// <param name="snapshot">The snapshot containing world state and configurations.</param>
+    /// <returns>A configured <see cref="SimulationBuilder" /> with the snapshot's world and configurations.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="snapshot" /> is <see langword="null" />.
+    /// </exception>
+    /// <exception cref="SimulationConfigurationException">
+    /// Thrown when snapshot contains invalid configuration or is missing required configurations.
+    /// </exception>
+    /// <remarks>
+    /// This method automatically applies SimulationConfig and ModelConfig from the snapshot if present.
+    /// Use <see cref="OverrideSimulationConfig" /> or <see cref="OverrideModelConfig" /> to override specific settings.
+    /// If snapshot does not contain valid configurations, an exception will be thrown to prevent using dangerous defaults.
+    /// </remarks>
+    public static SimulationBuilder FromSnapshot(WorldSnapshotXml snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        var builder = new SimulationBuilder();
+
+        // Apply simulation config from snapshot (required)
+        if (snapshot.SimulationConfig != null)
+        {
+            try
+            {
+                builder._simulationConfig = SnapshotConverter.ToSimulationConfig(snapshot.SimulationConfig);
+            }
+            catch (Exception ex)
+            {
+                throw new SimulationConfigurationException(
+                    "Failed to load SimulationConfig from snapshot. " +
+                    "The snapshot contains invalid configuration data.", ex);
+            }
+        }
+        else
+        {
+            throw new SimulationConfigurationException(
+                "Snapshot does not contain SimulationConfig. " +
+                "To ensure safe simulation execution, snapshots must include valid simulation configuration. " +
+                "Use SnapshotConverter.ToSnapshot() with simulationConfig parameter when creating snapshots.");
+        }
+
+        // Apply model config from snapshot (required)
+        if (snapshot.ModelConfig != null)
+        {
+            try
+            {
+                builder._modelConfig = SnapshotConverter.ToModelConfig(snapshot.ModelConfig);
+            }
+            catch (Exception ex)
+            {
+                throw new SimulationConfigurationException(
+                    "Failed to load ModelConfig from snapshot. " +
+                    "The snapshot contains invalid configuration data.", ex);
+            }
+        }
+        else
+        {
+            throw new SimulationConfigurationException(
+                "Snapshot does not contain ModelConfig. " +
+                "To ensure safe simulation execution, snapshots must include valid model configuration. " +
+                "Use SnapshotConverter.ToSnapshot() with modelConfig parameter when creating snapshots.");
+        }
+
+        // Apply random seed if present
+        if (snapshot.LastUsedSeed.HasValue)
+        {
+            builder._randomSeed = snapshot.LastUsedSeed.Value;
+        }
+
+        return builder;
+    }
 
     /// <summary>
     /// Uses default stages for migration simulation (decision and execution).
@@ -134,9 +212,38 @@ public sealed class SimulationBuilder
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="config" /> is <see langword="null" />.
     /// </exception>
+    /// <remarks>
+    /// When using <see cref="FromSnapshot"/>, use <see cref="OverrideSimulationConfig"/> instead
+    /// to make it clear you're overriding snapshot configuration.
+    /// </remarks>
     public SimulationBuilder WithSimulationConfig(SimulationConfig config)
     {
         _simulationConfig = config ?? throw new ArgumentNullException(nameof(config));
+        return this;
+    }
+
+    /// <summary>
+    /// Overrides the simulation configuration from a snapshot.
+    /// </summary>
+    /// <param name="configure">A function to modify the current simulation configuration and return the updated version.</param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="configure" /> is <see langword="null" />.
+    /// </exception>
+    /// <remarks>
+    /// This method allows selective override of simulation config properties while keeping others from the snapshot.
+    /// Use after <see cref="FromSnapshot" /> to customize specific settings.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    /// var builder = SimulationBuilder.FromSnapshot(snapshot)
+    ///     .OverrideSimulationConfig(cfg => cfg with { MaxSteps = 500 });
+    /// </code>
+    /// </example>
+    public SimulationBuilder OverrideSimulationConfig(Func<SimulationConfig, SimulationConfig> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        _simulationConfig = configure(_simulationConfig);
         return this;
     }
 
@@ -165,9 +272,38 @@ public sealed class SimulationBuilder
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="config" /> is <see langword="null" />.
     /// </exception>
+    /// <remarks>
+    /// When using <see cref="FromSnapshot"/>, use <see cref="OverrideModelConfig"/> instead
+    /// to make it clear you're overriding snapshot configuration.
+    /// </remarks>
     public SimulationBuilder WithModelConfig(StandardModelConfig config)
     {
         _modelConfig = config ?? throw new ArgumentNullException(nameof(config));
+        return this;
+    }
+
+    /// <summary>
+    /// Overrides the model configuration from a snapshot.
+    /// </summary>
+    /// <param name="configure">A function to modify the current model configuration and return the updated version.</param>
+    /// <returns>This builder for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="configure" /> is <see langword="null" />.
+    /// </exception>
+    /// <remarks>
+    /// This method allows selective override of model config properties while keeping others from the snapshot.
+    /// Use after <see cref="FromSnapshot" /> to customize specific settings.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    /// var builder = SimulationBuilder.FromSnapshot(snapshot)
+    ///     .OverrideModelConfig(cfg => cfg with { DistanceDecayLambda = 0.0001 });
+    /// </code>
+    /// </example>
+    public SimulationBuilder OverrideModelConfig(Func<StandardModelConfig, StandardModelConfig> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        _modelConfig = configure(_modelConfig);
         return this;
     }
 

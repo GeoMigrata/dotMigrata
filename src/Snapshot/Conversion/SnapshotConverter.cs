@@ -1,10 +1,10 @@
 ﻿using dotMigrata.Core.Entities;
 using dotMigrata.Core.Enums;
-using dotMigrata.Core.Exceptions;
 using dotMigrata.Core.Values;
+using dotMigrata.Logic.Models;
+using dotMigrata.Simulation.Models;
 using dotMigrata.Snapshot.Enums;
 using dotMigrata.Snapshot.Models;
-using dotMigrata.Snapshot.Version;
 
 namespace dotMigrata.Snapshot.Conversion;
 
@@ -64,6 +64,8 @@ public static class SnapshotConverter
     /// <param name="status">The snapshot status (default: Seed).</param>
     /// <param name="currentStep">The current simulation step (default: 0).</param>
     /// <param name="lastUsedSeed">The last used random seed for reproducibility (optional).</param>
+    /// <param name="simulationConfig">The simulation configuration to embed in snapshot (optional but recommended).</param>
+    /// <param name="modelConfig">The model configuration to embed in snapshot (optional but recommended).</param>
     /// <param name="checkpoints">The list of checkpoints (optional).</param>
     /// <returns>A <see cref="WorldSnapshotXml"/> ready for XML serialization.</returns>
     /// <exception cref="ArgumentNullException">
@@ -71,12 +73,15 @@ public static class SnapshotConverter
     /// </exception>
     /// <remarks>
     /// Person instances are not persisted individually; use Population groups for reproducibility.
+    /// It is recommended to include simulation and model configurations for reproducible snapshots.
     /// </remarks>
     public static WorldSnapshotXml ToSnapshot(
         World world,
         SnapshotStatus status = SnapshotStatus.Seed,
         int currentStep = 0,
         int? lastUsedSeed = null,
+        SimulationConfig? simulationConfig = null,
+        StandardModelConfig? modelConfig = null,
         List<CheckpointXml>? checkpoints = null)
     {
         ArgumentNullException.ThrowIfNull(world);
@@ -91,9 +96,110 @@ public static class SnapshotConverter
             CurrentStep = currentStep,
             LastUsedSeed = lastUsedSeed,
             LastUsedSeedValue = lastUsedSeed ?? 0,
+            SimulationConfig = simulationConfig != null ? ToSimulationConfigXml(simulationConfig) : null,
+            ModelConfig = modelConfig != null ? ToModelConfigXml(modelConfig) : null,
             Checkpoints = checkpoints,
             World = ConvertWorldState(world),
             Steps = []
+        };
+    }
+
+    /// <summary>
+    /// Converts a <see cref="SimulationConfigXml" /> to a <see cref="SimulationConfig" /> domain object.
+    /// </summary>
+    /// <param name="configXml">The XML configuration to convert.</param>
+    /// <returns>A <see cref="SimulationConfig" /> instance.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="configXml" /> is <see langword="null" />.
+    /// </exception>
+    public static SimulationConfig ToSimulationConfig(SimulationConfigXml configXml)
+    {
+        ArgumentNullException.ThrowIfNull(configXml);
+
+        return new SimulationConfig
+        {
+            MaxSteps = configXml.MaxSteps,
+            CheckStability = configXml.CheckStability,
+            StabilityThreshold = configXml.StabilityThreshold,
+            StabilityCheckInterval = configXml.StabilityCheckInterval,
+            MinStepsBeforeStabilityCheck = configXml.MinStepsBeforeStabilityCheck
+        };
+    }
+
+    /// <summary>
+    /// Converts a <see cref="SimulationConfig" /> to a <see cref="SimulationConfigXml" /> for serialization.
+    /// </summary>
+    /// <param name="config">The configuration to convert.</param>
+    /// <returns>A <see cref="SimulationConfigXml" /> instance.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="config" /> is <see langword="null" />.
+    /// </exception>
+    public static SimulationConfigXml ToSimulationConfigXml(SimulationConfig config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+
+        return new SimulationConfigXml
+        {
+            MaxSteps = config.MaxSteps,
+            CheckStability = config.CheckStability,
+            StabilityThreshold = config.StabilityThreshold,
+            StabilityCheckInterval = config.StabilityCheckInterval,
+            MinStepsBeforeStabilityCheck = config.MinStepsBeforeStabilityCheck
+        };
+    }
+
+    /// <summary>
+    /// Converts a <see cref="StandardModelConfigXml" /> to a <see cref="StandardModelConfig" /> domain object.
+    /// </summary>
+    /// <param name="configXml">The XML configuration to convert.</param>
+    /// <returns>A <see cref="StandardModelConfig" /> instance.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="configXml" /> is <see langword="null" />.
+    /// </exception>
+    public static StandardModelConfig ToModelConfig(StandardModelConfigXml configXml)
+    {
+        ArgumentNullException.ThrowIfNull(configXml);
+
+        return new StandardModelConfig
+        {
+            CapacitySteepness = configXml.CapacitySteepness,
+            DistanceDecayLambda = configXml.DistanceDecayLambda,
+            MigrationProbabilitySteepness = configXml.MigrationProbabilitySteepness,
+            MigrationProbabilityThreshold = configXml.MigrationProbabilityThreshold,
+            FactorSmoothingAlpha = configXml.FactorSmoothingAlpha,
+            UseParallelProcessing = configXml.UseParallelProcessing,
+            MaxDegreeOfParallelism = configXml.MaxDegreeOfParallelismSpecified
+                ? configXml.MaxDegreeOfParallelism
+                : null
+        };
+    }
+
+    /// <summary>
+    /// Converts a <see cref="StandardModelConfig" /> to a <see cref="StandardModelConfigXml" /> for serialization.
+    /// </summary>
+    /// <param name="config">The configuration to convert.</param>
+    /// <returns>A <see cref="StandardModelConfigXml" /> instance.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="config" /> is <see langword="null" />.
+    /// </exception>
+    /// <remarks>
+    /// When MaxDegreeOfParallelism is null (system default), it is serialized as 0 with MaxDegreeOfParallelismSpecified=false.
+    /// This allows the XML schema to use 0 as a placeholder while maintaining null semantics on deserialization.
+    /// </remarks>
+    public static StandardModelConfigXml ToModelConfigXml(StandardModelConfig config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+
+        return new StandardModelConfigXml
+        {
+            CapacitySteepness = config.CapacitySteepness,
+            DistanceDecayLambda = config.DistanceDecayLambda,
+            MigrationProbabilitySteepness = config.MigrationProbabilitySteepness,
+            MigrationProbabilityThreshold = config.MigrationProbabilityThreshold,
+            FactorSmoothingAlpha = config.FactorSmoothingAlpha,
+            UseParallelProcessing = config.UseParallelProcessing,
+            MaxDegreeOfParallelism = config.MaxDegreeOfParallelism ?? 0,
+            MaxDegreeOfParallelismSpecified = config.MaxDegreeOfParallelism.HasValue
         };
     }
 
