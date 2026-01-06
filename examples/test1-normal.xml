@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Snapshot Version="beta" Id="4e3fc6f6-5e8b-40da-b721-9a8e26700fc4" Status="Seed" CreatedAt="2026-01-05T05:25:53.200146Z"
+          LastModifiedAt="2026-01-05T05:25:53.200175Z" Step="0" LastUsedSeed="42">
+    <SimulationConfig MaxSteps="100" CheckStability="true" StabilityThreshold="10" StabilityCheckInterval="1"
+                      MinStepsBeforeStabilityCheck="10"/>
+    <ModelConfig CapacitySteepness="5" DistanceDecayLambda="5E-05" MigrationProbabilitySteepness="8"
+                 MigrationProbabilityThreshold="0" FactorSmoothingAlpha="0.2" UseParallelProcessing="true"/>
+    <World Name="Test 1: US Cities Migration - Normal Data (Fixed)">
+        <Factors>
+            <Factor Id="average_income" Name="Average Income" Type="Positive"/>
+            <Factor Id="air_pollution" Name="Air Pollution" Type="Negative"/>
+            <Factor Id="education_quality" Name="Education Quality" Type="Positive"/>
+            <Factor Id="public_security" Name="Public Security" Type="Positive"/>
+            <Factor Id="housing_cost" Name="Housing Cost" Type="Negative"/>
+        </Factors>
+        <Population>
+            <Group Id="nyc_young_professionals">
+                <Person Count="5000" Seed="101" Type="StandardPerson">
+                    <Tags>young_professional;age_25_34;nyc</Tags>
+                    <Sensitivities>
+                        <S Id="average_income" Min="0.7" Max="0.9"/>
+                        <S Id="air_pollution" Min="0.3" Max="0.55"/>
+                        <S Id="education_quality" Min="0.55" Max="0.75"/>
+                        <S Id="public_security" Min="0.4" Max="0.65"/>
+                        <S Id="housing_cost" Min="0.6" Max="0.85"/>
+                    </Sensitivities>
+                    <Willingness Min="0.55" Max="0.75"/>
+                    <Retention Min="0.25" Max="0.4"/>
+                    <Threshold Min="0.008" Max="0.018"/>
+                    <Scaling Min="0.6" Max="0.75"/>
+                    <MinAttraction V="0.03"/>
+                </Person>
+            </Group>
+            <Group Id="nyc_students">
+                <Person Count="4000" Seed="404" Type="StandardPerson">
+                    <Tags>student;age_18_24;nyc</Tags>
+                    <Sensitivities>
+                        <S Id="average_income" Min="0.3" Max="0.55"/>
+                        <S Id="air_pollution" Min="0.2" Max="0.45"/>
+                        <S Id="education_quality" Min="0.85" Max="0.98"/>
+                        <S Id="public_security" Min="0.45" Max="0.68"/>
+                        <S Id="housing_cost" Min="0.82" Max="0.96"/>
+                    </Sensitivities>
+                    <Willingness Min="0.7" Max="0.9"/>
+                    <Retention Min="0.08" Max="0.2"/>
+                    <Threshold Min="0.005" Max="0.015"/>
+                    <Scaling Min="0.65" Max="0.85"/>
+                    <MinAttraction V="0.03"/>
+                </Person>
+            </Group>
+            <Group Id="austin_young_professionals">
+                <Person Count="5000" Seed="102" Type="StandardPerson">
+                    <Tags>young_professional;age_25_34;austin</Tags>
+                    <Sensitivities>
+                        <S Id="average_income" Min="0.7" Max="0.9"/>
+                        <S Id="air_pollution" Min="0.3" Max="0.55"/>
+                        <S Id="education_quality" Min="0.55" Max="0.75"/>
+                        <S Id="public_security" Min="0.4" Max="0.65"/>
+                        <S Id="housing_cost" Min="0.6" Max="0.85"/>
+                    </Sensitivities>
+                    <Willingness Min="0.55" Max="0.75"/>
+                    <Retention Min="0.25" Max="0.4"/>
+                    <Threshold Min="0.008" Max="0.018"/>
+                    <Scaling Min="0.6" Max="0.75"/>
+                    <MinAttraction V="0.03"/>
+                </Person>
+            </Group>
+            <Group Id="austin_families">
+                <Person Count="5000" Seed="202" Type="StandardPerson">
+                    <Tags>family;age_35_49;with_children;austin</Tags>
+                    <Sensitivities>
+                        <S Id="average_income" Min="0.65" Max="0.85"/>
+                        <S Id="air_pollution" Min="0.65" Max="0.9"/>
+                        <S Id="education_quality" Min="0.75" Max="0.95"/>
+                        <S Id="public_security" Min="0.75" Max="0.92"/>
+                        <S Id="housing_cost" Min="0.7" Max="0.88"/>
+                    </Sensitivities>
+                    <Willingness Min="0.3" Max="0.5"/>
+                    <Retention Min="0.45" Max="0.65"/>
+                    <Threshold Min="0.012" Max="0.028"/>
+                    <Scaling Min="0.45" Max="0.65"/>
+                    <MinAttraction V="0.06"/>
+                </Person>
+            </Group>
+            <Group Id="detroit_retirees">
+                <Person Count="6000" Seed="303" Type="StandardPerson">
+                    <Tags>retiree;age_65_plus;detroit</Tags>
+                    <Sensitivities>
+                        <S Id="average_income" Min="0.25" Max="0.5"/>
+                        <S Id="air_pollution" Min="0.55" Max="0.8"/>
+                        <S Id="education_quality" Min="0.15" Max="0.35"/>
+                        <S Id="public_security" Min="0.7" Max="0.9"/>
+                        <S Id="housing_cost" Min="0.75" Max="0.92"/>
+                    </Sensitivities>
+                    <Willingness Min="0.15" Max="0.3"/>
+                    <Retention Min="0.65" Max="0.8"/>
+                    <Threshold Min="0.022" Max="0.042"/>
+                    <Scaling Min="0.3" Max="0.5"/>
+                    <MinAttraction V="0.12"/>
+                </Person>
+            </Group>
+            <Group Id="detroit_students">
+                <Person Count="6000" Seed="405" Type="StandardPerson">
+                    <Tags>student;age_18_24;detroit</Tags>
+                    <Sensitivities>
+                        <S Id="average_income" Min="0.3" Max="0.55"/>
+                        <S Id="air_pollution" Min="0.2" Max="0.45"/>
+                        <S Id="education_quality" Min="0.85" Max="0.98"/>
+                        <S Id="public_security" Min="0.45" Max="0.68"/>
+                        <S Id="housing_cost" Min="0.82" Max="0.96"/>
+                    </Sensitivities>
+                    <Willingness Min="0.7" Max="0.9"/>
+                    <Retention Min="0.08" Max="0.2"/>
+                    <Threshold Min="0.005" Max="0.015"/>
+                    <Scaling Min="0.65" Max="0.85"/>
+                    <MinAttraction V="0.03"/>
+                </Person>
+            </Group>
+            <Group Id="portland_families">
+                <Person Count="5000" Seed="203" Type="StandardPerson">
+                    <Tags>family;age_35_49;with_children;portland</Tags>
+                    <Sensitivities>
+                        <S Id="average_income" Min="0.65" Max="0.85"/>
+                        <S Id="air_pollution" Min="0.65" Max="0.9"/>
+                        <S Id="education_quality" Min="0.75" Max="0.95"/>
+                        <S Id="public_security" Min="0.75" Max="0.92"/>
+                        <S Id="housing_cost" Min="0.7" Max="0.88"/>
+                    </Sensitivities>
+                    <Willingness Min="0.3" Max="0.5"/>
+                    <Retention Min="0.45" Max="0.65"/>
+                    <Threshold Min="0.012" Max="0.028"/>
+                    <Scaling Min="0.45" Max="0.65"/>
+                    <MinAttraction V="0.06"/>
+                </Person>
+            </Group>
+            <Group Id="portland_retirees">
+                <Person Count="4000" Seed="304" Type="StandardPerson">
+                    <Tags>retiree;age_65_plus;portland</Tags>
+                    <Sensitivities>
+                        <S Id="average_income" Min="0.25" Max="0.5"/>
+                        <S Id="air_pollution" Min="0.55" Max="0.8"/>
+                        <S Id="education_quality" Min="0.15" Max="0.35"/>
+                        <S Id="public_security" Min="0.7" Max="0.9"/>
+                        <S Id="housing_cost" Min="0.75" Max="0.92"/>
+                    </Sensitivities>
+                    <Willingness Min="0.15" Max="0.3"/>
+                    <Retention Min="0.65" Max="0.8"/>
+                    <Threshold Min="0.022" Max="0.042"/>
+                    <Scaling Min="0.3" Max="0.5"/>
+                    <MinAttraction V="0.12"/>
+                </Person>
+            </Group>
+        </Population>
+        <Cities>
+            <City Id="new_york_city" Name="New York City" Lat="40.7128" Lon="-74.006" Area="302.6" Capacity="8500000">
+                <Factors>
+                    <F Id="average_income" V="0.82"/>
+                    <F Id="air_pollution" V="0.58"/>
+                    <F Id="education_quality" V="0.88"/>
+                    <F Id="public_security" V="0.72"/>
+                    <F Id="housing_cost" V="0.92"/>
+                </Factors>
+                <Population>
+                    <Ref Id="nyc_young_professionals"/>
+                    <Ref Id="nyc_students"/>
+                </Population>
+            </City>
+            <City Id="austin" Name="Austin" Lat="30.2672" Lon="-97.7431" Area="326.5" Capacity="1000000">
+                <Factors>
+                    <F Id="average_income" V="0.75"/>
+                    <F Id="air_pollution" V="0.35"/>
+                    <F Id="education_quality" V="0.78"/>
+                    <F Id="public_security" V="0.8"/>
+                    <F Id="housing_cost" V="0.68"/>
+                </Factors>
+                <Population>
+                    <Ref Id="austin_young_professionals"/>
+                    <Ref Id="austin_families"/>
+                </Population>
+            </City>
+            <City Id="detroit" Name="Detroit" Lat="42.3314" Lon="-83.0458" Area="370.2" Capacity="640000">
+                <Factors>
+                    <F Id="average_income" V="0.48"/>
+                    <F Id="air_pollution" V="0.72"/>
+                    <F Id="education_quality" V="0.62"/>
+                    <F Id="public_security" V="0.55"/>
+                    <F Id="housing_cost" V="0.32"/>
+                </Factors>
+                <Population>
+                    <Ref Id="detroit_retirees"/>
+                    <Ref Id="detroit_students"/>
+                </Population>
+            </City>
+            <City Id="portland" Name="Portland" Lat="45.5152" Lon="-122.6784" Area="375" Capacity="650000">
+                <Factors>
+                    <F Id="average_income" V="0.7"/>
+                    <F Id="air_pollution" V="0.28"/>
+                    <F Id="education_quality" V="0.75"/>
+                    <F Id="public_security" V="0.78"/>
+                    <F Id="housing_cost" V="0.58"/>
+                </Factors>
+                <Population>
+                    <Ref Id="portland_families"/>
+                    <Ref Id="portland_retirees"/>
+                </Population>
+            </City>
+        </Cities>
+    </World>
+    <History/>
+</Snapshot>

@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Snapshot Version="beta" Id="217f29d6-7213-4518-b779-586437e4bf47" Status="Seed"
+          CreatedAt="2026-01-05T05:25:57.0321859Z" LastModifiedAt="2026-01-05T05:25:57.0321859Z" Step="0"
+          LastUsedSeed="42">
+    <SimulationConfig MaxSteps="100" CheckStability="true" StabilityThreshold="10" StabilityCheckInterval="1"
+                      MinStepsBeforeStabilityCheck="10"/>
+    <ModelConfig CapacitySteepness="5" DistanceDecayLambda="5E-05" MigrationProbabilitySteepness="8"
+                 MigrationProbabilityThreshold="0" FactorSmoothingAlpha="0.2" UseParallelProcessing="true"/>
+    <World Name="Test 2: Extreme Data Simulation (Fixed)">
+        <Factors>
+            <Factor Id="overall_attraction" Name="Overall Attraction" Type="Positive"/>
+            <Factor Id="overall_repulsion" Name="Overall Repulsion" Type="Negative"/>
+        </Factors>
+        <Population>
+            <Group Id="paradise_optimists">
+                <Person Count="10000" Seed="501" Type="StandardPerson">
+                    <Tags>optimist;extreme;paradise</Tags>
+                    <Sensitivities>
+                        <S Id="overall_attraction" Min="0.85" Max="0.98"/>
+                        <S Id="overall_repulsion" Min="0.1" Max="0.3"/>
+                    </Sensitivities>
+                    <Willingness Min="0.75" Max="0.95"/>
+                    <Retention Min="0.05" Max="0.15"/>
+                    <Threshold Min="0.002" Max="0.008"/>
+                    <Scaling Min="0.75" Max="0.92"/>
+                    <MinAttraction V="0.03"/>
+                </Person>
+            </Group>
+            <Group Id="dystopia_pessimists">
+                <Person Count="10000" Seed="502" Type="StandardPerson">
+                    <Tags>pessimist;extreme;dystopia</Tags>
+                    <Sensitivities>
+                        <S Id="overall_attraction" Min="0.1" Max="0.3"/>
+                        <S Id="overall_repulsion" Min="0.85" Max="0.98"/>
+                    </Sensitivities>
+                    <Willingness Min="0.05" Max="0.25"/>
+                    <Retention Min="0.8" Max="0.95"/>
+                    <Threshold Min="0.065" Max="0.09"/>
+                    <Scaling Min="0.25" Max="0.45"/>
+                    <MinAttraction V="0.15"/>
+                </Person>
+            </Group>
+        </Population>
+        <Cities>
+            <City Id="paradise_city" Name="Paradise City" Lat="25.7617" Lon="-80.1918" Area="100000"
+                  Capacity="15000000">
+                <Factors>
+                    <F Id="overall_attraction" V="0.99"/>
+                    <F Id="overall_repulsion" V="0.01"/>
+                </Factors>
+                <Population>
+                    <Ref Id="paradise_optimists"/>
+                </Population>
+            </City>
+            <City Id="dystopia_city" Name="Dystopia City" Lat="51.5074" Lon="-0.1278" Area="100000" Capacity="15000000">
+                <Factors>
+                    <F Id="overall_attraction" V="0.01"/>
+                    <F Id="overall_repulsion" V="0.99"/>
+                </Factors>
+                <Population>
+                    <Ref Id="dystopia_pessimists"/>
+                </Population>
+            </City>
+        </Cities>
+    </World>
+    <History/>
+</Snapshot>
